@@ -1,0 +1,22 @@
+#Idea and Mac OS X hidden files
+.DS_Store
+.idea
+*.iml
+*.iws
+*.ipr
+
+#Project Files
+*.class
+*.settings
+*.project
+*.classpath
+*.log*
+
+#Folders to ignore
+target/
+test-output/
+logs/*
+output/*
+metrics/
+src/main/resources/
+
