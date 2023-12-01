@@ -11,14 +11,14 @@ import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import javafx.util.Pair;
 
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.util.*;
 
 
 public class Scheduler {
 
-    static String spreadSheetId = "1OAETr5cs8rjSy-2JjnpSNblnVnEQO85dykbACW41ZnI";
+    static String spreadSheetId = "";
+
 
     private static Credential authorize() throws Exception {
         String currentFilePath = new File("").getAbsolutePath();
@@ -267,6 +267,14 @@ public class Scheduler {
     }
 
     public static void main(String[] args) {
+
+        Properties prop = new Properties();
+        try {
+            prop.load(Scheduler.class.getResourceAsStream("nacl.properties"));
+            spreadSheetId = prop.getProperty("NACL_SCHEDULER_SHEET_ID");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
 
         //Refer https://medium.com/geekculture/how-to-read-data-from-google-sheets-ee335f787de6 for reading data from Google Sheets
 
