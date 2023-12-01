@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+        <link href="https://fonts.googleapis.com/css?family=Roboto Condensed" rel="stylesheet" />
+        <style>
+            .styled-table {
+                border-collapse: collapse;
+                margin: 25px 0;
+                min-width: 400px;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+                border-style: hidden;
+                font-family: "Roboto Condensed";
+                font-size: 14px;
+                transition: opacity 1s;
+            }
+
+            .styled-table tr {
+                color: #ffffff;
+                text-align: left;
+                background-color: #012169;
+            }
+
+            .styled-table td {
+                padding: 12px 15px;
+                border: 2px solid white;
+            }
+
+            .styled-table tr:first-child {
+                background-color: #da291c;
+            }
+
+            .styled-table tbody tr {
+                border-bottom: 1px solid #dddddd;
+            }
+
+            .styled-table tbody tr:nth-of-type(even) {
+                background-color: #012169;
+            }
+
+            .styled-table tbody tr:last-of-type {
+                border-bottom: 2px solid #012169;
+            }
+
+            #umpireDiv,
+            #umpireTables,
+            #sel,
+            #selSeries,
+            #bt {
+                display: table;
+                margin-right: auto;
+                margin-left: auto;
+                font-family: "Roboto Condensed";
+                font-size: 14px;
+            }
+
+            #sel,#selSeries {
+                border: 2px solid #012169;
+                width: 160px;
+                height: 32px;
+                font-size: 14px;
+                border-radius: 8px;
+            }
+
+            .btn {
+                background-color: #012169; /* Green */
+                border: none;
+                color: white;
+                padding: 10px 32px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 14px;
+                cursor: pointer;
+                border-radius: 8px;
+            }
+
+            .subBtn {
+                background-color: #da291c;
+                border: none;
+                color: white;
+                padding: 10px 15px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 14px;
+                cursor: pointer;
+                border-radius: 8px;
+                font-family: "Roboto Condensed";
+            }
+            #img {
+              display: none;
+              top: 50%;
+              left: 50%;
+              position: absolute;
+              transform: translate(-50%, -50%);
+              max-width: 10%;  
+              height: auto;  
+            }
+            @keyframes spinner-border {
+              to { transform: rotate(360deg); }
+            } 
+            .spinner-border{
+                display: inline-block;
+                width: 2rem;
+                height: 2rem;
+                vertical-align: text-bottom;
+                border: .25em solid currentColor;
+                border-right-color: transparent;
+                border-radius: 50%;
+                -webkit-animation: spinner-border .75s linear infinite;
+                animation: spinner-border .75s linear infinite;
+            }
+            .spinner-border-sm{
+                height: 1rem;
+                border-width: .2em;
+            }
+        </style>
+    </head>
+    <body>
+        <p><input type="button" value="Start" id="bt" class="btn" /><br /></p>
+        <div id="umpireDiv">
+            <select id="selSeries" style="display: none;"></select><br>
+            <select id="sel" style="display: none;"> </select><br>
+            <div id="umpireTables"></div>
+        </div>
+    </body>
+
+    <script>
+        var script_url ="https://script.google.com/macros/s/AKfycbw3bDebOYV8VnIP24DxkuoyGpNY6aR_yczobPICzfyPlubPYdvlQELxG0l_WlC-SziPqg/exec";
+        var emailcheck=false;
+        var selectedSeries = 0;
+        var selectedSeriesName = "";
+        const seriesToDivMap = new Map();//Map<series, List<divIds>>
+        $(document).ready(function () {
+            $("#selSeries").html("");
+            $("#selSeries").append('<option value="">Select Season</option>');
+            var seriesListURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId=27594";
+            var seriesDetailsURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesDetails?clubId=27594&X-Auth-Token=&seriesId=";
+            $.getJSON(seriesListURL, function (data) {
+                $.each(data.data.seriesList, function (index, series) {
+                    var seriesId = series.seriesID;
+                    var seriesName = series.seriesName
+                    if(series.parentSeriesId == 0) {// show only parent series
+                        $("#selSeries").append('<option value="' + seriesId + '">' + seriesName + "</option>");
+                    }
+                    $.getJSON(seriesDetailsURL+seriesId, function (data1) {
+                        seriesToDivMap.set(seriesId,[]);
+                        if(data1.data.hasDivisions) {
+                            $.each(data1.data.divisions, function (index, divs) {
+                                seriesToDivMap.get(seriesId).push(divs.leagueId);
+                            });
+                        }
+                        else
+                            seriesToDivMap.get(seriesId).push(seriesId);
+                    });
+                });
+            });
+            $("#bt").click(function () {
+                $("#sel").hide();
+                $("#umpireTables").html("");
+                $("#selSeries").val("");
+                $("#selSeries").show();
+                $('#selSeries').on('change', function() {
+                    selectedSeries = $('#selSeries :selected').val();
+                    selectedSeriesName = $('#selSeries :selected').text();
+                    $("#sel").html("");
+                    $("#sel").append('<option value="">Select Umpiring Team</option>');
+                    $("#sel").show();
+                    $("#umpireTables").html("");
+                    const url = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId=27594&seriesId=";
+                    seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) => $.getJSON(url+divId, function (data) {
+                        $.each(data.data.teamsList, function (index, value) {
+                            $.each(value.teams, function (index, value) {
+                                $("#sel").append('<option value="' + value.teamID + '">' + value.teamName + "</option>");
+                            });
+                        });
+                    }));
+                });
+            });
+
+            $("#sel").change(function () {
+                $("#umpireTables").html("");
+                var umpireTeamName = this.options[this.selectedIndex].text;
+                var umpireTeamId = this.options[this.selectedIndex].value;
+                //const scheduleUrls = ["https://ccapi.cricclubs.com/CCAPI/match/getSchedule?clubId=27594&seriesId="+selectedSeries];
+                scheduleUrl = "https://ccapi.cricclubs.com/CCAPI/match/getSchedule?clubId=27594&seriesId=";
+                var playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId=27594&teamId=" + umpireTeamId;
+                const teamMatchesUrls = ["https://ccapi.cricclubs.com/CCAPI/match/getMatches?clubId=27594&seriesId="+selectedSeries+"&teamId="];
+                var playersMatchCountMap = new Map();
+                var calls = [];
+                /*calls.push(
+                    teamMatchesUrls.forEach((teamMatchesUrl) => 
+                    $.getJSON(teamMatchesUrl+umpireTeamId, function (data) {
+                        $.each(data.data, function (idx, matchVal) {
+                            if(matchVal.matchType == "l") {
+                                var matchUrl = "https://ccapi.cricclubs.com/CCAPI/scoreCard/getScoreCard?clubId=27594&matchId="+matchVal.matchId;
+                                $.getJSON(matchUrl, function (matchData) {
+                                    if(matchData.data.matchInfo.teamOne == umpireTeamId) {
+                                        $.each(matchData.data.innings1.batting, function (idx1, playerStat) {
+                                            var playerName = playerStat.firstName+" "+playerStat.lastName;
+                                            if(!playersMatchCountMap.has(playerName))
+                                                playersMatchCountMap.set(playerName, 0);
+                                            playersMatchCountMap.set(playerName, playersMatchCountMap.get(playerName)+1);
+                                        });
+                                    }
+                                    else if(matchData.data.matchInfo.teamTwo == umpireTeamId) {
+                                        $.each(matchData.data.innings2.batting, function (idx1, playerStat) {
+                                            var playerName = playerStat.firstName+" "+playerStat.lastName;
+                                            if(!playersMatchCountMap.has(playerName))
+                                                playersMatchCountMap.set(playerName, 0);
+                                            playersMatchCountMap.set(playerName, playersMatchCountMap.get(playerName)+1);
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }))
+                );*/
+                var flag = 0;
+                var scheduleCalls = [];
+                //$.when.apply($,calls).then(function() {
+                    var todayDate = new Date(getFormattedDate(new Date()));
+                    todayDate.setHours(0, 0, 0, 0);
+                    seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) => 
+                        scheduleCalls.push($.getJSON(scheduleUrl+divId, function (data) {
+                            $.each(data.data.fixtureList, function (index, value) {
+                                var fixtureId = value.fixtureId;
+                                var umpire1Assinged = value.umpire1 == umpireTeamName;
+                                var umpire2Assinged = value.umpire2 == umpireTeamName;
+                                var gameDate = new Date(value.date);
+                                gameDate.setHours(0, 0, 0, 0);
+                                if ((umpire1Assinged || umpire2Assinged) && (gameDate >= todayDate)) {
+                                    flag = 1;
+                                    var body = document.getElementById("umpireTables");
+                                    var tbl = document.createElement("table");
+                                    tbl.setAttribute("id", "table" + fixtureId);
+                                    tbl.setAttribute("class", "styled-table");
+                                    var th = tbl.createTHead();
+                                    var thr = th.insertRow();
+                                    var thd = thr.insertCell();
+                                    thd.appendChild(document.createTextNode("Match " + fixtureId));
+                                    thd.setAttribute("colspan", "2");
+
+                                    var tr1 = tbl.insertRow();
+                                    var td11 = tr1.insertCell();
+                                    td11.appendChild(document.createTextNode("Home Team"));
+                                    var td12 = tr1.insertCell();
+                                    var homeTeam = document.createElement("Label");
+                                    homeTeam.innerHTML = value.teamOneName;
+                                    homeTeam.setAttribute("id", "homeTeam"+fixtureId);
+                                    td12.appendChild(homeTeam);
+
+                                    var tr2 = tbl.insertRow();
+                                    var td21 = tr2.insertCell();
+                                    td21.appendChild(document.createTextNode("Away Team"));
+                                    var td22 = tr2.insertCell();
+                                    var awayTeam = document.createElement("Label");
+                                    awayTeam.innerHTML = value.teamTwoName;
+                                    awayTeam.setAttribute("id", "awayTeam"+fixtureId);
+                                    td22.appendChild(awayTeam);
+
+                                    var tr3 = tbl.insertRow();
+                                    var td31 = tr3.insertCell();
+                                    td31.appendChild(document.createTextNode("Ground"));
+                                    var td32 = tr3.insertCell();
+                                    var ground = document.createElement("Label");
+                                    ground.innerHTML = value.location;
+                                    ground.setAttribute("id", "ground"+fixtureId);
+                                    td32.appendChild(ground);
+
+                                    var tr4 = tbl.insertRow();
+                                    var td41 = tr4.insertCell();
+                                    td41.appendChild(document.createTextNode("Date & Time"));
+                                    var td42 = tr4.insertCell();
+                                    var dateTime = document.createElement("Label");
+                                    dateTime.innerHTML = getDateString(value.date)+', '+value.time;
+                                    dateTime.setAttribute("id", "dateTime"+fixtureId);
+                                    td42.appendChild(dateTime);
+
+                                    if (umpire1Assinged) {
+                                        var tr6 = tbl.insertRow();
+                                        var td61 = tr6.insertCell();
+                                        td61.appendChild(document.createTextNode("Umpire1"));
+                                        var td62 = tr6.insertCell();
+                                        var umpire1Select = document.createElement("select");
+                                        umpire1Select.setAttribute("id", "umpire1Sel"+fixtureId);
+                                        var selOption = document.createElement("option");
+                                        selOption.value = "select";
+                                        selOption.text = "--Select Player--";
+                                        umpire1Select.appendChild(selOption);
+                                        $.getJSON(playersURL, function (data) {
+                                            $.each(data.data.teamPlayers, function (index, value) {
+                                                var option = document.createElement("option");
+                                                option.value = value.userId;
+                                                option.text = value.firstName + " " + value.lastName;
+                                                umpire1Select.appendChild(option);
+                                            });
+                                        });
+                                        //console.log(playersMatchCountMap);
+                                        /*for (const [playerName, playerMatchCount] of playersMatchCountMap.entries()) {
+                                            if(playerMatchCount > 2) {
+                                                var option = document.createElement("option");
+                                                option.text = playerName;
+                                                umpire1Select.appendChild(option);
+                                            }
+                                        }*/
+                                        td62.setAttribute("style", "color: black;");
+                                        var umpire1Phone = document.createElement("INPUT");
+                                        umpire1Phone.setAttribute("type", "text");
+                                        umpire1Phone.setAttribute("placeholder", "--Enter Phone Number--");
+                                        umpire1Phone.setAttribute("id", "umpire1Ph"+fixtureId);
+                                        td62.appendChild(umpire1Select);
+                                        td62.appendChild(document.createElement("br"));
+                                        td62.appendChild(document.createElement("br"));
+                                        td62.appendChild(umpire1Phone);
+                                    }
+                                    if (umpire2Assinged) {
+                                        var tr7 = tbl.insertRow();
+                                        var td71 = tr7.insertCell();
+                                        td71.appendChild(document.createTextNode("Umpire2"));
+                                        var td72 = tr7.insertCell();
+                                        var umpire2Select = document.createElement("select");
+                                        umpire2Select.setAttribute("id", "umpire2Sel"+fixtureId);
+                                        var selOption = document.createElement("option");
+                                        selOption.value = "select";
+                                        selOption.text = "--Select Player--";
+                                        umpire2Select.appendChild(selOption);
+                                        $.getJSON(playersURL, function (data) {
+                                            $.each(data.data.teamPlayers, function (index, value) {
+                                                var option = document.createElement("option");
+                                                option.value = value.userId;
+                                                option.text = value.firstName + " " + value.lastName;
+                                                umpire2Select.appendChild(option);
+                                            });
+                                        });
+                                        //console.log(playersMatchCountMap);
+                                        /*for (let [playerName, playerMatchCount] of playersMatchCountMap) {
+                                            if(playerMatchCount > 2) {
+                                                var option = document.createElement("option");
+                                                option.text = playerName;
+                                                umpire2Select.appendChild(option);
+                                            }
+                                        }*/
+                                        td72.setAttribute("style", "color: black;");
+                                        var umpire2Phone = document.createElement("INPUT");
+                                        umpire2Phone.setAttribute("type", "text");
+                                        umpire2Phone.setAttribute("placeholder", "--Enter Phone Number--");
+                                        umpire2Phone.setAttribute("id", "umpire2Ph"+fixtureId);
+                                        td72.appendChild(umpire2Select);
+                                        td72.appendChild(document.createElement("br"));
+                                        td72.appendChild(document.createElement("br"));
+                                        td72.appendChild(umpire2Phone);
+                                    }
+
+                                    var subBtn = document.createElement("input");
+                                    subBtn.type = "button";
+                                    subBtn.className = "subBtn";
+                                    subBtn.value = "Submit";
+                                    subBtn.id = "submit"+fixtureId;
+                                    subBtn.addEventListener('click', function() {
+                                        if(umpire1Assinged) {
+                                            var umpire1Selected = document.getElementById('umpire1Sel'+fixtureId);
+                                            var umpire1SelectedPlayer = umpire1Selected.options[umpire1Selected.selectedIndex].text;
+                                        }
+                                        if(umpire2Assinged) {
+                                            var umpire2Selected = document.getElementById('umpire2Sel'+fixtureId);
+                                            var umpire2SelectedPlayer = umpire2Selected.options[umpire2Selected.selectedIndex].text;
+                                        }
+                                        if((umpire1Assinged && umpire1SelectedPlayer == '--Select Player--') || (umpire2Assinged && umpire2SelectedPlayer == '--Select Player--')) {
+                                            alert('Select a player as an umpire');
+                                        }
+                                        else if(umpire1Assinged && umpire2Assinged && umpire1SelectedPlayer == umpire2SelectedPlayer) {
+                                            alert('Both umpires for a match cannot be same');
+                                        }
+                                        else {
+                                            if(umpire1Assinged) {
+                                                var umpire1phone = document.getElementById('umpire1Ph'+fixtureId).value;
+                                            }
+                                            if(umpire2Assinged) {
+                                                var umpire2phone = document.getElementById('umpire2Ph'+fixtureId).value;
+                                            }
+                                            if ((umpire1Assinged && umpire1phone.trim() == '') || (umpire2Assinged && umpire2phone.trim() == '')) {
+                                                alert('Enter valid phone number for umpire');
+                                            }
+                                            else {
+                                                var submitButtonElement = document.getElementById('submit'+fixtureId);
+                                                submitButtonElement.disabled = true;
+                                                submitButtonElement.value = 'Submitting...';
+                                                var subUrl = "&series="+selectedSeriesName+"&matchId="+fixtureId;
+                                                var umpireComment = "Umpires: ";
+                                                var match = document.getElementById('homeTeam' + fixtureId).innerHTML + " vs "+document.getElementById('awayTeam' + fixtureId).innerHTML;
+                                                subUrl = subUrl+"&match="+match;
+                                                var ground = document.getElementById('ground' + fixtureId).innerHTML;
+                                                subUrl = subUrl+"&ground="+ground;
+                                                var dateTime = document.getElementById('dateTime' + fixtureId).innerHTML;
+                                                subUrl = subUrl+"&dateTime="+dateTime;
+                                                subUrl = subUrl+"&umpireTeam="+umpireTeamName;
+                                                if(umpire1Assinged) {
+                                                    subUrl = subUrl+"&umpire1="+umpire1SelectedPlayer+"&umpire1Phone="+umpire1phone;
+                                                    umpireComment = umpireComment+umpire1SelectedPlayer+" - "
+                                                    +umpire1phone;
+                                                }
+                                                else {
+                                                    subUrl = subUrl+"&umpire1=-&umpire1Phone=-";
+                                                }
+                                                if(umpire2Assinged) {
+                                                    subUrl = subUrl+"&umpire2="+umpire2SelectedPlayer+"&umpire2Phone="+umpire2phone;
+                                                    umpireComment = umpireComment+", "+umpire2SelectedPlayer+" - "
+                                                    +umpire2phone;
+                                                }
+                                                else {
+                                                    subUrl = subUrl+"&umpire2=-&umpire2Phone=-";
+                                                }
+                                                subUrl = subUrl + "&umpireComment="+umpireComment;
+                                                console.log(subUrl);
+                                                var url = script_url+"?"+subUrl+"&action=insert";
+                                                var request = jQuery.ajax({
+                                                  crossDomain: true,
+                                                  url: url ,
+                                                  dataType: 'json',
+                                                  type: 'GET',
+                                                  success: function (data) {
+                                                    submitButtonElement.disabled = false;
+                                                    submitButtonElement.value = 'Submit';
+                                                    alert(data);
+                                                    const targetTable = document.getElementById('table' + fixtureId).style;
+                                                    targetTable.opacity = 1;
+                                                    (function fade(){(targetTable.opacity-=.1)<0?targetTable.display="none":setTimeout(fade,150)})();
+                                                  }
+                                                });
+                                            }
+                                        }
+                                    });
+                                    var trSubmit = tbl.insertRow();
+                                    var tdSubmit = trSubmit.insertCell();
+                                    tdSubmit.setAttribute("colspan", "2");
+                                    tdSubmit.setAttribute("style", "text-align: center;");
+                                    tdSubmit.appendChild(subBtn);
+
+                                    body.appendChild(tbl);
+                                }
+                            });
+                        }))
+                    );
+                    $.when.apply($,scheduleCalls).then(function() {
+                        if(flag == 0)
+                            $("#umpireTables").html("Your team doesn't have any upcoming umpiring duties");
+                    });
+                //});
+            });
+        });
+
+        function submitPhoneNumbers(umpire1phone,umpire2phone) {
+            if (umpire1phone.trim() == '') {
+                alert('Enter Umpire1 phone number');
+            }
+            if (umpire2phone.trim() == '') {
+                alert('Enter Umpire2 phone number');
+            }
+        }
+
+        function getFormattedDate(date) {
+            let year = date.getFullYear();
+            let month = (1 + date.getMonth()).toString().padStart(2, '0');
+            let day = date.getDate().toString().padStart(2, '0');
+          
+            return month + '/' + day + '/' + year;
+        }
+
+        function getDayOfWeek(date) {
+          const dayOfWeek = new Date(date).getDay();    
+          return isNaN(dayOfWeek) ? null : 
+            ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
+        }
+
+        function getDateString(date) {
+            var date = new Date(date);
+            return date.toDateString();
+        }
+    </script>
+</html>

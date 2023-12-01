@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+        <link href="https://fonts.googleapis.com/css?family=Roboto Condensed" rel="stylesheet" />
+        <style>
+            .styled-table {
+                border-collapse: collapse;
+                margin: 25px 0;
+                min-width: 400px;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+                border-style: hidden;
+                font-family: "Roboto Condensed";
+                font-size: 14px;
+                transition: opacity 1s;
+            }
+            .styled-table th {
+                cursor: pointer;
+                padding: 15px 15px;
+                border: 2px solid white;
+            }
+            .styled-table tr {
+                color: #ffffff;
+                text-align: left;
+                background-color: #012169;
+            }
+
+            .styled-table td {
+                padding: 5px 15px;
+                border: 2px solid white;
+            }
+
+            .styled-table tr:first-child {
+                background-color: #da291c;
+            }
+
+            .styled-table tbody tr {
+                border-bottom: 1px solid #dddddd;
+            }
+
+            .styled-table tbody tr:nth-of-type(even) {
+                background-color: #012169;
+            }
+
+            .styled-table tbody tr:last-of-type {
+                border-bottom: 2px solid #012169;
+            }
+
+            #summaryTable tr:first-child{
+                text-align: center;
+                background-color: #da291c;
+            }
+
+            #summaryTable tr:nth-child(2){
+                text-align: center;
+                background-color: #da291c;
+            }
+
+            #summaryTable td:nth-child(1){
+                background-color: #da291c;
+            }
+            
+            #statsTableBody,
+            #sel,
+            #bt {
+                display: table;
+                margin-right: auto;
+                margin-left: auto;
+                font-family: "Roboto Condensed";
+                font-size: 14px;
+            }
+
+            #statsInputDiv {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: "Roboto Condensed";
+                font-size: 14px;
+            }
+
+            #selSeries,
+            #selStatType,
+            #selTeam {
+                border: 2px solid #012169;
+                width: 160px;
+                height: 32px;
+                font-size: 14px;
+                border-radius: 8px;
+            }
+
+            .btn {
+                background-color: #012169; /* Green */
+                border: none;
+                color: white;
+                padding: 10px 32px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 14px;
+                cursor: pointer;
+                border-radius: 8px;
+            }
+
+            .subBtn {
+                background-color: #da291c;
+                border: none;
+                color: white;
+                padding: 10px 15px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 14px;
+                cursor: pointer;
+                border-radius: 8px;
+                font-family: "Roboto Condensed";
+            }
+            #img {
+              display: none;
+              top: 50%;
+              left: 50%;
+              position: absolute;
+              transform: translate(-50%, -50%);
+              max-width: 10%;  
+              height: auto;  
+            }
+            @keyframes spinner-border {
+              to { transform: rotate(360deg); }
+            } 
+            .spinner-border{
+                display: inline-block;
+                width: 2rem;
+                height: 2rem;
+                vertical-align: text-bottom;
+                border: .25em solid currentColor;
+                border-right-color: transparent;
+                border-radius: 50%;
+                -webkit-animation: spinner-border .75s linear infinite;
+                animation: spinner-border .75s linear infinite;
+            }
+            .spinner-border-sm{
+                height: 1rem;
+                border-width: .2em;
+            }
+
+            .logo-txt-container {
+              display:flex;
+              align-items:center;
+              flex-direction: row;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div id="statsDiv">
+            <div id="statsInputDiv">
+                <select id="selSeries" style="display: none;"></select>&nbsp;&nbsp;&nbsp;&nbsp;
+                <select id="selStatType" style="display: none;"></select>&nbsp;&nbsp;&nbsp;&nbsp;
+                <select id="selTeam" style="display: none;"></select>&nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="button" style="display: none;" value="Submit" id="submit" class="btn" />
+            </div>
+            <div id="statsTableBody"></div>
+        </div>
+    </body>
+
+    <script>
+        var script_url ="https://script.google.com/macros/s/AKfycbyy4BY8sb963Fk9_0TTF1_AP71OgD2yOL-5VzPufVpU0kNIf5GfO_iBUrQN0JmoPNVCAQ/exec";
+        var emailcheck=false;
+        var minPartnershipStatRuns = 30;
+        var minBatsmanStatScore = 30;
+        var minBowlerStatWkts = 3;
+        //var matchDates = ['02/11/2023','02/12/2023'];
+        var matchDates = [];
+        var seriesCalls = [];
+        $(document).ready(function () {
+            var allMatchesMap = {};// Object<series, List<match>>
+            const allPlayersMap = new Map();//Map<series, Map<team_name, Map<player_id, player_name>>>
+            const allTeamsMap = new Map();//Map<series, Map<team_name, List<match>>>
+            const allSeriesMap = new Map();
+            $("#selSeries").html("");
+            $("#selSeries").append('<option value="">Select Season</option>');
+            $("#selSeries").show();
+            $("#statsTableBody").html("");
+            var seriesURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId=27594";
+            seriesCalls.push($.getJSON(seriesURL, function (data) {
+                $.each(data.data.seriesList, function (index, series) {
+                    allSeriesMap.set(series.seriesID, series.seriesName);
+                    if(allSeriesMap.has(series.parentSeriesId)) {
+                        allSeriesMap.delete(series.parentSeriesId);
+                    }
+                });
+            }));
+            $.when.apply($,seriesCalls).then(function() {
+                $("#selSeries").append('<option value="allSeries">All</option>');
+                console.log(allSeriesMap);
+                console.log(allSeriesMap.size);
+                allSeriesMap.forEach(function(seriesName, seriesId) {
+                    console.log(seriesId);
+                    $("#selSeries").append('<option value="' + seriesName + '">' + seriesName + "</option>");
+                    allPlayersMap.set(seriesName, new Map());
+                    allTeamsMap.set(seriesName, new Map());
+                    var allMatchesPerSeriesUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatches?X-Auth-Token=&clubId=27594&seriesId="+seriesId+"&teamId=&limit=10000";
+                    $.getJSON(allMatchesPerSeriesUrl, function (data) {
+                        $.each(data.data, function (idx, val) {
+                            if(matchDates.includes(val.matchDate) || matchDates.length==0) {
+                                allMatchesMap[seriesName] ??= [];
+                                allMatchesMap[seriesName].push(val);
+                                if(!allTeamsMap.get(seriesName).has(val.teamOneName))
+                                    allTeamsMap.get(seriesName).set(val.teamOneName, []);
+                                allTeamsMap.get(seriesName).get(val.teamOneName).push(val);
+                                if(!allTeamsMap.get(seriesName).has(val.teamTwoName))
+                                    allTeamsMap.get(seriesName).set(val.teamTwoName, []);
+                                allTeamsMap.get(seriesName).get(val.teamTwoName).push(val);
+                            }
+                        });
+                    });
+                    var allTeamsPerSeriesUrl = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId=27594&seriesId="+seriesId;
+                    $.getJSON(allTeamsPerSeriesUrl, function (data) {
+                        $.each(data.data.teamsList, function (index, teamsList) {
+                            $.each(teamsList.teams, function (index, team) {
+                                allPlayersMap.get(seriesName).set(team.teamName, new Map());
+                                var playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId=27594&teamId=" + team.teamID;
+                                $.getJSON(playersURL, function (data) {
+                                    $.each(data.data.teamPlayers, function (index, player) {
+                                        allPlayersMap.get(seriesName).get(team.teamName).set(player.playerID,player.firstName + " " + player.lastName);
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+            $("#selStatType").html("");
+            $("#selStatType").append('<option value="">Select Stat</option>');
+            $("#selStatType").append('<option value="ts">Team Scores</option>');
+            $("#selStatType").append('<option value="ts">Batting Figures</option>');
+            $("#selStatType").append('<option value="bf">Bowling Figures</option>');
+            $("#selStatType").append('<option value="ps">Partnerships</option>');
+            $("#selStatType").append('<option value="tstats">Team Stats</option>');
+            $("#selStatType").append('<option value="ranks">Rankings</option>');
+            $("#selStatType").append('<option value="seriesSummary">Summary</option>');
+            $("#selStatType").show();
+
+            $('#selSeries').on('change', function() {
+                $("#selStatType").html("");
+                $("#selStatType").append('<option value="">Select Stat</option>');
+                $("#selStatType").append('<option value="ts">Team Scores</option>');
+                $("#selStatType").append('<option value="ts">Batting Figures</option>');
+                $("#selStatType").append('<option value="bf">Bowling Figures</option>');
+                $("#selStatType").append('<option value="ps">Partnerships</option>');
+                $("#selStatType").append('<option value="tstats">Team Stats</option>');
+                $("#selStatType").append('<option value="ranks">Rankings</option>');
+                $("#selStatType").append('<option value="seriesSummary">Summary</option>');
+                $("#selStatType").show();
+                $("#selTeam").html("");
+                $("#selTeam").hide();
+            });
+
+            $('#selStatType').on('change', function() {
+                if ( this.value == "tstats") {
+                    $("#selTeam").html("");
+                    var selectedSeries = $('#selSeries :selected').text();
+                    $("#selTeam").append('<option value="">Select Team</option>');
+                    for (let [series, teamMap] of allTeamsMap) {
+                        if(selectedSeries === "All" || selectedSeries === series) {
+                            for(let [team, match] of teamMap) {
+                                $("#selTeam").append('<option value="'+team+'">'+team+'</option>');
+                            }
+                        }
+                    }
+                    $("#selTeam").show();
+                }
+                else {
+                    $("#selTeam").hide();
+                }
+            });
+
+            $("#submit").show();
+            $("#submit").click(function () {
+                showLoading();
+                var selectedSeries = $('#selSeries :selected').text();
+                var selectedStatType = $('#selStatType :selected').text();
+                $("#statsTableBody").html("");
+                var body = document.getElementById("statsTableBody");
+                var tbl = document.createElement("table");
+                tbl.setAttribute("class", "styled-table");
+                tbl.setAttribute("style","table-layout:fixed");
+                if(selectedStatType === "Team Scores") {
+                    tbl.setAttribute("id", "scoresTable");
+                    var tr = document.createElement('tr');
+
+                    var sno = document.createElement('th');
+                    sno.onclick = function(){
+                        sortTable(selectedSeries,1,"scoresTable","number")
+                    };
+                    sno.appendChild(document.createTextNode("S.No. ↕"));
+                    tr.appendChild(sno);
+
+                    var seriesTH = document.createElement('th');
+                    seriesTH.onclick = function(){
+                        sortTable(selectedSeries,2,"scoresTable","text")
+                    };
+                    seriesTH.appendChild(document.createTextNode("Series ↕"));
+                    tr.appendChild(seriesTH);
+
+                    var dateTH = document.createElement('th');
+                    dateTH.onclick = function(){
+                        sortTable(selectedSeries,3,"scoresTable","date")
+                    };
+                    dateTH.appendChild(document.createTextNode("Date ↕"));
+                    tr.appendChild(dateTH);
+
+                    var matcTypeTH = document.createElement('th');
+                    matcTypeTH.onclick = function(){
+                        sortTable(selectedSeries,4,"scoresTable","text")
+                    };
+                    matcTypeTH.appendChild(document.createTextNode("Match Type ↕"));
+                    tr.appendChild(matcTypeTH);
+
+                    var scoreTH = document.createElement('th');
+                    scoreTH.onclick = function(){
+                        sortTable(selectedSeries,5,"scoresTable","score")
+                    };
+                    scoreTH.appendChild(document.createTextNode("Score ↕"));
+                    tr.appendChild(scoreTH);
+
+                    var teamTH = document.createElement('th');
+                    teamTH.onclick = function(){
+                        sortTable(selectedSeries,6,"scoresTable","text")
+                    };
+                    teamTH.appendChild(document.createTextNode("Team ↕"));
+                    tr.appendChild(teamTH);
+
+                    var oppTeamTH = document.createElement('th');
+                    oppTeamTH.onclick = function(){
+                        sortTable(selectedSeries,7,"scoresTable","text")
+                    };
+                    oppTeamTH.appendChild(document.createTextNode("Opponent ↕"));
+                    tr.appendChild(oppTeamTH);
+
+                    var oppScoreTH = document.createElement('th');
+                    oppScoreTH.onclick = function(){
+                        sortTable(selectedSeries,8,"scoresTable","score")
+                    };
+                    oppScoreTH.appendChild(document.createTextNode("Opponent Score ↕"));
+                    tr.appendChild(oppScoreTH);
+
+                    var winMarginTH = document.createElement('th');
+                    winMarginTH.onclick = function(){
+                        sortTable(selectedSeries,9,"scoresTable","winMargin")
+                    };
+                    winMarginTH.appendChild(document.createTextNode("Win Margin ↕"));
+                    tr.appendChild(winMarginTH);
+
+                    var rrDiffTH = document.createElement('th');
+                    rrDiffTH.onclick = function(){
+                        sortTable(selectedSeries,10,"scoresTable","float")
+                    };
+                    rrDiffTH.appendChild(document.createTextNode("RR Diff ↕"));
+                    tr.appendChild(rrDiffTH);
+
+                    var resultTH = document.createElement('th');
+                    resultTH.appendChild(document.createTextNode("Result"));
+                    tr.appendChild(resultTH);
+
+                    tbl.appendChild(tr);
+                }
+                else if(selectedStatType === "Bowling Figures") {
+                    tbl.setAttribute("id", "bowfTable");
+                    var tr = document.createElement('tr');
+
+                    var sno = document.createElement('th');
+                    sno.onclick = function(){
+                        sortTable(selectedSeries,1,"bowfTable","number")
+                    };
+                    sno.appendChild(document.createTextNode("S.No. ↕"));
+                    tr.appendChild(sno);
+
+                    var seriesTH = document.createElement('th');
+                    seriesTH.appendChild(document.createTextNode("Series"));
+                    tr.appendChild(seriesTH);
+
+                    var dateTH = document.createElement('th');
+                    dateTH.onclick = function(){
+                        sortTable(selectedSeries,3,"bowfTable","date")
+                    };
+                    dateTH.appendChild(document.createTextNode("Date ↕"));
+                    tr.appendChild(dateTH);
+
+                    var matcTypeTH = document.createElement('th');
+                    matcTypeTH.appendChild(document.createTextNode("Match Type"));
+                    tr.appendChild(matcTypeTH);
+
+                    var bbTH = document.createElement('th');
+                    bbTH.onclick = function(){
+                        sortTable(selectedSeries,5,"bowfTable","bowlingFigure");
+                    };
+                    bbTH.appendChild(document.createTextNode("Bowling Figures ↕"));
+                    tr.appendChild(bbTH);
+
+                    var bowlerNameTH = document.createElement('th');
+                    bowlerNameTH.onclick = function(){
+                        sortTable(selectedSeries,6,"bowfTable","text")
+                    };
+                    bowlerNameTH.appendChild(document.createTextNode("Bowler ↕"));
+                    tr.appendChild(bowlerNameTH);
+
+                    var teamTH = document.createElement('th');
+                    teamTH.onclick = function(){
+                        sortTable(selectedSeries,7,"bowfTable","text")
+                    };
+                    teamTH.appendChild(document.createTextNode("Team ↕"));
+                    tr.appendChild(teamTH);
+
+                    var againstTH = document.createElement('th');
+                    againstTH.appendChild(document.createTextNode("Against"));
+                    tr.appendChild(againstTH);
+                    tbl.appendChild(tr);
+                }
+                else if(selectedStatType === "Batting Figures") {
+                    tbl.setAttribute("id", "batfTable");
+                    var tr = document.createElement('tr');
+
+                    var sno = document.createElement('th');
+                    sno.onclick = function(){
+                        sortTable(selectedSeries,1,"batfTable","number")
+                    };
+                    sno.appendChild(document.createTextNode("S.No. ↕"));
+                    tr.appendChild(sno);
+
+                    var seriesTH = document.createElement('th');
+                    seriesTH.appendChild(document.createTextNode("Series"));
+                    tr.appendChild(seriesTH);
+
+                    var dateTH = document.createElement('th');
+                    dateTH.onclick = function(){
+                        sortTable(selectedSeries,3,"batfTable","date")
+                    };
+                    dateTH.appendChild(document.createTextNode("Date ↕"));
+                    tr.appendChild(dateTH);
+
+                    var matcTypeTH = document.createElement('th');
+                    matcTypeTH.appendChild(document.createTextNode("Match Type"));
+                    tr.appendChild(matcTypeTH);
+
+                    var bbTH = document.createElement('th');
+                    bbTH.onclick = function(){
+                        sortTable(selectedSeries,5,"batfTable","partnership");
+                    };
+                    bbTH.appendChild(document.createTextNode("Batting Figures ↕"));
+                    tr.appendChild(bbTH);
+
+                    var percentTH = document.createElement('th');
+                    percentTH.onclick = function(){
+                        sortTable(selectedSeries,6,"batfTable","number");
+                    };
+                    percentTH.appendChild(document.createTextNode("Pencentage of Team Runs ↕"));
+                    tr.appendChild(percentTH);
+
+                    var batterNameTH = document.createElement('th');
+                    batterNameTH.onclick = function(){
+                        sortTable(selectedSeries,7,"batfTable","text")
+                    };
+                    batterNameTH.appendChild(document.createTextNode("Batsmen ↕"));
+                    tr.appendChild(batterNameTH);
+
+                    var teamTotalTH = document.createElement('th');
+                    teamTotalTH.appendChild(document.createTextNode("Team Total"));
+                    tr.appendChild(teamTotalTH);
+
+                    var teamTH = document.createElement('th');
+                    teamTH.onclick = function(){
+                        sortTable(selectedSeries,9,"batfTable","text")
+                    };
+                    teamTH.appendChild(document.createTextNode("Team ↕"));
+                    tr.appendChild(teamTH);
+
+                    var againstTH = document.createElement('th');
+                    againstTH.appendChild(document.createTextNode("Against"));
+                    tr.appendChild(againstTH);
+                    tbl.appendChild(tr);
+                }
+                else if(selectedStatType === "Partnerships") {
+                    tbl.setAttribute("id", "psTable");
+                    var tr = document.createElement('tr');
+
+                    var sno = document.createElement('th');
+                    sno.onclick = function(){
+                        sortTable(selectedSeries,1,"psTable","number")
+                    };
+                    sno.appendChild(document.createTextNode("S.No. ↕"));
+                    tr.appendChild(sno);
+
+                    var seriesTH = document.createElement('th');
+                    seriesTH.appendChild(document.createTextNode("Series"));
+                    tr.appendChild(seriesTH);
+
+                    var dateTH = document.createElement('th');
+                    dateTH.appendChild(document.createTextNode("Date"));
+                    tr.appendChild(dateTH);
+
+                    var matchTypeTH = document.createElement('th');
+                    matchTypeTH.appendChild(document.createTextNode("Match Type"));
+                    tr.appendChild(matchTypeTH);
+
+                    var wktTH = document.createElement('th');
+                    wktTH.appendChild(document.createTextNode("Wkt"));
+                    tr.appendChild(wktTH);
+
+                    var psTH = document.createElement('th');
+                    psTH.onclick = function(){
+                        sortTable(selectedSeries,6,"psTable","partnership");
+                    };
+                    psTH.appendChild(document.createTextNode("Partnership Runs ↕"));
+                    tr.appendChild(psTH);
+
+                    var teamScoreTH = document.createElement('th');
+                    teamScoreTH.appendChild(document.createTextNode("Team Total"));
+                    tr.appendChild(teamScoreTH);
+
+                    var partnersTH = document.createElement('th');
+                    partnersTH.appendChild(document.createTextNode("Partners"));
+                    tr.appendChild(partnersTH);
+
+                    var teamTH = document.createElement('th');
+                    teamTH.appendChild(document.createTextNode("Team"));
+                    tr.appendChild(teamTH);
+
+                    var againstTH = document.createElement('th');
+                    againstTH.appendChild(document.createTextNode("Against"));
+                    tr.appendChild(againstTH);
+
+                    var scorecardTH = document.createElement('th');
+                    scorecardTH.appendChild(document.createTextNode("Scorecard"));
+                    tr.appendChild(scorecardTH);
+
+                    tbl.appendChild(tr);
+                }
+                else if(selectedStatType === "Team Stats") {
+                    tbl.setAttribute("id", "tStatsTable");
+                    var tr = document.createElement('tr');
+
+                    var seriesTH = document.createElement('th');
+                    seriesTH.appendChild(document.createTextNode("Series"));
+                    tr.appendChild(seriesTH);
+
+                    var teamTH = document.createElement('th');
+                    teamTH.appendChild(document.createTextNode("Team"));
+                    tr.appendChild(teamTH);
+
+                    var playedTH = document.createElement('th');
+                    playedTH.appendChild(document.createTextNode("Total"));
+                    tr.appendChild(playedTH);
+
+                    var wonTH = document.createElement('th');
+                    wonTH.appendChild(document.createTextNode("Won"));
+                    tr.appendChild(wonTH);
+
+                    var lostTH = document.createElement('th');
+                    lostTH.appendChild(document.createTextNode("Lost"));
+                    tr.appendChild(lostTH);
+
+                    var tieTH = document.createElement('th');
+                    tieTH.appendChild(document.createTextNode("Tie"));
+                    tr.appendChild(tieTH);
+
+                    var abanTH = document.createElement('th');
+                    abanTH.appendChild(document.createTextNode("Abandoned"));
+                    tr.appendChild(abanTH);
+
+                    var rankTH = document.createElement('th');
+                    rankTH.appendChild(document.createTextNode("Rank"));
+                    tr.appendChild(rankTH);
+
+                    tbl.appendChild(tr);
+                }
+                else if(selectedStatType === "Rankings") {
+                    tbl.setAttribute("id", "ranksTable");
+                    var tr = document.createElement('tr');
+
+                    var rankTH = document.createElement('th');
+                    rankTH.onclick = function(){
+                        sortTable(selectedSeries,4,"ranksTable","number");
+                    };
+                    rankTH.appendChild(document.createTextNode("Rank ↕"));
+                    tr.appendChild(rankTH);
+
+                    var summer2021TH = document.createElement('th');
+                    summer2021TH.appendChild(document.createTextNode("Summer 2021"));
+                    tr.appendChild(summer2021TH);
+
+                    var Fall2021TH = document.createElement('th');
+                    Fall2021TH.appendChild(document.createTextNode("Fall 2021"));
+                    tr.appendChild(Fall2021TH);
+
+                    var winter202122TH = document.createElement('th');
+                    winter202122TH.appendChild(document.createTextNode("Winter 2021-22"));
+                    tr.appendChild(winter202122TH);
+
+                    var Spring2022TH = document.createElement('th');
+                    Spring2022TH.appendChild(document.createTextNode("Spring 2022"));
+                    tr.appendChild(Spring2022TH);
+
+                    var summer2022TH = document.createElement('th');
+                    summer2022TH.appendChild(document.createTextNode("Summer 2022"));
+                    tr.appendChild(summer2022TH);
+
+                    var winter202223TH = document.createElement('th');
+                    winter202223TH.appendChild(document.createTextNode("Winter 2022-23"));
+                    tr.appendChild(winter202223TH);
+
+                    var Spring2023TH = document.createElement('th');
+                    Spring2023TH.appendChild(document.createTextNode("Spring 2023"));
+                    tr.appendChild(Spring2023TH);
+
+                    var IndCup2023TH = document.createElement('th');
+                    IndCup2023TH.appendChild(document.createTextNode("Independence Cup 2023"));
+                    tr.appendChild(IndCup2023TH);
+
+                    var summer2023ATH = document.createElement('th');
+                    summer2023ATH.appendChild(document.createTextNode("Summer 2023 - A"));
+                    tr.appendChild(summer2023ATH);
+
+                    var summer2023BTH = document.createElement('th');
+                    summer2023BTH.appendChild(document.createTextNode("Summer 2023 - B"));
+                    tr.appendChild(summer2023BTH);
+
+                    var vetCup2023TH = document.createElement('th');
+                    vetCup2023TH.appendChild(document.createTextNode("Veterans Cup 2023"));
+                    tr.appendChild(vetCup2023TH);
+
+                    var winter202324ATH = document.createElement('th');
+                    winter202324ATH.appendChild(document.createTextNode("Winter 2023-24 - A"));
+                    tr.appendChild(winter202324ATH);
+
+                    var winter202324BTH = document.createElement('th');
+                    winter202324BTH.appendChild(document.createTextNode("Winter 2023-24 - B"));
+                    tr.appendChild(winter202324BTH);
+
+                    tbl.appendChild(tr);
+                }
+                else if(selectedStatType === "Summary") {
+                    tbl.setAttribute("id", "summaryTable");
+                    var headRow1 = tbl.insertRow(0);
+
+                    var seriesCell = headRow1.insertCell(0);
+                    seriesCell.innerHTML= "SERIES"
+                    seriesCell.rowSpan = 2
+
+                    var divACell = headRow1.insertCell(1);
+                    divACell.innerHTML= "DIVISION A"
+                    divACell.colSpan = 2
+
+                    var divBCell = headRow1.insertCell(2);
+                    divBCell.innerHTML= "DIVISION B"
+                    divBCell.colSpan = 2
+
+                    var headRow2 = tbl.insertRow(1);
+
+                    var divAWinners = headRow2.insertCell(0);
+                    divAWinners.innerHTML= "CHAMPIONS";
+                    divAWinners.style.backgroundColor = "#da291c";
+
+                    var divARunnersUp = headRow2.insertCell(1);
+                    divARunnersUp.innerHTML= "RUNNERS-UP";
+                    divARunnersUp.style.backgroundColor = "#da291c";  
+
+                    var divBWinners = headRow2.insertCell(2);
+                    divBWinners.innerHTML= "CHAMPIONS";
+                    divBWinners.style.backgroundColor = "#da291c"; 
+
+                    var divBRunnersUp = headRow2.insertCell(3);
+                    divBRunnersUp.innerHTML= "RUNNERS-UP";
+                    divBRunnersUp.style.backgroundColor = "#da291c"; 
+
+                    var spring2021Row = tbl.insertRow(2);
+                    spring2021Row.insertCell(0).innerHTML= "SPRING 2021";
+                    spring2021Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/qjrm4tX/Bullets.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>BULLETS</h4></div>';
+                    spring2021Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/K5WxbRB/Royal-Kings.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>ROYAL KINGS</h4></div>';
+                    spring2021Row.insertCell(3).innerHTML= "-";
+                    spring2021Row.insertCell(4).innerHTML= "-";
+
+
+                    var sum2021Row = tbl.insertRow(2);
+                    sum2021Row.insertCell(0).innerHTML= "SUMMER 2021";
+                    sum2021Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/xFP9SMY/Seamers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>SEAMERS</h4></div>';
+                    sum2021Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/qjrm4tX/Bullets.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>BULLETS</h4></div>';
+                    sum2021Row.insertCell(3).innerHTML= "-";
+                    sum2021Row.insertCell(4).innerHTML= "-";
+
+                    var win202122Row = tbl.insertRow(2);
+                    win202122Row.insertCell(0).innerHTML= "WINTER 2021-22";
+                    win202122Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/xFP9SMY/Seamers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>SEAMERS</h4></div>';
+                    win202122Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/ZLsxGXQ/MW.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>MIGHTY WARRIORS</h4></div>';
+                    win202122Row.insertCell(3).innerHTML= "-";
+                    win202122Row.insertCell(4).innerHTML= "-";
+
+                    var spring2022Row = tbl.insertRow(2);
+                    spring2022Row.insertCell(0).innerHTML= "SPRING 2022";
+                    spring2022Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/xFP9SMY/Seamers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>SEAMERS</h4></div>';
+                    spring2022Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Tv5Y3bV/CSK.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>CSK YORKERS</h4></div>';
+                    spring2022Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/dPdN0tJ/Raynor-Royals.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>RAYNOR ROYALS</h4></div>';
+                    spring2022Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/9VBN1Pj/LordsXI.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>LORDS XI</h4></div>';
+                    
+
+                    var sum2022Row = tbl.insertRow(2);
+                    sum2022Row.insertCell(0).innerHTML= "SUMMER 2022";
+                    sum2022Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Tv5Y3bV/CSK.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>CSK YORKERS</h4></div>';
+                    sum2022Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/ZLsxGXQ/MW.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>MIGHTY WARRIORS</h4></div>';
+                    sum2022Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/RHST4Zd/Tailenders.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>TAILENDERS</h4></div>';
+                    sum2022Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/J3hH24k/Unstoppable.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>UNSTOPPABLE</h4></div>';
+                    
+
+                    var win202223Row = tbl.insertRow(2);
+                    win202223Row.insertCell(0).innerHTML= "WINTER 2022-23";
+                    win202223ADivCell = win202223Row.insertCell(1);
+                    win202223ADivCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/xFP9SMY/Seamers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>SEAMERS&nbsp;&nbsp;&nbsp;&nbsp;&</h4>&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://i.ibb.co/Lx6HQ4F/Grizzlies.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>GRIZZLIES</h4></div>';
+                    win202223ADivCell.colSpan = 2;
+                    win202223BDivCell = win202223Row.insertCell(2);
+                    win202223BDivCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/K5WxbRB/Royal-Kings.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>ROYAL KINGS&nbsp;&nbsp;&nbsp;&nbsp;&</h4>&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://i.ibb.co/CvZsmht/2pointo.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>2POINT0</h4></div>';
+                    win202223BDivCell.colSpan = 2;
+
+                    var spring2023Row = tbl.insertRow(2);
+                    spring2023Row.insertCell(0).innerHTML= "SPRING 2023";
+                    spring2023Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Wc4DrBx/Astros.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>ASTROS+</h4></div>';
+                    spring2023Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/qFhzncs/Money-Hiest.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>MONEY HEIST</h4></div>';
+                    spring2023Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Nj4hm1C/Knight-Walkers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>KNIGHT WALKERS (CA)</h4></div>';
+                    spring2023Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/J3hH24k/Unstoppable.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>UNSTOPPABLE</h4></div>';
+
+                    var indCup2023Row = tbl.insertRow(2);
+                    indCup2023Row.insertCell(0).innerHTML= "INDEPENDENCE CUP 2023";
+                    indCup2023Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/pZL4Dgh/Ghadheer-CC.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>GHADEER CC</h4></div>';
+                    indCup2023Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/fM0RQ1q/Sadhoos.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>SMOKING SADHOOS</h4></div>';
+                    indCup2023Row.insertCell(3).innerHTML= "-";
+                    indCup2023Row.insertCell(4).innerHTML= "-";
+
+                    var sum2023Row = tbl.insertRow(2);
+                    sum2023Row.insertCell(0).innerHTML= "SUMMER 2023";
+                    sum2023Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/7pbCbdv/Lords.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>LORDS</h4></div>';
+                    sum2023Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Tv5Y3bV/CSK.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>CSK YORKERS</h4></div>';
+                    sum2023Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/K5WxbRB/Royal-Kings.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>ROYAL KINGS</h4></div>';
+                    sum2023Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/BcFxbtP/Bleed-Blue.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>BLEED BLUE</h4></div>';
+
+
+                    var vetCup2023Row = tbl.insertRow(2);
+                    vetCup2023Row.insertCell(0).innerHTML= "VETERANS CUP 2023";
+                    vetCup2023Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/bR0FZyS/Challengers-CC.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>CHALLENGERS CC</h4></div>';
+                    vetCup2023Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Wc4DrBx/Astros.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>ASTROS+</h4></div>';
+                    vetCup2023Row.insertCell(3).innerHTML= "-";
+                    vetCup2023Row.insertCell(4).innerHTML= "-";
+
+                }
+                var calls = [];
+                var snoCount = 1;
+                $.map(allMatchesMap, function(value, key){
+                    var seriesName = key;
+                    if(selectedSeries === "All" || selectedSeries === seriesName) {
+                        if(selectedStatType === "Team Scores") {
+                            value.forEach(function (match) {
+                                var matchId = match.matchId;
+                                var dr = tbl.insertRow();
+
+                                var sno = document.createElement("Label");
+                                sno.innerHTML = snoCount;
+                                dr.insertCell().appendChild(sno);
+                                snoCount += 1;
+
+                                var series = document.createElement("Label");
+                                series.innerHTML = seriesName;
+                                dr.insertCell().appendChild(series);
+                                
+                                var matchDate = document.createElement("Label");
+                                matchDate.innerHTML = match.matchDate;
+                                dr.insertCell().appendChild(matchDate);
+
+                                var matchType = document.createElement("Label");
+                                matchType.innerHTML = getMatchType(match.matchType);
+                                dr.insertCell().appendChild(matchType);
+
+                                var ballsPerOver = getBallsPerOver(seriesName);
+                                var teamScore = document.createElement("Label");
+                                teamScore.innerHTML = match.t1total+"/"+match.t1wickets+" ("+Math.floor(match.t1balls / ballsPerOver)+"."+(match.t1balls % ballsPerOver)+")";
+                                dr.insertCell().appendChild(teamScore);
+
+                                var teamName = document.createElement("Label");
+                                teamName.innerHTML = match.teamOneName;
+                                dr.insertCell().appendChild(teamName);
+
+                                var oppTeamName = document.createElement("Label");
+                                oppTeamName.innerHTML = match.teamTwoName;
+                                dr.insertCell().appendChild(oppTeamName);
+
+                                var oppScore = document.createElement("Label");
+                                oppScore.innerHTML = match.t2total+"/"+match.t2wickets+" ("+getOvers(seriesName,match.t2balls)+")";
+                                dr.insertCell().appendChild(oppScore);
+
+                                var winMargin = document.createElement("Label");
+                                if(match.result.includes("Forfeited") || match.result.includes("Abandoned") || match.result.includes("Super Over"))
+                                    winMargin.innerHTML = "0 Run(s)";
+                                else
+                                    winMargin.innerHTML = match.result.split(' ')[match.result.split(' ').length-2] + " "+match.result.split(' ')[match.result.split(' ').length-1];
+                                dr.insertCell().appendChild(winMargin);
+
+                                var rrDiff = document.createElement("Label");
+                                rrDiff.innerHTML = calculateRRDiff(seriesName,match.t1total, match.t2total, match.t1balls, match.t2balls, match.t1wickets, match.t2wickets);
+                                dr.insertCell().appendChild(rrDiff);
+
+                                var result = document.createElement("a");
+                                var linkText = document.createTextNode(match.result);
+                                result.appendChild(linkText);
+                                result.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?matchId="+matchId+"&clubId=27594";
+                                result.title = match.result;
+                                result.style.color = "#dddddd";
+                                dr.insertCell().appendChild(result);
+                            });
+                        }
+                        else if(selectedStatType === "Bowling Figures") {
+                            value.forEach(function (match) {
+                                var matchId = match.matchId;
+                                var matchUrl = "https://ccapi.cricclubs.com/CCAPI/scoreCard/getScoreCard?matchId="+matchId+"&clubId=27594";
+                                calls.push(
+                                    $.getJSON(matchUrl, function (data) {
+                                        var bowlerTeamName = data.data.innings2.teamName;
+                                        var oppTeamName = data.data.innings1.teamName;
+                                        $.each(data.data.innings1.bowling, function (idx, playerStat) {
+                                            if(playerStat.wickets >= minBowlerStatWkts) {
+                                                var dr = tbl.insertRow();
+
+                                                var sno = document.createElement("Label");
+                                                sno.innerHTML = snoCount;
+                                                dr.insertCell().appendChild(sno);
+                                                snoCount += 1;
+
+                                                var series = document.createElement("Label");
+                                                series.innerHTML = seriesName;
+                                                dr.insertCell().appendChild(series);
+                                                
+                                                var matchDate = document.createElement("Label");
+                                                matchDate.innerHTML = match.matchDate;
+                                                dr.insertCell().appendChild(matchDate);
+
+                                                var matchType = document.createElement("Label");
+                                                matchType.innerHTML = getMatchType(match.matchType);
+                                                dr.insertCell().appendChild(matchType);
+
+                                                var bowlingFigures = document.createElement("Label");
+                                                bowlingFigures.innerHTML = getOvers(seriesName,playerStat.balls) + " - " + playerStat.maidens + " - " + playerStat.runs + " - " + playerStat.wickets;
+                                                dr.insertCell().appendChild(bowlingFigures);
+
+                                                var bowlerName = document.createElement("Label");
+                                                bowlerName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
+                                                dr.insertCell().appendChild(bowlerName);
+
+                                                var bowlerTeam = document.createElement("Label");
+                                                bowlerTeam.innerHTML = bowlerTeamName;
+                                                dr.insertCell().appendChild(bowlerTeam);
+
+                                                var oppTeam = document.createElement("Label");
+                                                oppTeam.innerHTML = oppTeamName;
+                                                dr.insertCell().appendChild(oppTeam);
+                                            }
+                                        });
+                                        bowlerTeamName = data.data.innings1.teamName;
+                                        oppTeamName = data.data.innings2.teamName;
+                                        $.each(data.data.innings2.bowling, function (idx, playerStat) {
+                                            if(playerStat.wickets >= minBowlerStatWkts) {
+                                                var dr = tbl.insertRow();
+
+                                                var sno = document.createElement("Label");
+                                                sno.innerHTML = snoCount;
+                                                dr.insertCell().appendChild(sno);
+                                                snoCount += 1;
+
+                                                var series = document.createElement("Label");
+                                                series.innerHTML = seriesName;
+                                                dr.insertCell().appendChild(series);
+                                                
+                                                var matchDate = document.createElement("Label");
+                                                matchDate.innerHTML = match.matchDate;
+                                                dr.insertCell().appendChild(matchDate);
+
+                                                var matchType = document.createElement("Label");
+                                                matchType.innerHTML = getMatchType(match.matchType);
+                                                dr.insertCell().appendChild(matchType);
+
+                                                var bowlingFigures = document.createElement("Label");
+                                                bowlingFigures.innerHTML = getOvers(seriesName,playerStat.balls) + " - " + playerStat.maidens + " - " + playerStat.runs + " - " + playerStat.wickets;
+                                                dr.insertCell().appendChild(bowlingFigures);
+
+                                                var bowlerName = document.createElement("Label");
+                                                bowlerName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
+                                                dr.insertCell().appendChild(bowlerName);
+
+                                                var bowlerTeam = document.createElement("Label");
+                                                bowlerTeam.innerHTML = bowlerTeamName;
+                                                dr.insertCell().appendChild(bowlerTeam);
+
+                                                var oppTeam = document.createElement("Label");
+                                                oppTeam.innerHTML = oppTeamName;
+                                                dr.insertCell().appendChild(oppTeam);
+                                            }
+                                        });
+                                    })
+                                );
+                            }); 
+                        }
+                        else if(selectedStatType === "Batting Figures") {
+                            value.forEach(function (match) {
+                                var matchId = match.matchId;
+                                var matchUrl = "https://ccapi.cricclubs.com/CCAPI/scoreCard/getScoreCard?matchId="+matchId+"&clubId=27594";
+                                calls.push(
+                                    $.getJSON(matchUrl, function (data) {
+                                        var batterTeamName = data.data.innings1.teamName;
+                                        var oppTeamName = data.data.innings2.teamName;
+                                        var inn1TeamTotal = data.data.innings1.total;
+                                        var inn2TeamTotal = data.data.innings2.total;
+                                        $.each(data.data.innings1.batting, function (idx, playerStat) {
+                                            if(playerStat.runsScored > minBatsmanStatScore) {
+                                                var dr = tbl.insertRow();
+
+                                                var sno = document.createElement("Label");
+                                                sno.innerHTML = snoCount;
+                                                dr.insertCell().appendChild(sno);
+                                                snoCount += 1;
+
+                                                var series = document.createElement("Label");
+                                                series.innerHTML = seriesName;
+                                                dr.insertCell().appendChild(series);
+                                                
+                                                var matchDate = document.createElement("Label");
+                                                matchDate.innerHTML = match.matchDate;
+                                                dr.insertCell().appendChild(matchDate);
+
+                                                var matchType = document.createElement("Label");
+                                                matchType.innerHTML = getMatchType(match.matchType);
+                                                dr.insertCell().appendChild(matchType);
+
+                                                var battingFigures = document.createElement("Label");
+                                                battingFigures.innerHTML = playerStat.runsScored +"("+playerStat.ballsFaced+"),  4s:"+playerStat.fours+",  6s:"+playerStat.sixers;
+                                                dr.insertCell().appendChild(battingFigures);
+
+                                                var percentInTotal = document.createElement("Label");
+                                                percentInTotal.innerHTML = ((playerStat.runsScored / inn1TeamTotal)*100).toFixed(2);
+                                                dr.insertCell().appendChild(percentInTotal);
+
+                                                var batterName = document.createElement("Label");
+                                                batterName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
+                                                dr.insertCell().appendChild(batterName);
+
+                                                var teamTotal = document.createElement("Label");
+                                                teamTotal.innerHTML = inn1TeamTotal;
+                                                dr.insertCell().appendChild(teamTotal);
+
+                                                var batterTeam = document.createElement("Label");
+                                                batterTeam.innerHTML = batterTeamName;
+                                                dr.insertCell().appendChild(batterTeam);
+
+                                                var oppTeam = document.createElement("Label");
+                                                oppTeam.innerHTML = oppTeamName;
+                                                dr.insertCell().appendChild(oppTeam);
+                                            }
+                                        });
+                                        batterTeamName = data.data.innings2.teamName;
+                                        oppTeamName = data.data.innings1.teamName;
+                                        $.each(data.data.innings2.batting, function (idx, playerStat) {
+                                            if(playerStat.runsScored > minBatsmanStatScore) {
+                                                var dr = tbl.insertRow();
+
+                                                var sno = document.createElement("Label");
+                                                sno.innerHTML = snoCount;
+                                                dr.insertCell().appendChild(sno);
+                                                snoCount += 1;
+
+                                                var series = document.createElement("Label");
+                                                series.innerHTML = seriesName;
+                                                dr.insertCell().appendChild(series);
+                                                
+                                                var matchDate = document.createElement("Label");
+                                                matchDate.innerHTML = match.matchDate;
+                                                dr.insertCell().appendChild(matchDate);
+
+                                                var matchType = document.createElement("Label");
+                                                matchType.innerHTML = getMatchType(match.matchType);
+                                                dr.insertCell().appendChild(matchType);
+
+                                                var battingFigures = document.createElement("Label");
+                                                battingFigures.innerHTML = playerStat.runsScored +"("+playerStat.ballsFaced+"),  4s:"+playerStat.fours+",  6s:"+playerStat.sixers;
+                                                dr.insertCell().appendChild(battingFigures);
+
+                                                var percentInTotal = document.createElement("Label");
+                                                percentInTotal.innerHTML = ((playerStat.runsScored / inn2TeamTotal)*100).toFixed(2);
+                                                dr.insertCell().appendChild(percentInTotal);
+
+                                                var batterName = document.createElement("Label");
+                                                batterName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
+                                                dr.insertCell().appendChild(batterName);
+
+                                                var teamTotal = document.createElement("Label");
+                                                teamTotal.innerHTML = inn2TeamTotal;
+                                                dr.insertCell().appendChild(teamTotal);
+
+                                                var batterTeam = document.createElement("Label");
+                                                batterTeam.innerHTML = batterTeamName;
+                                                dr.insertCell().appendChild(batterTeam);
+
+                                                var oppTeam = document.createElement("Label");
+                                                oppTeam.innerHTML = oppTeamName;
+                                                dr.insertCell().appendChild(oppTeam);
+                                            }
+                                        });
+                                    })
+                                );
+                            }); 
+                        }
+                        else if(selectedStatType === "Partnerships") {
+                            value.forEach(function (match) {
+                                var matchId = match.matchId;
+                                var matchUrl = "https://ccapi.cricclubs.com/CCAPI/scoreCard/getScoreCard?matchId="+matchId+"&clubId=27594";
+                                calls.push(
+                                    $.getJSON(matchUrl, function(data) {
+                                        var team1Name = data.data.matchInfo.teamOneName;
+                                        var team2Name = data.data.matchInfo.teamTwoName;
+                                        var team1TotalRuns = data.data.innings1.total;
+                                        var team1TotalOvers = data.data.innings1.overs;
+                                        var team2TotalRuns = data.data.innings2.total;
+                                        var team2TotalOvers = data.data.innings2.overs;
+                                        $.each(data.data.partnershipMap, function (wktPos, partnerships) {
+                                            $.map(partnerships, function(value, keyIdx) {
+                                                if(value.partnershipTotalRuns > minPartnershipStatRuns) {
+                                                    var teamNameIdx = wktPos.split('-')[0];
+                                                    var teamName = teamNameIdx == 1 ? team1Name : team2Name;
+                                                    var oppTeamName = team1Name == teamName ? team2Name : team1Name;
+                                                    var totalTeamRuns = teamNameIdx == 1 ? team1TotalRuns : team2TotalRuns;
+                                                    var totalTeamOvers = teamNameIdx == 1 ? team1TotalOvers : team2TotalOvers;
+                                                    var wicket = wktPos.split('-')[1];
+
+                                                    var dr = tbl.insertRow();
+
+                                                    var sno = document.createElement("Label");
+                                                    sno.innerHTML = snoCount;
+                                                    dr.insertCell().appendChild(sno);
+                                                    snoCount += 1;
+
+                                                    var series = document.createElement("Label");
+                                                    series.innerHTML = seriesName;
+                                                    dr.insertCell().appendChild(series);
+                                                    
+                                                    var matchDate = document.createElement("Label");
+                                                    matchDate.innerHTML = match.matchDate;
+                                                    dr.insertCell().appendChild(matchDate);
+
+                                                    var matchType = document.createElement("Label");
+                                                    matchType.innerHTML = getMatchType(match.matchType);
+                                                    dr.insertCell().appendChild(matchType);
+
+                                                    var wkt = document.createElement("Label");
+                                                    wkt.innerHTML = wicket;
+                                                    dr.insertCell().appendChild(wkt);
+
+                                                    var psRuns = document.createElement("Label");
+                                                    psRuns.innerHTML = value.partnershipTotalRuns+"("+value.partnershipTotalBalls+")";
+                                                    dr.insertCell().appendChild(psRuns);
+
+                                                    var teamRuns = document.createElement("Label");
+                                                    teamRuns.innerHTML = totalTeamRuns+"("+totalTeamOvers+")";
+                                                    dr.insertCell().appendChild(teamRuns);
+
+                                                    var partners = document.createElement("Label");
+                                                    partners.innerHTML = allPlayersMap.get(seriesName).get(teamName).get(value.outPlayerId)+" - "+value.outPlayerScore+"("+value.outPlayerBalls+"), "+allPlayersMap.get(seriesName).get(teamName).get(value.otherPlayerId)+" - "+value.otherPlayerScore+"("+value.otherPlayerBalls+")";
+                                                    dr.insertCell().appendChild(partners);
+
+                                                    var batTeam = document.createElement("Label");
+                                                    batTeam.innerHTML = teamName;
+                                                    dr.insertCell().appendChild(batTeam);
+
+                                                    var oppTeam = document.createElement("Label");
+                                                    oppTeam.innerHTML = oppTeamName;
+                                                    dr.insertCell().appendChild(oppTeam);
+
+                                                    var scorecard = document.createElement("a");
+                                                    var linkText = document.createTextNode(match.result);
+                                                    scorecard.appendChild(linkText);
+                                                    scorecard.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?matchId="+matchId+"&clubId=27594";
+                                                    scorecard.title = match.result;
+                                                    scorecard.style.color = "#dddddd";
+                                                    dr.insertCell().appendChild(scorecard);
+                                                }
+                                            });
+                                        }); 
+                                    })
+                                );
+                            });
+                        }
+                    }
+                });
+                for (let [series, teamMap] of allTeamsMap) {
+                    var seriesName = series;
+                    var selectedTeam = $('#selTeam :selected').text();
+                    if(selectedSeries === "All" || selectedSeries === seriesName) {
+                        if(selectedStatType === "Team Stats") {
+                            if(teamMap.has(selectedTeam)) {
+                                var teamMatchestbl = document.createElement("table");
+                                teamMatchestbl.setAttribute("class", "styled-table");
+                                teamMatchestbl.setAttribute("id", "tStatsTable_"+seriesName);
+                                var tr = document.createElement('tr');
+
+                                var seriesTH = document.createElement('th');
+                                seriesTH.appendChild(document.createTextNode("Series"));
+                                tr.appendChild(seriesTH);
+
+                                var dateTH = document.createElement('th');
+                                dateTH.appendChild(document.createTextNode("Date"));
+                                tr.appendChild(dateTH);
+
+                                var matcTypeTH = document.createElement('th');
+                                matcTypeTH.appendChild(document.createTextNode("Match Type"));
+                                tr.appendChild(matcTypeTH);
+
+                                var scoreTH = document.createElement('th');
+                                scoreTH.appendChild(document.createTextNode("Score"));
+                                tr.appendChild(scoreTH);
+
+                                var oppScoreTH = document.createElement('th');
+                                oppScoreTH.appendChild(document.createTextNode("Opponent Score"));
+                                tr.appendChild(oppScoreTH);
+
+                                var oppTeamTH = document.createElement('th');
+                                oppTeamTH.appendChild(document.createTextNode("Against"));
+                                tr.appendChild(oppTeamTH);
+
+                                var resultTH = document.createElement('th');
+                                resultTH.appendChild(document.createTextNode("Result"));
+                                tr.appendChild(resultTH);
+
+                                teamMatchestbl.appendChild(tr);
+
+                                var dr = tbl.insertRow();
+
+                                var sName = document.createElement("Label");
+                                sName.innerHTML = seriesName;
+                                dr.insertCell().appendChild(sName);
+
+                                var teamName = document.createElement("Label");
+                                teamName.innerHTML = selectedTeam;
+                                dr.insertCell().appendChild(teamName);
+
+                                var total = 0;
+                                var won = 0;
+                                var lost = 0;
+                                var tied = 0;
+                                var abandoned = 0;
+
+                                console.log(selectedSeries);
+                                console.log(selectedTeam);
+                                teamMap.get(selectedTeam).forEach(function (match) {
+                                    total += 1;
+                                    if(match.result.includes(selectedTeam))
+                                        won += 1;
+                                    else
+                                        lost += 1;
+                                    if(match.result.includes("Super Over"))
+                                        tied += 1;
+                                    if(match.result.includes("Abandoned"))
+                                        abandoned += 1;
+
+                                    var matchId = match.matchId;
+                                    var dr = teamMatchestbl.insertRow();
+
+                                    var series = document.createElement("Label");
+                                    series.innerHTML = seriesName;
+                                    dr.insertCell().appendChild(series);
+                                    
+                                    var matchDate = document.createElement("Label");
+                                    matchDate.innerHTML = match.matchDate;
+                                    dr.insertCell().appendChild(matchDate);
+
+                                    var matchType = document.createElement("Label");
+                                    matchType.innerHTML = getMatchType(match.matchType);
+                                    dr.insertCell().appendChild(matchType);
+
+                                    if(match.teamOneName === selectedTeam) {
+                                        var teamScore = document.createElement("Label");
+                                        teamScore.innerHTML = match.t1total+"/"+match.t1wickets+" ("+getOvers(seriesName,match.t1balls)+")";
+                                        dr.insertCell().appendChild(teamScore);
+
+                                        var oppScore = document.createElement("Label");
+                                        oppScore.innerHTML = match.t2total+"/"+match.t2wickets+" ("+getOvers(seriesName,match.t2balls)+")";
+                                        dr.insertCell().appendChild(oppScore);
+
+                                        var oppTeamName = document.createElement("Label");
+                                        oppTeamName.innerHTML = match.teamTwoName;
+                                        dr.insertCell().appendChild(oppTeamName);
+                                    }
+                                    else {
+                                        var teamScore = document.createElement("Label");
+                                        teamScore.innerHTML = match.t2total+"/"+match.t2wickets+" ("+getOvers(seriesName,match.t2balls)+")";
+                                        dr.insertCell().appendChild(teamScore);
+
+                                        var oppScore = document.createElement("Label");
+                                        oppScore.innerHTML = match.t1total+"/"+match.t1wickets+" ("+getOvers(seriesName,match.t1balls)+")";
+                                        dr.insertCell().appendChild(oppScore);
+
+                                        var oppTeamName = document.createElement("Label");
+                                        oppTeamName.innerHTML = match.teamOneName;
+                                        dr.insertCell().appendChild(oppTeamName);
+                                    }
+
+                                    var result = document.createElement("a");
+                                    var linkText = document.createTextNode(getPOVResult(match.result, selectedTeam));
+                                    result.appendChild(linkText);
+                                    result.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?matchId="+matchId+"&clubId=27594";
+                                    result.title = getPOVResult(match.result, selectedTeam);
+                                    result.style.color = "#dddddd";
+                                    dr.insertCell().appendChild(result);
+                                });
+
+                                var totalPlayed = document.createElement("Label");
+                                totalPlayed.innerHTML = total;
+                                dr.insertCell().appendChild(totalPlayed);
+
+                                var wonPlayed = document.createElement("Label");
+                                wonPlayed.innerHTML = won;
+                                dr.insertCell().appendChild(wonPlayed);
+
+                                var lostPlayed = document.createElement("Label");
+                                lostPlayed.innerHTML = lost;
+                                dr.insertCell().appendChild(lostPlayed);
+
+                                var tiedPlayed = document.createElement("Label");
+                                tiedPlayed.innerHTML = tied;
+                                dr.insertCell().appendChild(tiedPlayed);
+
+                                var abandonedPlayed = document.createElement("Label");
+                                abandonedPlayed.innerHTML = abandoned;
+                                dr.insertCell().appendChild(abandonedPlayed);
+
+                                var rank = document.createElement("Label");
+                                rank.innerHTML = getTeamRank(seriesName, selectedTeam);
+                                dr.insertCell().appendChild(rank);
+
+                                body.appendChild(teamMatchestbl);
+                            }
+                        }
+                    }
+                }
+                if(selectedStatType === "Rankings") {
+                    var maxTeamCount = getMaxTeamCount(allTeamsMap);
+
+                    for (let i = 0; i < maxTeamCount; i++) {
+                        var dr = tbl.insertRow();
+
+                        var rank = document.createElement("Label");
+                        rank.innerHTML = i + 1;
+                        dr.insertCell().appendChild(rank);
+
+                        var summer21TeamName = document.createElement("Label");
+                        summer21TeamName.innerHTML = getithRankedTeam("Summer 2021", i);
+                        dr.insertCell().appendChild(summer21TeamName);
+
+                        var fall21TeamName = document.createElement("Label");
+                        fall21TeamName.innerHTML = getithRankedTeam("Fall 2021", i);
+                        dr.insertCell().appendChild(fall21TeamName);
+
+                        var winter2122TeamName = document.createElement("Label");
+                        winter2122TeamName.innerHTML = getithRankedTeam("Winter 2021-22", i);
+                        dr.insertCell().appendChild(winter2122TeamName);
+
+                        var spring22TeamName = document.createElement("Label");
+                        spring22TeamName.innerHTML = getithRankedTeam("Spring 2022", i);
+                        dr.insertCell().appendChild(spring22TeamName);
+
+                        var summer22TeamName = document.createElement("Label");
+                        summer22TeamName.innerHTML = getithRankedTeam("Summer 2022", i);
+                        dr.insertCell().appendChild(summer22TeamName);
+
+                        var winter2223TeamName = document.createElement("Label");
+                        winter2223TeamName.innerHTML = getithRankedTeam("Winter 2022-23", i);
+                        dr.insertCell().appendChild(winter2223TeamName);
+
+                        var spring23TeamName = document.createElement("Label");
+                        spring23TeamName.innerHTML = getithRankedTeam("Spring 2023", i);
+                        dr.insertCell().appendChild(spring23TeamName);
+
+                        var indCup23TeamName = document.createElement("Label");
+                        indCup23TeamName.innerHTML = getithRankedTeam("Independence Cup 2023", i);
+                        dr.insertCell().appendChild(indCup23TeamName);
+
+                        var summer23ATeamName = document.createElement("Label");
+                        summer23ATeamName.innerHTML = getithRankedTeam("Summer 2023 - A", i);
+                        dr.insertCell().appendChild(summer23ATeamName);
+
+                        var summer23BTeamName = document.createElement("Label");
+                        summer23BTeamName.innerHTML = getithRankedTeam("Summer 2023 - B", i);
+                        dr.insertCell().appendChild(summer23BTeamName);
+
+                        var veterans23TeamName = document.createElement("Label");
+                        veterans23TeamName.innerHTML = getithRankedTeam("Veterans Cup 2023", i);
+                        dr.insertCell().appendChild(veterans23TeamName);
+
+                        var winter2324ATeamName = document.createElement("Label");
+                        winter2324ATeamName.innerHTML = getithRankedTeam("Winter 2023-24 - A", i);
+                        dr.insertCell().appendChild(winter2324ATeamName);
+
+                        var winter2324BTeamName = document.createElement("Label");
+                        winter2324BTeamName.innerHTML = getithRankedTeam("Winter 2023-24 - B", i);
+                        dr.insertCell().appendChild(winter2324BTeamName);
+                    }
+                }
+                $.when.apply($,calls).then(function() {
+                    removeLoading();
+                });
+                body.insertBefore(tbl, body.firstChild);
+            });
+        });
+        
+        function getMaxTeamCount(allTeamsMap) {
+            var maxCount = 0;
+            for (let [series, teamMap] of allTeamsMap) {
+                maxCount = Math.max(maxCount, teamMap.size);
+            }
+            return maxCount;
+        }
+
+        function getithRankedTeam(series, index) {
+            var allRanksMap = getRankArray(series);
+            if(index < allRanksMap.length) {
+                return allRanksMap[index];
+            }
+            return "-";
+        }
+
+        function getTeamRank(series, team) {
+        	var allRanksMap = getRankArray(series);
+            if(allRanksMap.includes(team)) {
+                return (allRanksMap.indexOf(team)+1)+" / "+allRanksMap.length;
+            }
+            return "- / "+allRanksMap.length;
+        }
+
+        function getFormattedDate(date) {
+            let year = date.getFullYear();
+            let month = (1 + date.getMonth()).toString().padStart(2, '0');
+            let day = date.getDate().toString().padStart(2, '0');
+          
+            return month + '/' + day + '/' + year;
+        }
+
+        function getDayOfWeek(date) {
+          const dayOfWeek = new Date(date).getDay();    
+          return isNaN(dayOfWeek) ? null : 
+            ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
+        }
+
+        function getDateString(date) {
+            var date = new Date(date);
+            return date.toDateString();
+        }
+
+        function compareValues(a, b) {
+          // return -1/0/1 based on what you "know" a and b
+          // are here. Numbers, text, some custom case-insensitive
+          // and natural number ordering, etc. That's up to you.
+          // A typical "do whatever JS would do" is:
+          return (a<b) ? -1 : (a>b) ? 1 : 0;
+        }
+
+        function compareBF(series, a, b) {
+            var ballsPerOver = getBallsPerOver(series);
+            var aWickets = parseInt(a.split("-")[3], 10);
+            var bWickets = parseInt(b.split("-")[3], 10);
+            var aRuns = parseInt(a.split("-")[2], 10);
+            var bRuns = parseInt(b.split("-")[2], 10);
+            var aOvers = a.split("-")[0];
+            var bOvers = b.split("-")[0];
+            var aBalls = parseInt(aOvers.split(".")[0],10)*ballsPerOver + parseInt(aOvers.split(".")[1],10);
+            var bBalls = parseInt(bOvers.split(".")[0],10)*ballsPerOver + parseInt(bOvers.split(".")[1],10);
+
+            return (aWickets > bWickets) ? 1 : (aWickets < bWickets) ? -1 : (aRuns < bRuns) ? 1 : (aRuns > bRuns) ? -1 : (aBalls < bBalls) ? 1 : (aBalls > bBalls) ? -1 : 0;
+        }
+
+        function comparePS(a, b) {
+            var totalARuns = parseInt(a.split("(")[0], 10);
+            var totalABalls = parseInt(a.split("(")[1].split(")")[0], 10);
+            var totalBRuns = parseInt(b.split("(")[0], 10);
+            var totalBBalls = parseInt(b.split("(")[1].split(")")[0], 10);
+
+            return (totalARuns > totalBRuns) ? 1 : (totalARuns < totalBRuns) ? -1 : (totalABalls < totalBBalls) ? 1 : (totalABalls > totalBBalls) ? -1 :  0;
+        }
+
+        function calculateRRDiff(series, t1total, t2total, t1balls, t2balls, t1wickets, t2wickets) {
+            if(t1total == 0 || t2total == 0)
+                return 0;
+            var t1overs = getOvers(series, t1balls);
+            var t2overs = getOvers(series, t2balls);
+            var t1RR = 0;
+            var t2RR = 0;
+            if(t1wickets == 10)
+                t1RR = (t1total/20).toFixed(2);
+            else
+                t1RR = (t1total/t1overs).toFixed(2);
+
+            if(t2wickets == 10)
+                t2RR = (t2total/20).toFixed(2);
+            else
+                t2RR = (t2total/t2overs).toFixed(2);
+
+            return Math.abs(parseFloat(t1RR) - parseFloat(t2RR)).toFixed(2);
+        }
+
+        function sortTable(series,colnum,tableId,columnType) {
+            //showLoading();
+          var table = document.getElementById(tableId);
+          // get all the rows in this table:
+          let rows = Array.from(table.querySelectorAll(`tr`));
+
+          // but ignore the heading row:
+          rows = rows.slice(1);
+
+          // set up the queryselector for getting the indicated
+          // column from a row, so we can compare using its value:
+          let qs = `td:nth-child(${colnum})`;
+
+          // and then just... sort the rows:
+            rows.sort( (r1,r2) => {
+            // get each row's relevant column
+                let t1 = r1.querySelector(qs);
+                let t2 = r2.querySelector(qs);
+
+                // and then effect sorting by comparing their content:
+                switch (columnType) {
+                    case 'score':
+                        return compareValues(parseInt(t1.textContent.split("/")[0], 10),parseInt(t2.textContent.split("/")[0], 10));
+                        break;
+                    case 'date':
+                        return compareValues(new Date(t1.textContent).getTime(),new Date(t2.textContent).getTime());
+                        break;
+                    case 'text':
+                        return compareValues(t1.textContent,t2.textContent);
+                        break;
+                    case 'bowlingFigure':
+                        return compareBF(series,t1.textContent,t2.textContent);
+                        break;  
+                    case 'partnership':
+                        return comparePS(t1.textContent,t2.textContent);
+                        break;
+                    case 'winMargin':
+                        return compareValues(parseInt(t1.textContent.split(" ")[0], 10),parseInt(t2.textContent.split(" ")[0], 10));
+                        break;
+                    case 'number':
+                        return compareValues(parseInt(t1.textContent, 10),parseInt(t2.textContent, 10));
+                        break;
+                    case 'float':
+                        return compareValues(parseFloat(t1.textContent, 10),parseFloat(t2.textContent, 10));
+                        break;
+                }
+            
+            });
+
+            this.asc = !this.asc
+            if (!this.asc){
+                rows = rows.reverse()
+            }
+
+          // and then the magic part that makes the sorting appear on-page:
+            rows.forEach(row => table.appendChild(row));
+            //removeLoading();
+        }
+
+        function getOvers(series,balls) {
+            var ballsPerOver=getBallsPerOver(series);
+            return Math.floor(balls / ballsPerOver)+"."+(balls % ballsPerOver);
+        }
+
+        function getBallsPerOver(series) {
+            if(series == "Winter 2022-23")
+                return 5;
+            return 6;
+        }
+
+        function getMatchType(type) {
+            switch (type) {
+                case 'f':
+                    return "Final";
+                case 's':
+                    return "Semi Final";
+                case 'q':
+                    return "Quarter Final";
+                case 'ql':
+                    return "Qualifier";
+                case 'e':
+                    return "Eliminator";
+                case 'l':
+                    return "League";
+                case 'p':
+                    return "Practice";
+                case '3p':
+                    return "3rd Place";
+                case 'sl':
+                    return "Super League";   
+            }
+        }
+
+        function getRankArray(series) {
+            switch (series) {
+                case 'Winter 2021-22':
+                    return ["Seamers","Mighty Warriors","Dragons","Blazing Broncos","Ghadeer CC","CSK Yorkers","Royal Kings","Green Rebels","Skippers","Dream Killers","Chargers","Gully Boys","Fire Friends","Knight Walkers (CA)","Titans","Bullets","MINIONS","Smoking Sadhoos","Fairfield Hawks","Peaky Blinders","Unstoppable","Alviso Warriors","Squid Gamerz","Fairfield Falcons","Thunder Wolves XI","P@nthers","Khalsa Warriors","Josh"];
+                case 'Spring 2022':
+                    return ["Seamers","CSK Yorkers","Ghadeer CC","Mighty Warriors","Bay Indians","Singh Cricket Club","Dragons","Unstoppable","Blazing Broncos","Fairfield Hawks ","Vaders","Rising Stars","Fire Friends","Knight Walkers (CA)","Smoking Sadhoos","Bullets","Raynor Royals","Lords XI","MCC","Sunrisers","P@nthers","Royal Kings","Chargers","Titans","MINIONS","Alviso Warriors","Daredevils","Skywalkers","Squid Gamerz","Fairfield Falcons"];
+                case 'Fall 2021':
+                    return ["Seamers","Bullets","Ghadeer CC","Mighty Warriors","CSK Yorkers","On A Serious Note","Dragons","2point0 ","Unstoppable","Drunken Hammers","Knight Walkers (CA)","FriendzXI","Royal Kings","Smoking Sadhoos","MINIONS","Bay Area Kings","BAYAREAFX1","Chargers","Vaders","P@nthers","Alviso Warriors","ChampsXI","Raynor Royals","CCC Champs","Phoenix Fremont X1","Deccan Chargers","Alameda Lions","The Silly Sloggers XI"];
+                case 'Summer 2021':
+                    return ["Bullets","Royal Kings","Skippers 2.0","Seamers","Royal Strikerz","Unstoppable","CSK Yorkers","Smoking Sadhoos","Green Rebels","MINIONS","Shockers","Dixon 11","Alviso Warriors","Ghadeer CC","SWAT","Raptors","Ravens XI","Unshackled11","Dragons","Wolves XI","Vaders","Challengers 11","Avengers","Falcons"];
+                case 'Summer 2022':
+                    return ["CSK Yorkers","Mighty Warriors","Seamers","Grizzlies","Singh Cricket Club","Knight Walkers","Fairfield Hawks","Dragons","Ghadeer CC","Royal Kings","Drunken Hammers","Raynor Royals","Astros+","Fire Friends","Rising Stars","Vaders","Tailenders","Unstoppable","Bleed Blue","MCC","Titans","Chargers","SilverSwords","Minions","Yodhas","Daredevils","Team Tsunami","Smoking Sadhoos","Avengers","Valley Lions","Alviso Warriors ","P@nthers","Skywalkers","Crickings","Blossom Blasters","Bay Boys"];
+                case 'Winter 2022-23':
+                    return ["Seamers / Grizzlies","-","CSK Yorkers","Singh Cricket Club","Astros+","Fire Friends","Thunderbolts","Blazing Broncos","MCC","Ghadeer CC","Dark Knights","Baazigar of Bay","Tailenders","Chargers","Knight Walkers (CA)","Rising Stars","Unstoppable","Dragons","Bay Boys","Titans","Skywalkers","Smoking Sadhoos","Cric Blasters","Weekend Cricketers","Royal Kings / 2point0","-","MINIONS","Fairfield Hawks","Raynor Royals","Juggernaut","Calivasis","Yodhas","Now Warriors","Alviso Warriors","Champions","HITMEN XI","Bleed Blue","Money Heist","CricKings","Thunder Wolves XI","Bulls","P@nthers XI","Mavericks","Avengers","YAM CC-14","Blossom Blasters","Silverswords","Breaking Bats"];
+                case 'Spring 2023':
+                    return ["Astros+","Money Heist","Dark Knights","Mighty Warriors","Thunderbolts","Seamers","Grizzlies","JerseyXI","Krazy Hitters","Singh Cricket Club","Rising Stars","Ghadeer CC","Smoking Sadhoos","Fire Friends","Dragons","CSK Yorkers","Lords","2point0","P@nthers XI","Alviso Warriors","Knight Walkers (CA)","Unstoppable","Breaking Bats","Baazigar of Bay","Mavericks","MINIONS","Royal Kings","MCC","Champions","Gully Cricketers","Yodhas","Tailenders","Chargers","Now Warriors","Bleed Blue","Daredevils","Fireballs","Skywalkers","Titans","HITMEN XI","CricKings","Vaders","YAM CC-14","Thunder Wolves XI"];
+                case 'Independence Cup 2023':
+                    return ["Ghadeer CC","Smoking Sadhoos","Bay Boys","Lords","2point0","Chargers","Avengers","Gully Boys","Gully Cricketers","Rising Stars","Art Villa","Champions","Yodhas","YAM CC-14","Blue Warriors","Calivaasis","UC11","Now Warriors","HITMEN XI"];
+                case 'Summer 2023 - A':
+                    return ["Lords","CSK Yorkers","Seamers","Singh Cricket Club","Grizzlies","Ghadeer CC","Money Heist","Mighty Warriors","Dark Knights","Smoking Sadhoos","Astros+","Fire Friends","2point0","Thunderbolts","JerseyXI","Dragons","Knight Walkers (CA)","Baazigar of Bay","Unstoppable","P@nthers XI","Alviso Warriors","Rising Stars"];
+                case 'Summer 2023 - B':
+                    return ["Royal Kings","Bleed Blue","Kings XI","Royal Knights","Daredevils","Chargers","Breaking Bats","Champions","Tailenders","Titans","YAM CC-14","Mavericks","Raynor Royals","MINIONS","Veer Jawan","Extraas","Avengers","Skippers","MCC","Gully Cricketers","Thunder Wolves XI","CricKings"];
+                case 'Veterans Cup 2023':
+                    return ["Challengers CC","Astros+","Thunderbolts","Deccan United CC","HTM","Fire Friends","YAM CC-14","Gully Boys","Gully Cricketers","Veer Jawan","Koolagents","Now Warriors","CricKings","Thunder Wolves XI","Miya Bhaiz","Khalsa Warriors"];
+                case 'Winter 2023-24 - A':
+                    return ["-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-"];
+                case 'Winter 2023-24 - B':
+                    return ["-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-"];
+            }
+        }
+
+        function getPOVResult(result, team) {
+            var res = "";
+            if(result.includes(team))
+                res = result.replace(team+" ", '');
+            else if(result.includes('Run') || result.includes('Wkt')) {
+                res = "lost by " + result.split(' ')[result.split(' ').length-2] +" " +result.split(' ')[result.split(' ').length-1];
+            }
+            else
+                res = result;
+            return res.charAt(0).toUpperCase() + res.slice(1);
+        }
+
+        function showLoading() {
+          if (document.getElementById("divLoadingFrame") != null) {
+            return;
+          }
+          var style = document.createElement("style");
+          style.id = "styleLoadingWindow";
+          style.innerHTML = `
+                .loading-frame {
+                    position: fixed;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    left: 0;
+                    top: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 4;
+                }
+
+                .loading-track {
+                    height: 50px;
+                    display: inline-block;
+                    position: absolute;
+                    top: calc(50% - 50px);
+                    left: 50%;
+                }
+
+                .loading-dot {
+                    height: 5px;
+                    width: 5px;
+                    background-color: white;
+                    border-radius: 100%;
+                    opacity: 0;
+                }
+
+                .loading-dot-animated {
+                    animation-name: loading-dot-animated;
+                    animation-direction: alternate;
+                    animation-duration: .75s;
+                    animation-iteration-count: infinite;
+                    animation-timing-function: ease-in-out;
+                }
+
+                @keyframes loading-dot-animated {
+                    from {
+                        opacity: 0;
+                    }
+
+                    to {
+                        opacity: 1;
+                    }
+                }
+            `
+          document.body.appendChild(style);
+          var frame = document.createElement("div");
+          frame.id = "divLoadingFrame";
+          frame.classList.add("loading-frame");
+          for (var i = 0; i < 10; i++) {
+            var track = document.createElement("div");
+            track.classList.add("loading-track");
+            var dot = document.createElement("div");
+            dot.classList.add("loading-dot");
+            track.style.transform = "rotate(" + String(i * 36) + "deg)";
+            track.appendChild(dot);
+            frame.appendChild(track);
+          }
+          document.body.appendChild(frame);
+          var wait = 0;
+          var dots = document.getElementsByClassName("loading-dot");
+          for (var i = 0; i < dots.length; i++) {
+            window.setTimeout(function(dot) {
+              dot.classList.add("loading-dot-animated");
+            }, wait, dots[i]);
+            wait += 150;
+          }
+        }
+
+        function removeLoading() {
+          document.body.removeChild(document.getElementById("divLoadingFrame"));
+          document.body.removeChild(document.getElementById("styleLoadingWindow"));
+        }
+    </script>
+</html>
