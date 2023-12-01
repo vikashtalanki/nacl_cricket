@@ -21,7 +21,8 @@ public class Scheduler {
     static String spreadSheetId = "1OAETr5cs8rjSy-2JjnpSNblnVnEQO85dykbACW41ZnI";
 
     private static Credential authorize() throws Exception {
-        String credentialLocationDir = "/Users/sreevik/Desktop/NACL/nacl_cricket/Scheduler/src/main/resources/";
+        String currentFilePath = new File("").getAbsolutePath();
+        String credentialLocationDir = currentFilePath+"/src/main/resources/";
         String credentialLocationFile = "credentials.json";
 
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JacksonFactory.getDefaultInstance(), new FileReader(credentialLocationDir+credentialLocationFile));
