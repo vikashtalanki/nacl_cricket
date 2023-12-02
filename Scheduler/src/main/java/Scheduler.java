@@ -40,11 +40,11 @@ public class Scheduler {
     }
 
 
-    public static List<List<String>> getData(String sheetName, String rangeDataToRead) throws Exception {
+    public static List<List<String>> getData(String sheetName) throws Exception {
         Sheets sheet = new Sheets(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance(), authorize());
 
         List<List<Object>> data = sheet.spreadsheets().values()
-                .get(spreadSheetId, sheetName + "!" + rangeDataToRead)
+                .get(spreadSheetId, sheetName)
                 .execute().getValues();
 
         List<List<String>> results = new ArrayList<>(data.size());
@@ -84,8 +84,8 @@ public class Scheduler {
                 dataRow.add(game.allotedGround);
                 dataRow.add(game.qualityScore);
                 dataRow.add(game.teamWithDishonoredTicket);
-                dataRow.add(game.team1NumGamesOnGround);
-                dataRow.add(game.team2NumGamesOnGround);
+                dataRow.add(game.team1NumGamesOnAllotedGround);
+                dataRow.add(game.team2NumGamesOnAllotedGround);
                 writeData.add(dataRow);
             }
 
@@ -124,6 +124,9 @@ public class Scheduler {
         return commonValues;
     }
 
+    /**
+     * Given a team name this traverses the tickets to find all the open slots available for the team
+     */
     public static List<String> findOpenSlotsForTeam(String teamName, List<List<String>> tickets) {
         List<String> teamAvailability = new ArrayList<>();
 
@@ -140,6 +143,9 @@ public class Scheduler {
         return teamAvailability;
     }
 
+    /**
+     * Given a time slot, it traverses grounds to find all possible grounds
+     */
     public static List<Pair<Integer, Integer>> findOpenGroundsForSlot(String slot, List<List<String>> grounds) {
         List<Pair<Integer, Integer>> availableGrounds = new ArrayList<>();
         for (int p = 1; p < grounds.get(0).size(); p++) {
@@ -161,8 +167,8 @@ public class Scheduler {
         String allotedTime="";
         int qualityScore;
         String teamWithDishonoredTicket;
-        int team1NumGamesOnGround=0;
-        int team2NumGamesOnGround=0;
+        int team1NumGamesOnAllotedGround=0;
+        int team2NumGamesOnAllotedGround=0;
 
         List<String> team1Availability;
         List<String> team2Availability;
@@ -170,42 +176,47 @@ public class Scheduler {
         int computeQualityScore(Map<String, Integer> priorityMap, Map<Pair<String, String>, Integer> groundPreferenceMap) {
             qualityScore = 0;
             teamWithDishonoredTicket = "NA";
-            team1NumGamesOnGround = 0;
-            team2NumGamesOnGround = 0;
 
+            /** Lets first do time slot */
+            // If no game scheduled lowest quality
             if (allotedTime.length() == 0) {
                 qualityScore = 1000 * (priorityMap.get(team1) + priorityMap.get(team2));
             }
-
+            // Team 1
             if (!team1Availability.contains(allotedTime)) {
                 qualityScore = 1000 * priorityMap.get(team1);
                 teamWithDishonoredTicket = team1;
             }
-
+            // Team 2
             if (!team2Availability.contains(allotedTime)) {
                 qualityScore = 1000 * priorityMap.get(team2);
                 teamWithDishonoredTicket = team2;
             }
 
+            /** Lets next do ground */
             for (Map.Entry<Pair<String, String>, Integer> entry : groundPreferenceMap.entrySet()) {
                 if (entry.getKey().getKey().equals(team1) && entry.getKey().getValue().equals(allotedGround))
-                    team1NumGamesOnGround = entry.getValue();
+                    team1NumGamesOnAllotedGround = entry.getValue();
                 else if (entry.getKey().getKey().equals(team2) && entry.getKey().getValue().equals(allotedGround))
-                    team2NumGamesOnGround = entry.getValue();
+                    team2NumGamesOnAllotedGround = entry.getValue();
             }
-            qualityScore += 10 * Math.max(team1NumGamesOnGround, team2NumGamesOnGround);
-            qualityScore += Math.min(team1NumGamesOnGround, team2NumGamesOnGround);
+            qualityScore += 10 * Math.max(team1NumGamesOnAllotedGround, team2NumGamesOnAllotedGround);
+            qualityScore += Math.min(team1NumGamesOnAllotedGround, team2NumGamesOnAllotedGround);
             return qualityScore;
         }
 
         List<List<String>> computeGroundSlots(List<List<String>> tickets, List<List<String>> grounds,
                                               Map<String, Integer> priorityMap, Map<Pair<String, String>, Integer> groundPreferenceMap) {
 
+            // Find open time slots for Team 1
             team1Availability = findOpenSlotsForTeam(team1, tickets);
+            // Find open time slots for Team 2
             team2Availability = findOpenSlotsForTeam(team2, tickets);
 
+            // Find common time slot
             List<String> bestTimeSlots = findCommonBetweenTwoLists(team1Availability, team2Availability);
 
+            // If no time slot then pick the time slot of the team with higher priority
             if (bestTimeSlots.size() == 0) {
                 if (priorityMap.get(team1) > priorityMap.get(team2)) {
                     bestTimeSlots = team1Availability;
@@ -221,16 +232,19 @@ public class Scheduler {
                 }
             }
 
+            // Compute all eligible open grounds for the time slots
             List<Pair<Integer, Integer>> eligibleGroundsIndices = new ArrayList<>();
             for (String bestTimeSlot : bestTimeSlots) {
                 List<Pair<Integer, Integer>> groundsIndicesForBestTimeSlots = findOpenGroundsForSlot(bestTimeSlot, grounds);
                 eligibleGroundsIndices.addAll(groundsIndicesForBestTimeSlots);
             }
 
+            // No ground slots available
             if (eligibleGroundsIndices.size() == 0) {
                 return grounds;
             }
 
+            // Shuffle eligibleGroundsIndices
             int size = eligibleGroundsIndices.size();
             for (int i = 0; i < size - 1; i++) {
                 int j = i + new Random().nextInt(size - i);
@@ -240,20 +254,32 @@ public class Scheduler {
             Pair<Integer, Integer> bestSlot;
             int bestGroundQuality = 100000;
             Pair<Integer, Integer> winningSlot = null;
+            int team1NumGamesOnCurrentGround = 0;
+            int team2NumGamesOnCurrentGround = 0;
 
+            // Pick the ground slot that matches the preference of either the two team
+            // or the team with highest priority by basically picking the team with lowest
+            // groundQuality
             for (Pair<Integer, Integer> eligibleGroundIndex : eligibleGroundsIndices) {
                 Pair<Integer, Integer> currentSlot = eligibleGroundIndex;
                 String currentGround = grounds.get(currentSlot.getKey()).get(0);
                 int groundQuality = 0;
+                for (Map.Entry<Pair<String, String>, Integer> entry : groundPreferenceMap.entrySet()) {
+                    if (entry.getKey().getKey().equals(team1) && entry.getKey().getValue().equals(currentGround))
+                        team1NumGamesOnCurrentGround = entry.getValue();
+                    else if (entry.getKey().getKey().equals(team2) && entry.getKey().getValue().equals(currentGround))
+                        team2NumGamesOnCurrentGround = entry.getValue();
+                }
                 groundQuality += 10 * Math.max(
-                        groundPreferenceMap.get(new Pair<>(team1, currentGround)),
-                        groundPreferenceMap.get(new Pair<>(team2, currentGround))
+                        team1NumGamesOnCurrentGround,
+                        team2NumGamesOnCurrentGround
                 );
                 groundQuality += Math.min(
-                        groundPreferenceMap.get(new Pair<>(team1, currentGround)),
-                        groundPreferenceMap.get(new Pair<>(team2, currentGround))
+                        team1NumGamesOnCurrentGround,
+                        team2NumGamesOnCurrentGround
                 );
 
+                // We have found a better ground!
                 if (groundQuality <= bestGroundQuality) {
                     bestGroundQuality = groundQuality;
                     winningSlot = currentSlot;
@@ -277,8 +303,6 @@ public class Scheduler {
         }
 
         //Refer https://medium.com/geekculture/how-to-read-data-from-google-sheets-ee335f787de6 for reading data from Google Sheets
-
-
         List<List<String>> tickets = null;
         List<List<String>> priority = null;
         List<List<String>> games = null;
@@ -287,7 +311,7 @@ public class Scheduler {
 
         // Read Tickets
         try {
-            tickets = getData("Tickets","A1:G45");
+            tickets = getData("Tickets");
             if(tickets.size() == 0) {
                 System.out.println("Tickets sheet doesn't have data");
                 return;
@@ -302,7 +326,7 @@ public class Scheduler {
 
         // Priority
         try {
-            priority = getData("Priority","A1:B45");
+            priority = getData("Priority");
             if(priority.size() == 0) {
                 System.out.println("Priority sheet doesn't have data");
                 return;
@@ -330,7 +354,7 @@ public class Scheduler {
 
         // Read Games
         try {
-            games = getData("Games","A1:C20");
+            games = getData("Games");
             if(games.size() == 0) {
                 System.out.println("Games sheet doesn't have data");
                 return;
@@ -358,7 +382,7 @@ public class Scheduler {
 
         // Read Grounds
         try {
-            grounds = getData("Grounds","A1:G9");
+            grounds = getData("Grounds");
             if(grounds.size() == 0) {
                 System.out.println("Grounds sheet doesn't have data");
                 return;
@@ -379,7 +403,7 @@ public class Scheduler {
 
         // Read Ground Preferences
         try {
-            groundsHistory = getData("GroundHistory","A1:I45");
+            groundsHistory = getData("GroundHistory");
             if(grounds.size() == 0) {
                 System.out.println("GroundsHistory sheet doesn't have data");
                 return;
@@ -421,7 +445,7 @@ public class Scheduler {
         /*
          * Brute force iterations
          */
-        for (int numIterations = 0; numIterations < 5000; numIterations++) {
+        for (int numIterations = 0; numIterations < 10; numIterations++) {
 
             // Initialize
             List<List<String>> groundsForIteration = new ArrayList<>(grounds);
@@ -450,7 +474,6 @@ public class Scheduler {
                     break;
                 }
 
-                // Ensure we have team names. Else exit
                 Game g = new Game();
                 g.team1 = gamesForIteration.get(i).get(1);
                 g.team2 = gamesForIteration.get(i).get(2);
@@ -458,23 +481,18 @@ public class Scheduler {
                 // Find common slots for team1 and team 2
                 groundsForIteration = g.computeGroundSlots(tickets, groundsForIteration, priorityMap, groundHistoryMap);
 
-                // Measure the quality
                 if (!g.allotedGround.isEmpty()) {
                     numGamesScheduled += 1;
                 }
 
                 // Quality of the games schedule
-                schedulingQuality = schedulingQuality + g.computeQualityScore(priorityMap, groundHistoryMap);
+                schedulingQuality += g.computeQualityScore(priorityMap, groundHistoryMap);
                 results.add(g);
             }
             System.out.println("Iteration: " + numIterations + " Games scheduled " + numGamesScheduled + " Failure cost " + schedulingQuality);
 
             // Find the iteration with max number of games scheduled and minimum priority
-            if (numGamesScheduled > numBestGamesScheduled) {
-                numBestGamesScheduled = numGamesScheduled;
-                bestResults = results;
-                bestSchedulingQuality = schedulingQuality;
-            } else if (numGamesScheduled == numBestGamesScheduled && schedulingQuality <= bestSchedulingQuality) {
+            if ((numGamesScheduled > numBestGamesScheduled) || (numGamesScheduled == numBestGamesScheduled && schedulingQuality <= bestSchedulingQuality)) {
                 numBestGamesScheduled = numGamesScheduled;
                 bestResults = results;
                 bestSchedulingQuality = schedulingQuality;
