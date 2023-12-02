@@ -445,10 +445,18 @@ public class Scheduler {
         /*
          * Brute force iterations
          */
-        for (int numIterations = 0; numIterations < 10; numIterations++) {
+        for (int numIterations = 0; numIterations < 3000; numIterations++) {
 
             // Initialize
-            List<List<String>> groundsForIteration = new ArrayList<>(grounds);
+            //As we are changing the contents actual cells, shallow copy doesn't work here. We need to do a deep copy
+            List<List<String>> groundsForIteration = new ArrayList<>();
+            for(List<String> groundRow : grounds) {
+                List<String> cloneGroundRow = new ArrayList<>();
+                for(String groundCell : groundRow) {
+                    cloneGroundRow.add(groundCell);
+                }
+                groundsForIteration.add(cloneGroundRow);
+            }
             List<List<String>> gamesForIteration = new ArrayList<>(games);
             List<Game> results = new ArrayList<>();
             int numGamesScheduled = 0;
@@ -462,7 +470,6 @@ public class Scheduler {
                 gamesForIteration.set(i, gamesForIteration.get(j));
                 gamesForIteration.set(j, temp);
             }
-
             /*
              * First row in the games file is just the column names we can skip and
              * so we start with i = 1
