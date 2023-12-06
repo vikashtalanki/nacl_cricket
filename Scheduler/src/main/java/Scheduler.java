@@ -66,10 +66,11 @@ public class Scheduler {
         try {
             List<List<Object>> writeData = new ArrayList<>();
             List<Object> dataHeader = new ArrayList<>();
+            dataHeader.add("Time");
             dataHeader.add("Team 1");
             dataHeader.add("Team 2");
-            dataHeader.add("Time");
             dataHeader.add("Ground");
+            dataHeader.add("UmpiringTeam1");
             dataHeader.add("Failure Score");
             dataHeader.add("Team with bad timing");
             dataHeader.add("Team 1 num completed games on ground");
@@ -78,10 +79,11 @@ public class Scheduler {
 
             for (Game game: games) {
                 List<Object> dataRow = new ArrayList<>();
+                dataRow.add(game.allotedTime);
                 dataRow.add(game.team1);
                 dataRow.add(game.team2);
-                dataRow.add(game.allotedTime);
                 dataRow.add(game.allotedGround);
+                dataRow.add(game.umpiringTeam1);
                 dataRow.add(game.qualityScore);
                 dataRow.add(game.teamWithDishonoredTicket);
                 dataRow.add(game.team1NumGamesOnAllotedGround);
@@ -91,7 +93,7 @@ public class Scheduler {
 
             ValueRange vr = new ValueRange().setValues(writeData).setMajorDimension("ROWS");
             sheet.spreadsheets().values()
-                    .update(spreadSheetId, "Output!A1:H", vr)
+                    .update(spreadSheetId, "Output!A1:I", vr)
                     .setValueInputOption("RAW")
                     .execute();
         } catch (Exception e) {
@@ -144,6 +146,44 @@ public class Scheduler {
     }
 
     /**
+     * Assign umpiring duties to best result of games - works for only 1 neutral umpire per game
+     */
+    public static boolean assignUmpiringDuties(List<Game> games, List<String> umpiringTeams, Map<String, String> groupsMap) {
+        return assignUmpiringDutiesBT(games, umpiringTeams, groupsMap, 0);
+    }
+
+    // A recursive utility function to assign umpiring duties
+    public static boolean assignUmpiringDutiesBT(List<Game> games, List<String> umpiringTeams, Map<String, String> groupsMap, int gameIndex) {
+        // Base case: If all umpiring duties are assigned then return true
+        if(gameIndex >= umpiringTeams.size())
+            return true;
+
+        for(int i = 0; i < umpiringTeams.size(); i++) {
+            //Use this umpiring team only if its not empty
+            if(!umpiringTeams.get(i).isEmpty()) {
+                String umpiringTeamGroup = groupsMap.get(umpiringTeams.get(i));
+                String playingTeam1Group = groupsMap.get(games.get(gameIndex).team1);
+                String playingTeam2Group = groupsMap.get(games.get(gameIndex).team2);
+                //Check if this umpiring team is from different group as playing teams
+                if(!umpiringTeamGroup.equals(playingTeam1Group) & !umpiringTeamGroup.equals(playingTeam2Group)) {
+                    String umpiringTeam = umpiringTeams.get(i);
+                    //Assign this umpiring team to this game
+                    games.get(gameIndex).umpiringTeam1 = umpiringTeam;
+                    umpiringTeams.set(i, "");
+                    // Recur to assign rest of the umpiring teams
+                    if(assignUmpiringDutiesBT(games, umpiringTeams, groupsMap, gameIndex + 1))
+                        return true;
+                    // If assigning umpiring team to game doesn't lead to a solution then remove umpiring team from game
+                    games.get(gameIndex).umpiringTeam1 = "";//backtrack
+                    umpiringTeams.set(i, umpiringTeam);
+                }
+            }
+        }
+        //if an umpiring team cannot be assigned to any game, return false
+        return false;
+    }
+
+    /**
      * Given a time slot, it traverses grounds to find all possible grounds
      */
     public static List<Pair<Integer, Integer>> findOpenGroundsForSlot(String slot, List<List<String>> grounds) {
@@ -163,6 +203,7 @@ public class Scheduler {
     static class Game {
         String team1;
         String team2;
+        String umpiringTeam1 = "";
         String allotedGround="";
         String allotedTime="";
         int qualityScore;
@@ -308,6 +349,29 @@ public class Scheduler {
         List<List<String>> games = null;
         List<List<String>> grounds = null;
         List<List<String>> groundsHistory = null;
+        List<List<String>> groups = null;
+
+        // Read Groups
+        try {
+            groups = getData("Groups");
+            if(groups.size() == 0) {
+                System.out.println("Groups sheet doesn't have data");
+                return;
+            }
+            System.out.println("Groups: Read " + (groups.size() - 1) + " groups");
+        } catch (Exception e) {
+            System.out.println("Cant read groups");
+            e.printStackTrace();
+            return;
+        }
+        System.out.println(groups);
+        // Convert Groups into Map<Team Name, Group Name> for Easy Look Up
+        Map<String, String> groupsMap = new HashMap<>();
+        for (int i = 1; i < groups.size(); i++) {
+            for(int j=0; j < groups.get(0).size(); j++){
+                groupsMap.put(groups.get(i).get(j), groups.get(0).get(j));
+            }
+        }
 
         // Read Tickets
         try {
@@ -324,7 +388,7 @@ public class Scheduler {
         }
         System.out.println(tickets);
 
-        // Priority
+        // Read Priority
         try {
             priority = getData("Priority");
             if(priority.size() == 0) {
@@ -379,6 +443,12 @@ public class Scheduler {
                 return;
             }
         }
+        //Collect Umpiring teams - Assuming 1 umpiring duty per game
+        List<String> umpiringTeams = new ArrayList<>();
+        for (int i = 1; i < games.size(); i++) {
+            umpiringTeams.add(games.get(i).get(3));
+        }
+        System.out.println(umpiringTeams);
 
         // Read Grounds
         try {
@@ -445,7 +515,7 @@ public class Scheduler {
         /*
          * Brute force iterations
          */
-        for (int numIterations = 0; numIterations < 3000; numIterations++) {
+        for (int numIterations = 0; numIterations < 1000; numIterations++) {
 
             // Initialize
             //As we are changing the contents actual cells, shallow copy doesn't work here. We need to do a deep copy
@@ -510,7 +580,13 @@ public class Scheduler {
         System.out.println("*** BEST RESULT ****");
         System.out.println("Num games scheduled: " + numBestGamesScheduled);
         System.out.println("Quality Score: " + bestSchedulingQuality);
+
         try {
+            if (assignUmpiringDuties(bestResults, umpiringTeams, groupsMap) == false) {
+                System.out.print("Cannot assign umpiring duties");
+                return;
+            }
+            System.out.println("Umpiring assignment successful");
             updateData(bestResults);
         } catch (Exception e) {
             e.printStackTrace();
