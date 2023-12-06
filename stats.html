@@ -166,7 +166,7 @@
         var emailcheck=false;
         var minPartnershipStatRuns = 30;
         var minBatsmanStatScore = 30;
-        var minBowlerStatWkts = 3;
+        var minBowlerStatWkts = 0;
         //var matchDates = ['02/11/2023','02/12/2023'];
         var matchDates = [];
         var seriesCalls = [];
@@ -396,16 +396,23 @@
                     bbTH.appendChild(document.createTextNode("Bowling Figures ↕"));
                     tr.appendChild(bbTH);
 
+                    var beTH = document.createElement('th');
+                    beTH.onclick = function(){
+                        sortTable(selectedSeries,6,"bowfTable","float");
+                    };
+                    beTH.appendChild(document.createTextNode("Econ ↕"));
+                    tr.appendChild(beTH);
+
                     var bowlerNameTH = document.createElement('th');
                     bowlerNameTH.onclick = function(){
-                        sortTable(selectedSeries,6,"bowfTable","text")
+                        sortTable(selectedSeries,7,"bowfTable","text")
                     };
                     bowlerNameTH.appendChild(document.createTextNode("Bowler ↕"));
                     tr.appendChild(bowlerNameTH);
 
                     var teamTH = document.createElement('th');
                     teamTH.onclick = function(){
-                        sortTable(selectedSeries,7,"bowfTable","text")
+                        sortTable(selectedSeries,8,"bowfTable","text")
                     };
                     teamTH.appendChild(document.createTextNode("Team ↕"));
                     tr.appendChild(teamTH);
@@ -845,6 +852,10 @@
                                                 bowlingFigures.innerHTML = getOvers(seriesName,playerStat.balls) + " - " + playerStat.maidens + " - " + playerStat.runs + " - " + playerStat.wickets;
                                                 dr.insertCell().appendChild(bowlingFigures);
 
+                                                var economy = document.createElement("Label");
+                                                economy.innerHTML = getEconomy(seriesName,playerStat.balls,playerStat.runs);
+                                                dr.insertCell().appendChild(economy);
+
                                                 var bowlerName = document.createElement("Label");
                                                 bowlerName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
                                                 dr.insertCell().appendChild(bowlerName);
@@ -884,6 +895,10 @@
                                                 var bowlingFigures = document.createElement("Label");
                                                 bowlingFigures.innerHTML = getOvers(seriesName,playerStat.balls) + " - " + playerStat.maidens + " - " + playerStat.runs + " - " + playerStat.wickets;
                                                 dr.insertCell().appendChild(bowlingFigures);
+
+                                                var economy = document.createElement("Label");
+                                                economy.innerHTML = getEconomy(seriesName,playerStat.balls,playerStat.runs);
+                                                dr.insertCell().appendChild(economy);
 
                                                 var bowlerName = document.createElement("Label");
                                                 bowlerName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
@@ -1473,6 +1488,13 @@
             if(series == "Winter 2022-23")
                 return 5;
             return 6;
+        }
+
+        function getEconomy(series,balls,runs) {
+            var ballsPerOver=getBallsPerOver(series);
+            var overs_pre_dec = Math.floor(balls / ballsPerOver);
+            var overs_post_dec = ((balls % ballsPerOver) / ballsPerOver);
+            return (runs/(overs_pre_dec + overs_post_dec)).toFixed(2);
         }
 
         function getMatchType(type) {
