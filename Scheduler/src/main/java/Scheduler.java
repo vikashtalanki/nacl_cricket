@@ -141,7 +141,6 @@ public class Scheduler {
                 }
             }
         }
-
         return teamAvailability;
     }
 
@@ -149,7 +148,12 @@ public class Scheduler {
      * Assign umpiring duties to best result of games - works for only 1 neutral umpire per game
      */
     public static boolean assignUmpiringDuties(List<Game> games, List<String> umpiringTeams, Map<String, String> groupsMap) {
-        return assignUmpiringDutiesBT(games, umpiringTeams, groupsMap, 0);
+        //deep copy umpiringTeams as we are replacing the values in inplace
+        List<String> localUmpiringTeamsCopy = new ArrayList<>();
+        for(String team: umpiringTeams) {
+            localUmpiringTeamsCopy.add(team);
+        }
+        return assignUmpiringDutiesBT(games, localUmpiringTeamsCopy, groupsMap, 0);
     }
 
     // A recursive utility function to assign umpiring duties
@@ -184,6 +188,41 @@ public class Scheduler {
     }
 
     /**
+     * Function to validate correct assignment of umpiring duties
+     */
+    public static boolean validateUmpiringAssignments(List<Game> games, List<String> umpiringTeams, Map<String, String> groupsMap) {
+        //Base case
+        if(games.size() == 0 || groupsMap.size() == 0) {
+            System.out.println("Games or Groups cannot be empty");
+            return false;
+        }
+
+        //Create a map of umpiring count per team to check if same number of umpiring duties are assigned
+        Map<String, Integer> umpiringCountMap = new HashMap<>();
+        for(String team : umpiringTeams) {
+            umpiringCountMap.put(team, umpiringCountMap.getOrDefault(team, 0) + 1);
+        }
+        System.out.println(umpiringCountMap);
+
+        for(Game game: games) {
+            if(groupsMap.get(game.umpiringTeam1).equals(groupsMap.get(game.team1)) || groupsMap.get(game.umpiringTeam1).equals(groupsMap.get(game.team2))) {
+                System.out.println("Invalid Umpiring assignment for " + game.team1 + " vs " + game.team2 + " game. Umpiring assigned to " + game.umpiringTeam1);
+                return false;
+            }
+            umpiringCountMap.put(game.umpiringTeam1, umpiringCountMap.get(game.umpiringTeam1) - 1);
+        }
+        System.out.println(umpiringCountMap);
+        for(Map.Entry<String,Integer> entry : umpiringCountMap.entrySet()) {
+            if(entry.getValue() != 0) {
+                System.out.println("Invalid number of umpiring assignments for team "+entry.getKey());
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Given a time slot, it traverses grounds to find all possible grounds
      */
     public static List<Pair<Integer, Integer>> findOpenGroundsForSlot(String slot, List<List<String>> grounds) {
@@ -198,6 +237,14 @@ public class Scheduler {
             }
         }
         return availableGrounds;
+    }
+
+    public static void printSchedule(List<Game> bestResult) {
+        System.out.println("--------------------------------------------------");
+        for(Game game: bestResult) {
+            System.out.println(game.team1 +" vs "+game.team2+", umpiring: "+game.umpiringTeam1);
+        }
+        System.out.println("--------------------------------------------------");
     }
 
     static class Game {
@@ -518,7 +565,7 @@ public class Scheduler {
         for (int numIterations = 0; numIterations < 1000; numIterations++) {
 
             // Initialize
-            //As we are changing the contents actual cells, shallow copy doesn't work here. We need to do a deep copy
+            //As we are changing the contents of actual entries, shallow copy doesn't work here. We need to do a deep copy
             List<List<String>> groundsForIteration = new ArrayList<>();
             for(List<String> groundRow : grounds) {
                 List<String> cloneGroundRow = new ArrayList<>();
@@ -582,11 +629,18 @@ public class Scheduler {
         System.out.println("Quality Score: " + bestSchedulingQuality);
 
         try {
-            if (assignUmpiringDuties(bestResults, umpiringTeams, groupsMap) == false) {
-                System.out.print("Cannot assign umpiring duties");
+            if (!assignUmpiringDuties(bestResults, umpiringTeams, groupsMap)) {
+                System.out.println("Cannot assign umpiring duties");
+                printSchedule(bestResults);
                 return;
             }
             System.out.println("Umpiring assignment successful");
+            if(!validateUmpiringAssignments(bestResults, umpiringTeams, groupsMap)) {
+                System.out.println("Invalid umpiring assignments");
+                printSchedule(bestResults);
+                return;
+            }
+            System.out.println("Umpiring assignment validation successful");
             updateData(bestResults);
         } catch (Exception e) {
             e.printStackTrace();
