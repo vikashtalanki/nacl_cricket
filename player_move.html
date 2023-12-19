@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+        <link href="https://fonts.googleapis.com/css?family=Roboto Condensed" rel="stylesheet" />
+        <style>
+            .styled-table {
+                border-collapse: collapse;
+                margin: 25px 0;
+                min-width: 400px;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+                border-style: hidden;
+                font-family: "Roboto Condensed";
+                font-size: 14px;
+                transition: opacity 1s;
+            }
+            .styled-table th {
+                cursor: pointer;
+                padding: 15px 15px;
+                border: 2px solid white;
+            }
+            .styled-table tr {
+                color: #ffffff;
+                text-align: left;
+                background-color: #012169;
+            }
+
+            .styled-table td {
+                padding: 5px 15px;
+                border: 2px solid white;
+            }
+
+            .styled-table tr:first-child {
+                background-color: #da291c;
+            }
+
+            .styled-table tbody tr {
+                border-bottom: 1px solid #dddddd;
+            }
+
+            .styled-table tbody tr:nth-of-type(even) {
+                background-color: #012169;
+            }
+
+            .styled-table tbody tr:last-of-type {
+                border-bottom: 2px solid #012169;
+            }
+
+            #playersTableBody  {
+                display: table;
+                margin-right: auto;
+                margin-left: auto;
+                font-family: "Roboto Condensed";
+                font-size: 14px;
+            }
+
+            #inputDiv,
+            #playerInfoDiv {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: "Roboto Condensed";
+                font-size: 14px;
+            }
+
+            .selectItems {
+                border: 2px solid #012169;
+                width: 160px;
+                height: 32px;
+                font-size: 14px;
+                border-radius: 8px;
+            }
+
+            .playerInfoDivLabels {
+                font-family: "Roboto Condensed";
+                font-size: 16px;
+            }
+
+            .btn {
+                background-color: #012169; /* Green */
+                border: none;
+                color: white;
+                padding: 10px 32px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 14px;
+                cursor: pointer;
+                border-radius: 8px;
+                margin-left :15px
+            }
+        </style>    
+    </head>
+    <body>
+        <div id="initDiv">
+            <div id="inputDiv">
+                <select id="selSeries" class="selectItems">
+                    <option value="">Select Series</option>
+                </select>&nbsp;&nbsp;&nbsp;&nbsp;
+                <select name="knownOptions" id="knownOptions" class="selectItems">
+                    <option value="selectKnownOption">What I know</option>
+                    <option value="playerTeam">Player Current Team</option>
+                    <option value="playerId">Player Id</option>
+                    <option value="playerName">Player Name</option>
+                </select>
+                <input type="button" style="display: none;" value="Submit" id="inputDivSubmit" class="btn" />
+            </div><br>
+            <div id="playerInfoDiv" style="display: none;">
+                <label id="selTeamLabel" for="selTeam" style="display: none;" class="playerInfoDivLabels">Select Player Team:</label>&nbsp;&nbsp;&nbsp;&nbsp;
+                <select id="selTeam" style="display: none;" class="selectItems"></select>
+                <label id="playerIdLabel" for="playerIdInput" style="display: none;" class="playerInfoDivLabels">Input Player ID:</label>&nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="text" id="playerIdInput" name="playerIdInput" style="display: none;" class="selectItems">
+                <label id="playerNameLabel" for="playerNameInput" style="display: none;" class="playerInfoDivLabels">Input Player Name:</label>&nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="text" id="playerNameInput" name="playerNameInput" style="display: none;" class="selectItems">
+                <input type="button" style="display: none;" value="Submit" id="playerInfoDivSubmit" class="btn" />
+            </div><br>
+            <div id="playersTableBody"></div>
+        </div>
+    </body>
+    <script>
+        var selectedSeries = 0;
+        var selectedSeriesName = "";
+        var inputDivSelectedOption = "";
+        var playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId=27594&teamId=";
+        var teamMatchesUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatches?clubId=27594&seriesId=";
+        var matchUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatchInfo?clubId=27594&v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&matchId=";
+        const seriesToDivMap = new Map();//Map<series, List<divIds>>
+        $(document).ready(function () {
+            $("#selSeries").html("");
+            $("#playersTableBody").html("");
+            $("#selSeries").append('<option value="">Select Season</option>');
+            var seriesListURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId=27594";
+            var seriesDetailsURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesDetails?clubId=27594&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&seriesId=";
+            $.getJSON(seriesListURL, function (data) {
+                $.each(data.data.seriesList, function (index, series) {
+                    var seriesId = series.seriesID;
+                    var seriesName = series.seriesName
+                    if(series.parentSeriesId == 0) {// show only parent series
+                        $("#selSeries").append('<option value="' + seriesId + '">' + seriesName + "</option>");
+                    }
+                    $.getJSON(seriesDetailsURL+seriesId, function (data1) {
+                        seriesToDivMap.set(seriesId,[]);
+                        if(data1.data.hasDivisions) {
+                            $.each(data1.data.divisions, function (index, divs) {
+                                seriesToDivMap.get(seriesId).push(divs.leagueId);
+                            });
+                        }
+                        else
+                            seriesToDivMap.get(seriesId).push(seriesId);
+                    });
+                });
+            });
+        });
+
+        $("#inputDivSubmit").show();
+        $("#inputDivSubmit").click(function () {
+            $("#selTeam").html("");
+            $("#selTeamLabel").hide();
+            $("#selTeam").hide();
+            $("#playerIdInput").html("");
+            $("#playerIdLabel").hide();
+            $("#playerIdInput").hide();
+            $("#playerNameInput").html("");
+            $("#playerNameLabel").hide();
+            $("#playerNameInput").hide();
+            $("#playerInfoDiv").show();
+            inputDivSelectedOption = $('#knownOptions :selected').val();
+            if ( inputDivSelectedOption == "playerTeam") {
+                selectedSeries = $('#selSeries :selected').val();
+                selectedSeriesName = $('#selSeries :selected').text();
+                $("#selTeam").html("");
+                $("#selTeam").append('<option value="">Select...</option>');
+                $("#selTeamLabel").show();
+                $("#selTeam").show();
+                const url = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId=27594&seriesId=";
+                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) => $.getJSON(url+divId, function (data) {
+                    $.each(data.data.teamsList, function (index, value) {
+                        $.each(value.teams, function (index, value) {
+                            $("#selTeam").append('<option value="' + value.teamID + '">' + value.teamName + "</option>");
+                        });
+                    });
+                }));
+            }
+            if ( inputDivSelectedOption == "playerId") {
+                $("#playerIdLabel").show();
+                $("#playerIdInput").show();
+            }
+            if ( inputDivSelectedOption == "playerName") {
+                $("#playerNameLabel").show();
+                $("#playerNameInput").show();
+            }
+        });
+        $("#playerInfoDivSubmit").show();
+        $("#playerInfoDivSubmit").click(function () {
+            $("#playersTableBody").html("");
+            var playersMatchCountMap = new Map();
+            var body = document.getElementById("playersTableBody");
+            var tbl = document.createElement("table");
+            tbl.setAttribute("class", "styled-table");
+            tbl.setAttribute("style","table-layout:fixed");
+            tbl.setAttribute("id", "playerDetailsTable");
+            var tr = document.createElement('tr');
+
+            var trsno = document.createElement('th');
+            trsno.appendChild(document.createTextNode("S.No."));
+            tr.appendChild(trsno);
+
+            var trplayerId = document.createElement('th');
+            trplayerId.appendChild(document.createTextNode("Player Id"));
+            tr.appendChild(trplayerId);
+
+            var trplayerName = document.createElement('th');
+            trplayerName.appendChild(document.createTextNode("Player Name"));
+            tr.appendChild(trplayerName);
+
+            var trteam = document.createElement('th');
+            trteam.appendChild(document.createTextNode("Team"));
+            tr.appendChild(trteam);
+            
+            tbl.appendChild(tr);
+            body.insertBefore(tbl, body.firstChild);
+            var snoCount = 1;
+            if (inputDivSelectedOption == "playerTeam") {
+                var selectedTeam = $('#selTeam :selected').val();
+                var selectedTeamName = $('#selTeam :selected').text();
+                var calls = [];
+                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
+                    calls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+selectedTeam, function (data) {
+                        $.each(data.data, function (idx, matchVal) {
+                            if(matchVal.matchType == "l") {
+                                $.getJSON(matchUrl+matchVal.matchId, function (matchData) {
+                                    if(matchData.data.teamOne == selectedTeam) {
+                                        $.each(matchData.data.team1Players, function (idx, playerStat) {
+                                            if(!playersMatchCountMap.has(playerStat.playerID))
+                                                playersMatchCountMap.set(playerStat.playerID, 0);
+                                            playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
+                                        });
+                                    }
+                                    else if(matchData.data.teamTwo == selectedTeam) {
+                                        $.each(matchData.data.team2Players, function (idx, playerStat) {
+                                            if(!playersMatchCountMap.has(playerStat.playerID))
+                                                playersMatchCountMap.set(playerStat.playerID, 0);
+                                            playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }))
+                );
+                $.when.apply($,calls).then(function() {
+                    console.log(playersMatchCountMap)
+                    $.getJSON(playersURL+selectedTeam, function (data) {
+                        $.each(data.data.teamPlayers, function (index, value) {
+                            if(!playersMatchCountMap.has(value.playerID)) {
+                                var dr = tbl.insertRow();
+
+                                var sno = document.createElement("Label");
+                                sno.innerHTML = snoCount;
+                                dr.insertCell().appendChild(sno);
+                                snoCount += 1;
+
+                                var playerId = document.createElement("Label");
+                                playerId.innerHTML = value.playerID;
+                                dr.insertCell().appendChild(playerId);
+
+                                var playerName = document.createElement("Label");
+                                playerName.innerHTML = value.firstName + " " + value.lastName;
+                                dr.insertCell().appendChild(playerName);
+
+                                var team = document.createElement("Label");
+                                team.innerHTML = selectedTeamName;
+                                dr.insertCell().appendChild(team);
+                            }
+                        });
+                    });
+                });
+            }
+        });
+    </script>
+</html>
