@@ -127,6 +127,7 @@
         var playerRemoveUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/deletePlayerFromTeam?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594&teamId=";
         var playerAddUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/addPlayerToTeam?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594";
         var playerDetailsUrl = "https://ccapi.cricclubs.com/CCAPI/user/getUserDetails?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594&playerId=";
+        var allPlayersUrl = "https://ccapi.cricclubs.com/CCAPI/player/getAllPlayersInClub?clubId=27594&limit=0&offSet=0&searchStr=";
         const seriesToDivMap = new Map();//Map<series, List<divIds>>
         const teamIdToNameMap = new Map();//Map<teamId, teamName>
         const teamIdToDivIdMap = new Map();//Map<teamId, divId>
@@ -249,7 +250,6 @@
             var matchesCalls=[];
             var matchCalls=[];
             if (inputDivSelectedOption == "playerTeam") {
-                showLoading();
                 var snoCount = 1;
                 var loadingCount = 0;
                 var selectedTeam = $('#selTeam :selected').val();
@@ -294,15 +294,12 @@
                                     console.log(value.playerID+", "+value.firstName + " " + value.lastName+", "+ selectedTeamName+", played: "+ playersMatchCountMap.get(value.playerID));
                                     loadingCount -= 1;
                                 }
-                                if(loadingCount <= 0)
-                                    removeLoading();
                             });
                         });
                     });
                 });
             }
             else if(inputDivSelectedOption == "playerId") {
-                showLoading();
                 var playersCalls = [];
                 var givenPlayerId = document.querySelector('#playerIdInput').value;
                 $.getJSON(playerDetailsUrl+givenPlayerId, function (data) {
@@ -328,9 +325,8 @@
                             $.when.apply($,playersCalls).then(function() {
                                 if(isPlayerInThisTeamInThisLeague == false) {
                                     //player is part of this team but not in current league. so free to move him
-                                    console.log("player is part of "+currentTeamName+" but not in current league. so free to move him");
+                                    console.log(playerName+" is part of "+currentTeamName+" but not in current league. so free to move him");
                                     fillTable(1, givenPlayerId, playerName, "", -1);
-                                    removeLoading();
                                 }
                                 else {
                                     $.getJSON(playersURL+currentTeamId, function (data) {
@@ -368,7 +364,6 @@
                                                             fillTable(1, player.playerID, playerName, currentTeamName, currentTeamId);
                                                         else
                                                             console.log(player.playerID+", "+playerName+", "+ currentTeamName+", played: "+ playerMatchCount);
-                                                        removeLoading();
                                                     });
                                                 });
                                             }
@@ -379,68 +374,109 @@
                         }
                         else {
                             //player not part of current team
-                            console.log("player is part of "+currentTeamName+" that is not part of current team");
+                            console.log(playerName+" is part of "+currentTeamName+" that is not part of current team");
                             fillTable(1, givenPlayerId, playerName, "", -1);
-                            removeLoading();
                         }
                     }
                     else {
                         // player not part of any team
-                        console.log("player is part of any team yet");
+                        console.log(playerName+" is not part of any team yet");
                         fillTable(1, givenPlayerId, playerName, "", -1);
-                        removeLoading();
                     }
                 });
             }
             else if(inputDivSelectedOption == "playerName") {
+                var playersCalls = [];
                 var snoCount = 1;
                 var givenPlayerName = document.querySelector('#playerNameInput').value;
-                teamIdToNameMap.forEach((team, teamId) => {
-                    $.getJSON(playersURL+teamId, function (data) {
-                        $.each(data.data.teamPlayers, function (index, player) {
-                            if(player.firstName.toLowerCase().startsWith(givenPlayerName.toLowerCase())) {
-                                var playerMatchCount = 0;
-                                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
-                                    matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+teamId, function (data) {
-                                        $.each(data.data, function (idx, matchVal) {
-                                            matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
-                                                if(matchData.data.teamOne == teamId) {
-                                                    $.each(matchData.data.team1Players, function (idx, playerStat){
-                                                            if(playerStat.playerID == player.playerID) {
-                                                                showLoading();
-                                                                playerMatchCount += 1;
-                                                            }
-                                                        }
-                                                    );
-                                                }
-                                                else if(matchData.data.teamTwo == teamId) {
-                                                    $.each(matchData.data.team2Players, function (idx, playerStat){
-                                                            if(playerStat.playerID == player.playerID) {
-                                                                showLoading();
-                                                                playerMatchCount += 1;
-                                                            }
-                                                        }
-                                                    );
-                                                }
-                                            }))
-                                        })
-                                    })) 
-                                );
-                                $.when.apply($,matchesCalls).then(function() {
-                                    $.when.apply($,matchCalls).then(function() {
-                                        if(playerMatchCount == 0) {
-                                            fillTable(snoCount, player.playerID, player.firstName + " " + player.lastName, team, teamId);
-                                            snoCount += 1;
+                $.getJSON(allPlayersUrl+givenPlayerName, function (data) {
+                    $.each(data.data, function (index, playerInAll) {
+                        var playerId = playerInAll.playerID;
+                        var playerName = playerInAll.firstName+" "+playerInAll.lastName;
+                        var currentTeamName = playerInAll.teamName;
+                        var currentTeamId = null;
+                        if(currentTeamName != "") {
+                            //player is part of some team. checking if player is part of any current teams
+                            teamIdToNameMap.forEach((teamName, teamId) => {
+                                if(teamName == currentTeamName)
+                                    currentTeamId = teamId;
+                            });
+                            if(currentTeamId != null) {
+                                //player is part of a current team. Checking if player is part of this team in this league
+                                var isPlayerInThisTeamInThisLeague = false;
+                                playersCalls.push($.getJSON(playersURL+currentTeamId, function (data) {
+                                    $.each(data.data.teamPlayers, function (index, player) {
+                                        if(playerId == player.playerID) {
+                                            isPlayerInThisTeamInThisLeague = true;
                                         }
-                                        else
-                                            console.log(player.playerID+", "+player.firstName + " " + player.lastName+", "+ team+", played: "+ playerMatchCount);
-                                        removeLoading();
-                                    });
+                                    })
+                                }));
+                                $.when.apply($,playersCalls).then(function() {
+                                    if(isPlayerInThisTeamInThisLeague == false) {
+                                        //player is part of this team but not in current league. so free to move him
+                                        console.log(playerName+" is part of "+currentTeamName+" but not in current league. so free to move him");
+                                        fillTable(snoCount, playerId, playerName, "", -1);
+                                        snoCount += 1;
+                                    }
+                                    else {
+                                        $.getJSON(playersURL+currentTeamId, function (data) {
+                                            $.each(data.data.teamPlayers, function (index, player) {
+                                                if(playerId == player.playerID) {
+                                                    isPlayerInATeamInThisLeague = true;
+                                                    var playerMatchCount = 0;
+                                                    seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
+                                                        matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+currentTeamId, function (data) {
+                                                            $.each(data.data, function (idx, matchVal) {
+                                                                matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
+                                                                    if(matchData.data.teamOne == currentTeamId) {
+                                                                        $.each(matchData.data.team1Players, function (idx, playerStat){
+                                                                                if(playerStat.playerID == playerId) {
+                                                                                    playerMatchCount += 1;
+                                                                                }
+                                                                            }
+                                                                        );
+                                                                    }
+                                                                    else if(matchData.data.teamTwo == currentTeamId) {
+                                                                        $.each(matchData.data.team2Players, function (idx, playerStat){
+                                                                                if(playerStat.playerID == playerId) {
+                                                                                    playerMatchCount += 1;
+                                                                                }
+                                                                            }
+                                                                        );
+                                                                    }
+                                                                }))
+                                                            })
+                                                        })) 
+                                                    );
+                                                    $.when.apply($,matchesCalls).then(function() {
+                                                        $.when.apply($,matchCalls).then(function() {
+                                                            if(playerMatchCount == 0)
+                                                                fillTable(1, playerId, playerName, currentTeamName, currentTeamId);
+                                                            else
+                                                                console.log(playerId+", "+playerName+", "+ currentTeamName+", played: "+ playerMatchCount);
+                                                        });
+                                                    });
+                                                }
+                                            });
+                                        });
+                                    }
                                 });
                             }
-                        });
-                    });
-                })
+                            else {
+                                //player not part of current team
+                                console.log(playerName+" is part of "+currentTeamName+" that is not part of current team");
+                                fillTable(snoCount, playerId, playerName, "", -1);
+                                snoCount += 1;
+                            }
+                        }
+                        else {
+                            // player not part of any team
+                            console.log(playerName+" is not part of any team yet");
+                            fillTable(snoCount, playerId, playerName, "", -1);
+                            snoCount += 1;
+                        }
+                    })
+                });
             }
         });
         function enableMoveButton(idx) {
@@ -595,85 +631,6 @@
             movebtntc.setAttribute("onclick", "moveTeams("+sno+","+playerId+",'"+playerName+"','"+playerCurrentTeamName+"',"+playerCurrentTeamId+")");
             movebtntc.disabled = true;
             dr.insertCell().appendChild(movebtntc);
-        }
-        function showLoading() {
-          if (document.getElementById("divLoadingFrame") != null) {
-            return;
-          }
-          var style = document.createElement("style");
-          style.id = "styleLoadingWindow";
-          style.innerHTML = `
-                .loading-frame {
-                    position: fixed;
-                    background-color: rgba(0, 0, 0, 0.8);
-                    left: 0;
-                    top: 0;
-                    right: 0;
-                    bottom: 0;
-                    z-index: 4;
-                }
-
-                .loading-track {
-                    height: 50px;
-                    display: inline-block;
-                    position: absolute;
-                    top: calc(50% - 50px);
-                    left: 50%;
-                }
-
-                .loading-dot {
-                    height: 5px;
-                    width: 5px;
-                    background-color: white;
-                    border-radius: 100%;
-                    opacity: 0;
-                }
-
-                .loading-dot-animated {
-                    animation-name: loading-dot-animated;
-                    animation-direction: alternate;
-                    animation-duration: .75s;
-                    animation-iteration-count: infinite;
-                    animation-timing-function: ease-in-out;
-                }
-
-                @keyframes loading-dot-animated {
-                    from {
-                        opacity: 0;
-                    }
-
-                    to {
-                        opacity: 1;
-                    }
-                }
-            `
-          document.body.appendChild(style);
-          var frame = document.createElement("div");
-          frame.id = "divLoadingFrame";
-          frame.classList.add("loading-frame");
-          for (var i = 0; i < 10; i++) {
-            var track = document.createElement("div");
-            track.classList.add("loading-track");
-            var dot = document.createElement("div");
-            dot.classList.add("loading-dot");
-            track.style.transform = "rotate(" + String(i * 36) + "deg)";
-            track.appendChild(dot);
-            frame.appendChild(track);
-          }
-          document.body.appendChild(frame);
-          var wait = 0;
-          var dots = document.getElementsByClassName("loading-dot");
-          for (var i = 0; i < dots.length; i++) {
-            window.setTimeout(function(dot) {
-              dot.classList.add("loading-dot-animated");
-            }, wait, dots[i]);
-            wait += 150;
-          }
-        }
-
-        function removeLoading() {
-          document.body.removeChild(document.getElementById("divLoadingFrame"));
-          document.body.removeChild(document.getElementById("styleLoadingWindow"));
         }
     </script>
 </html>
