@@ -125,6 +125,7 @@
         var teamMatchesUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatches?clubId=27594&seriesId=";
         var matchUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatchInfo?clubId=27594&v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&matchId=";
         const seriesToDivMap = new Map();//Map<series, List<divIds>>
+        const teamIdToNameMap = new Map();//Map<teamId, teamName>
         $(document).ready(function () {
             $("#selSeries").html("");
             $("#playersTableBody").html("");
@@ -151,54 +152,67 @@
                 });
             });
         });
-
+        var body = document.getElementById("playersTableBody");
         $("#inputDivSubmit").show();
         $("#inputDivSubmit").click(function () {
-            $("#selTeam").html("");
-            $("#selTeamLabel").hide();
-            $("#selTeam").hide();
-            $("#playerIdInput").html("");
-            $("#playerIdLabel").hide();
-            $("#playerIdInput").hide();
-            $("#playerNameInput").html("");
-            $("#playerNameLabel").hide();
-            $("#playerNameInput").hide();
-            $("#playerInfoDiv").show();
-            inputDivSelectedOption = $('#knownOptions :selected').val();
-            if ( inputDivSelectedOption == "playerTeam") {
-                selectedSeries = $('#selSeries :selected').val();
-                selectedSeriesName = $('#selSeries :selected').text();
-                $("#selTeam").html("");
-                $("#selTeam").append('<option value="">Select...</option>');
-                $("#selTeamLabel").show();
-                $("#selTeam").show();
-                const url = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId=27594&seriesId=";
-                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) => $.getJSON(url+divId, function (data) {
+            $("#playersTableBody").html("");
+            var teamsCalls = [];
+            selectedSeries = $('#selSeries :selected').val();
+            selectedSeriesName = $('#selSeries :selected').text();
+            const url = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId=27594&seriesId=";
+            seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) => 
+                teamsCalls.push($.getJSON(url+divId, function (data) {
                     $.each(data.data.teamsList, function (index, value) {
                         $.each(value.teams, function (index, value) {
-                            $("#selTeam").append('<option value="' + value.teamID + '">' + value.teamName + "</option>");
+                            teamIdToNameMap.set(value.teamID,value.teamName);
                         });
                     });
-                }));
-            }
-            if ( inputDivSelectedOption == "playerId") {
-                $("#playerIdLabel").show();
-                $("#playerIdInput").show();
-            }
-            if ( inputDivSelectedOption == "playerName") {
-                $("#playerNameLabel").show();
-                $("#playerNameInput").show();
-            }
+                }))
+            );
+            $.when.apply($,teamsCalls).then(function() {
+                $("#selTeam").html("");
+                $("#selTeamLabel").hide();
+                $("#selTeam").hide();
+                $("#playerIdInput").html("");
+                $("#playerIdLabel").hide();
+                $("#playerIdInput").hide();
+                $("#playerNameInput").html("");
+                $("#playerNameLabel").hide();
+                $("#playerNameInput").hide();
+                $("#playerInfoDiv").show();
+                inputDivSelectedOption = $('#knownOptions :selected').val();
+                if ( inputDivSelectedOption == "playerTeam") {
+                    
+                    $("#selTeam").html("");
+                    $("#selTeam").append('<option value="">Select...</option>');
+                    $("#selTeamLabel").show();
+                    $("#selTeam").show();
+                    //console.log(teamIdToNameMap);
+                    teamIdToNameMap.forEach((value, key) => {
+                        $("#selTeam").append('<option value="' + key + '">' + value + "</option>");
+                    })
+                }
+                if ( inputDivSelectedOption == "playerId") {
+                    $("#playerIdLabel").show();
+                    $("#playerIdInput").show();
+                }
+                if ( inputDivSelectedOption == "playerName") {
+                    $("#playerNameLabel").show();
+                    $("#playerNameInput").show();
+                }
+            });
         });
         $("#playerInfoDivSubmit").show();
         $("#playerInfoDivSubmit").click(function () {
-            $("#playersTableBody").html("");
+            //var teamToPlayerMap = prepareTeamToPlayerMap(selectedSeries);
             var playersMatchCountMap = new Map();
-            var body = document.getElementById("playersTableBody");
+
+            $("#playersTableBody").html("");
             var tbl = document.createElement("table");
             tbl.setAttribute("class", "styled-table");
             tbl.setAttribute("style","table-layout:fixed");
             tbl.setAttribute("id", "playerDetailsTable");
+            
             var tr = document.createElement('tr');
 
             var trsno = document.createElement('th');
@@ -214,68 +228,210 @@
             tr.appendChild(trplayerName);
 
             var trteam = document.createElement('th');
-            trteam.appendChild(document.createTextNode("Team"));
+            trteam.appendChild(document.createTextNode("Current Team"));
             tr.appendChild(trteam);
+
+            var trmove = document.createElement('th');
+            trmove.appendChild(document.createTextNode("Move To"));
+            tr.appendChild(trmove);
+
+            var movebtn = document.createElement('th');
+            movebtn.appendChild(document.createTextNode(""));
+            tr.appendChild(movebtn);
             
             tbl.appendChild(tr);
             body.insertBefore(tbl, body.firstChild);
-            var snoCount = 1;
+
+            var matchesCalls=[];
+            var matchCalls=[];
             if (inputDivSelectedOption == "playerTeam") {
+                var snoCount = 1;
                 var selectedTeam = $('#selTeam :selected').val();
                 var selectedTeamName = $('#selTeam :selected').text();
-                var calls = [];
+                
                 seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
-                    calls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+selectedTeam, function (data) {
+                    matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+selectedTeam, function (data) {
                         $.each(data.data, function (idx, matchVal) {
-                            if(matchVal.matchType == "l") {
-                                $.getJSON(matchUrl+matchVal.matchId, function (matchData) {
-                                    if(matchData.data.teamOne == selectedTeam) {
-                                        $.each(matchData.data.team1Players, function (idx, playerStat) {
-                                            if(!playersMatchCountMap.has(playerStat.playerID))
-                                                playersMatchCountMap.set(playerStat.playerID, 0);
-                                            playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
-                                        });
-                                    }
-                                    else if(matchData.data.teamTwo == selectedTeam) {
-                                        $.each(matchData.data.team2Players, function (idx, playerStat) {
-                                            if(!playersMatchCountMap.has(playerStat.playerID))
-                                                playersMatchCountMap.set(playerStat.playerID, 0);
-                                            playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }))
+                            matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
+                                if(matchData.data.teamOne == selectedTeam) {
+                                    $.each(matchData.data.team1Players, function (idx, playerStat) {
+                                        if(!playersMatchCountMap.has(playerStat.playerID))
+                                            playersMatchCountMap.set(playerStat.playerID, 0);
+                                        playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
+                                    });
+                                }
+                                else if(matchData.data.teamTwo == selectedTeam) {
+                                    $.each(matchData.data.team2Players, function (idx, playerStat) {
+                                        if(!playersMatchCountMap.has(playerStat.playerID))
+                                            playersMatchCountMap.set(playerStat.playerID, 0);
+                                        playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
+                                    });
+                                }
+                            }))
+                        })
+                    })) 
                 );
-                $.when.apply($,calls).then(function() {
-                    console.log(playersMatchCountMap)
-                    $.getJSON(playersURL+selectedTeam, function (data) {
-                        $.each(data.data.teamPlayers, function (index, value) {
-                            if(!playersMatchCountMap.has(value.playerID)) {
-                                var dr = tbl.insertRow();
-
-                                var sno = document.createElement("Label");
-                                sno.innerHTML = snoCount;
-                                dr.insertCell().appendChild(sno);
-                                snoCount += 1;
-
-                                var playerId = document.createElement("Label");
-                                playerId.innerHTML = value.playerID;
-                                dr.insertCell().appendChild(playerId);
-
-                                var playerName = document.createElement("Label");
-                                playerName.innerHTML = value.firstName + " " + value.lastName;
-                                dr.insertCell().appendChild(playerName);
-
-                                var team = document.createElement("Label");
-                                team.innerHTML = selectedTeamName;
-                                dr.insertCell().appendChild(team);
-                            }
+                $.when.apply($,matchesCalls).then(function() {
+                    $.when.apply($,matchCalls).then(function() {
+                        console.log(playersMatchCountMap)
+                        $.getJSON(playersURL+selectedTeam, function (data) {
+                            $.each(data.data.teamPlayers, function (index, value) {
+                                if(!playersMatchCountMap.has(value.playerID)) {
+                                    fillTable(snoCount, value.playerID, value.firstName + " " + value.lastName, selectedTeamName);
+                                    snoCount += 1;
+                                }
+                            });
                         });
                     });
                 });
             }
+            else if(inputDivSelectedOption == "playerId") {
+                var givenPlayerId = document.querySelector('#playerIdInput').value;
+                teamIdToNameMap.forEach((team, teamId) => {
+                    $.getJSON(playersURL+teamId, function (data) {
+                        $.each(data.data.teamPlayers, function (index, player) {
+                            if(givenPlayerId == player.playerID) {
+                                var playerMatchCount = 0;
+                                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
+                                    matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+teamId, function (data) {
+                                        $.each(data.data, function (idx, matchVal) {
+                                            matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
+                                                if(matchData.data.teamOne == teamId) {
+                                                    $.each(matchData.data.team1Players, function (idx, playerStat){
+                                                            if(playerStat.playerID == givenPlayerId)
+                                                                playerMatchCount += 1;
+                                                        }
+                                                    );
+                                                }
+                                                else if(matchData.data.teamTwo == teamId) {
+                                                    $.each(matchData.data.team2Players, function (idx, playerStat){
+                                                            if(playerStat.playerID == givenPlayerId)
+                                                                playerMatchCount += 1;
+                                                        }
+                                                    );
+                                                }
+                                            }))
+                                        })
+                                    })) 
+                                );
+                                $.when.apply($,matchesCalls).then(function() {
+                                    $.when.apply($,matchCalls).then(function() {
+                                        console.log(playerMatchCount)
+                                        if(playerMatchCount == 0)
+                                            fillTable(1, player.playerID, player.firstName + " " + player.lastName, team);
+                                    });
+                                });
+                            }
+                        });
+                    });
+                })
+            }
         });
+        function enableMoveButton(idx) {
+            if(document.getElementById("moveToList-"+idx).value != "select")
+                document.getElementById("movebtnId-"+idx).disabled=false;
+            else
+                document.getElementById("movebtnId-"+idx).disabled=true;
+
+        }
+
+        function moveTeams(idx, playerId, currentTeam) {
+            var newTeam = $('#moveToList-'+idx+' :selected').text();
+            console.log("Moving "+playerId+" from "+currentTeam+" to "+newTeam);
+        }
+
+        function fillTable(sno, playerId, playerName, playerCurrentTeam) {
+            var tbl = document.getElementById("playerDetailsTable");
+            var dr = tbl.insertRow();
+
+            var snotc = document.createElement("Label");
+            snotc.innerHTML = sno;
+            dr.insertCell().appendChild(snotc);
+            
+
+            var playerIdtc = document.createElement("Label");
+            playerIdtc.innerHTML = playerId;
+            dr.insertCell().appendChild(playerIdtc);
+
+            var playerNametc = document.createElement("Label");
+            playerNametc.innerHTML = playerName;
+            dr.insertCell().appendChild(playerNametc);
+
+            var teamtc = document.createElement("Label");
+            teamtc.innerHTML = playerCurrentTeam;
+            dr.insertCell().appendChild(teamtc);
+
+            var moveToListtc = document.createElement("select");
+            moveToListtc.setAttribute("id", "moveToList-" + sno);
+            moveToListtc.setAttribute("class", "selectItems");
+            moveToListtc.setAttribute("onChange", "enableMoveButton("+sno+")");
+            var moveToDefaultOption = document.createElement('option');
+            moveToDefaultOption.value =  "select";
+            moveToDefaultOption.text = "select";
+            moveToListtc.appendChild(moveToDefaultOption);
+            teamIdToNameMap.forEach((value, key) => {
+                var moveToOption = document.createElement('option');
+                moveToOption.value =  key;
+                moveToOption.text = value;
+                moveToListtc.appendChild(moveToOption);
+            })
+            dr.insertCell().appendChild(moveToListtc);
+
+            var movebtntc = document.createElement('input');
+            movebtntc.type = "button";
+            movebtntc.className = "movebtn";
+            movebtntc.value = "Move";
+            movebtntc.id = "movebtnId-"+sno;
+            movebtntc.setAttribute("onclick", "moveTeams("+sno+","+playerId+",\""+playerCurrentTeam+"\")");
+            movebtntc.disabled = true;
+            dr.insertCell().appendChild(movebtntc);
+        }
+
+        /*function prepareTeamToPlayerMap(series) {
+            const teamToPlayerMap = new Map();
+            var matchesCalls=[];
+            var matchCalls=[];
+            var playerCalls = [];
+            teamIdToNameMap.forEach((teamName, teamId) => {
+                teamToPlayerMap.set(teamId, new Map());
+                playerCalls.push($.getJSON(playersURL+teamId, function (data) {
+                    $.each(data.data.teamPlayers, function (index, player) {
+                        teamToPlayerMap.get(teamId).set(player.playerID, [{playerId: player.playerID, playerName: player.firstName + " " + player.lastName, matchesPlayed: 0}]);
+                    })
+                }))
+            });
+            $.when.apply($,playerCalls).then(function() {
+                alert("hi");
+                seriesToDivMap.get(parseInt(series)).forEach((divId) =>
+                    teamIdToNameMap.forEach((teamName, teamId) => {
+                        matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+teamId, function (data) {
+                            $.each(data.data, function (idx, matchVal) {
+                                matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
+                                    if(matchData.data.teamOne == teamName) {
+                                        $.each(matchData.data.team1Players, function (idx, playerStat) {
+                                            var currentMatchesPlayed = teamToPlayerMap.get(teamId).get(playerStat.playerID).matchesPlayed;
+                                            teamToPlayerMap.get(teamId).get(playerStat.playerID).matchesPlayed = currentMatchesPlayed+1;
+                                        });
+                                    }
+                                    else if(matchData.data.teamTwo == teamName) {
+                                        $.each(matchData.data.team2Players, function (idx, playerStat) {
+                                            var currentMatchesPlayed = teamToPlayerMap.get(teamId).get(playerStat.playerID).matchesPlayed;
+                                            teamToPlayerMap.get(teamId).get(playerStat.playerID).matchesPlayed = currentMatchesPlayed+1;
+                                        });
+                                    }
+                                }))
+                            })
+                        }))
+                    })
+                );
+                $.when.apply($,matchesCalls).then(function() {
+                    $.when.apply($,matchCalls).then(function() {
+                        alert("hello");
+                        console.log(teamToPlayerMap)
+                        return teamToPlayerMap;
+                    });
+                });
+            });
+        }*/
     </script>
 </html>
