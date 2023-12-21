@@ -124,8 +124,11 @@
         var playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId=27594&teamId=";
         var teamMatchesUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatches?clubId=27594&seriesId=";
         var matchUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatchInfo?clubId=27594&v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&matchId=";
+        var playerRemoveUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/deletePlayerFromTeam?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594&teamId=";
+        var playerAddUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/addPlayerToTeam?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594";
         const seriesToDivMap = new Map();//Map<series, List<divIds>>
         const teamIdToNameMap = new Map();//Map<teamId, teamName>
+        const teamIdToDivIdMap = new Map();//Map<teamId, divId>
         $(document).ready(function () {
             $("#selSeries").html("");
             $("#playersTableBody").html("");
@@ -164,6 +167,7 @@
                 teamsCalls.push($.getJSON(url+divId, function (data) {
                     $.each(data.data.teamsList, function (index, value) {
                         $.each(value.teams, function (index, value) {
+                            teamIdToDivIdMap.set(value.teamID,divId);
                             teamIdToNameMap.set(value.teamID,value.teamName);
                         });
                     });
@@ -244,7 +248,9 @@
             var matchesCalls=[];
             var matchCalls=[];
             if (inputDivSelectedOption == "playerTeam") {
+                showLoading();
                 var snoCount = 1;
+                var loadingCount = 0;
                 var selectedTeam = $('#selTeam :selected').val();
                 var selectedTeamName = $('#selTeam :selected').text();
                 seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
@@ -253,15 +259,21 @@
                             matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
                                 if(matchData.data.teamOne == selectedTeam) {
                                     $.each(matchData.data.team1Players, function (idx, playerStat) {
-                                        if(!playersMatchCountMap.has(playerStat.playerID))
+                                        //console.log(playerStat.playerName);
+                                        if(!playersMatchCountMap.has(playerStat.playerID)) {
                                             playersMatchCountMap.set(playerStat.playerID, 0);
+                                            loadingCount += 1;
+                                        }
                                         playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
                                     });
                                 }
                                 else if(matchData.data.teamTwo == selectedTeam) {
                                     $.each(matchData.data.team2Players, function (idx, playerStat) {
-                                        if(!playersMatchCountMap.has(playerStat.playerID))
+                                        //console.log(playerStat.playerName);
+                                        if(!playersMatchCountMap.has(playerStat.playerID)) {
                                             playersMatchCountMap.set(playerStat.playerID, 0);
+                                            loadingCount += 1;
+                                        }
                                         playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
                                     });
                                 }
@@ -274,17 +286,22 @@
                         $.getJSON(playersURL+selectedTeam, function (data) {
                             $.each(data.data.teamPlayers, function (index, value) {
                                 if(!playersMatchCountMap.has(value.playerID)) {
-                                    fillTable(snoCount, value.playerID, value.firstName + " " + value.lastName, selectedTeamName);
+                                    fillTable(snoCount, value.playerID, value.firstName + " " + value.lastName, selectedTeamName, selectedTeam);
                                     snoCount += 1;
                                 }
-                                else
+                                else {
                                     console.log(value.playerID+", "+value.firstName + " " + value.lastName+", "+ selectedTeamName+", played: "+ playersMatchCountMap.get(value.playerID));
+                                    loadingCount -= 1;
+                                }
+                                if(loadingCount <= 0)
+                                    removeLoading();
                             });
                         });
                     });
                 });
             }
             else if(inputDivSelectedOption == "playerId") {
+                showLoading();
                 var givenPlayerId = document.querySelector('#playerIdInput').value;
                 teamIdToNameMap.forEach((team, teamId) => {
                     $.getJSON(playersURL+teamId, function (data) {
@@ -297,15 +314,17 @@
                                             matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
                                                 if(matchData.data.teamOne == teamId) {
                                                     $.each(matchData.data.team1Players, function (idx, playerStat){
-                                                            if(playerStat.playerID == givenPlayerId)
+                                                            if(playerStat.playerID == givenPlayerId) {
                                                                 playerMatchCount += 1;
+                                                            }
                                                         }
                                                     );
                                                 }
                                                 else if(matchData.data.teamTwo == teamId) {
                                                     $.each(matchData.data.team2Players, function (idx, playerStat){
-                                                            if(playerStat.playerID == givenPlayerId)
+                                                            if(playerStat.playerID == givenPlayerId) {
                                                                 playerMatchCount += 1;
+                                                            }
                                                         }
                                                     );
                                                 }
@@ -316,9 +335,10 @@
                                 $.when.apply($,matchesCalls).then(function() {
                                     $.when.apply($,matchCalls).then(function() {
                                         if(playerMatchCount == 0)
-                                            fillTable(1, player.playerID, player.firstName + " " + player.lastName, team);
+                                            fillTable(1, player.playerID, player.firstName + " " + player.lastName, team, teamId);
                                         else
                                             console.log(player.playerID+", "+player.firstName + " " + player.lastName+", "+ team+", played: "+ playerMatchCount);
+                                        removeLoading();
                                     });
                                 });
                             }
@@ -340,15 +360,19 @@
                                             matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
                                                 if(matchData.data.teamOne == teamId) {
                                                     $.each(matchData.data.team1Players, function (idx, playerStat){
-                                                            if(playerStat.playerID == player.playerID)
+                                                            if(playerStat.playerID == player.playerID) {
+                                                                showLoading();
                                                                 playerMatchCount += 1;
+                                                            }
                                                         }
                                                     );
                                                 }
                                                 else if(matchData.data.teamTwo == teamId) {
                                                     $.each(matchData.data.team2Players, function (idx, playerStat){
-                                                            if(playerStat.playerID == player.playerID)
+                                                            if(playerStat.playerID == player.playerID) {
+                                                                showLoading();
                                                                 playerMatchCount += 1;
+                                                            }
                                                         }
                                                     );
                                                 }
@@ -359,11 +383,12 @@
                                 $.when.apply($,matchesCalls).then(function() {
                                     $.when.apply($,matchCalls).then(function() {
                                         if(playerMatchCount == 0) {
-                                            fillTable(snoCount, player.playerID, player.firstName + " " + player.lastName, team);
+                                            fillTable(snoCount, player.playerID, player.firstName + " " + player.lastName, team, teamId);
                                             snoCount += 1;
                                         }
                                         else
                                             console.log(player.playerID+", "+player.firstName + " " + player.lastName+", "+ team+", played: "+ playerMatchCount);
+                                        removeLoading();
                                     });
                                 });
                             }
@@ -377,15 +402,79 @@
                 document.getElementById("movebtnId-"+idx).disabled=false;
             else
                 document.getElementById("movebtnId-"+idx).disabled=true;
-
         }
 
-        function moveTeams(idx, playerId, currentTeam) {
-            var newTeam = $('#moveToList-'+idx+' :selected').text();
-            console.log("Moving "+playerId+" from "+currentTeam+" to "+newTeam);
+        function moveTeams(idx, playerId, playerName, currentTeamName, currentTeamId) {
+            var newTeamName = $('#moveToList-'+idx+' :selected').text();
+            var newTeamId = $('#moveToList-'+idx+' :selected').val();
+            var newTeamDivId = teamIdToDivIdMap.get(newTeamId);
+            alert("Please confirm to move "+playerName+"("+playerId+") from "+currentTeamName+"("+currentTeamId+") to "+newTeamName+"("+newTeamId+")");
+            console.log("Moving "+playerName+"("+playerId+") from "+currentTeamName+"("+currentTeamId+") to "+newTeamName+"("+newTeamId+")");
+            var removePromise = removeFromTeam(playerId, currentTeamId);
+            removePromise.then(function (removeData) {
+                if(removeData.responseState == true && removeData.data == "1 Players Deleted") {
+                    console.log(playerName+"("+playerId+") successfully removed from "+currentTeamName+"("+currentTeamId+")");
+                    console.log("Adding "+playerName+"("+playerId+") to "+newTeamName+"("+newTeamId+")");
+                    var addPromise = addToTeam(newTeamDivId,newTeamId,playerId);
+                    addPromise.then(function (addData) {
+                        if(addData.responseState) {
+                            console.log(playerName+"("+playerId+") successfully added from "+newTeamName+"("+newTeamId+")");
+                            alert(playerName+" moved successfully to "+newTeamName);
+                        }
+                        else if(addData.data == null || addData.responseState == false) {
+                            console.log(playerName+"("+playerId+") addition to "+newTeamName+"("+newTeamId+") failed. Player is now in available list");
+                            alert(playerName+" successfully removed from "+currentTeamName+". But didn't get added to "+newTeamName);
+                        }
+                    })
+                }
+                else if(removeData.data == null || removeData.data == "0 Players Deleted" || removeData.responseState == false) {
+                    console.log(playerName+"("+playerId+") removal from "+newTeamName+"("+newTeamId+") failed.");
+                    alert(playerName+" couldn't be removed from "+currentTeamName);
+                }
+            });
         }
 
-        function fillTable(sno, playerId, playerName, playerCurrentTeam) {
+        function removeFromTeam(playerId, teamId) {
+            var data = [playerId];
+            return $.ajax({
+                type: "POST",
+                url: playerRemoveUrl+teamId,
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                error: function() {
+                    console.log(result);
+                },
+                success: function(result) {
+                    console.log(result);
+                }
+            });
+        }
+
+        function addToTeam(divId, teamId, playerId) {
+            var data = {
+                "teamId": teamId,
+                "clubId": 27594,
+                "leagueId": divId,
+                "playerIds": [playerId]
+              };
+
+            return $.ajax({
+                type: "POST",
+                url: playerAddUrl,
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                error: function() {
+                    console.log(result);
+                },
+                success: function(result) {
+                    console.log(result);
+                }
+            });
+        }
+
+        function fillTable(sno, playerId, playerName, playerCurrentTeamName, playerCurrentTeamId ) {
             var tbl = document.getElementById("playerDetailsTable");
             var dr = tbl.insertRow();
 
@@ -403,7 +492,7 @@
             dr.insertCell().appendChild(playerNametc);
 
             var teamtc = document.createElement("Label");
-            teamtc.innerHTML = playerCurrentTeam;
+            teamtc.innerHTML = playerCurrentTeamName;
             dr.insertCell().appendChild(teamtc);
 
             var moveToListtc = document.createElement("select");
@@ -427,9 +516,88 @@
             movebtntc.className = "movebtn";
             movebtntc.value = "Move";
             movebtntc.id = "movebtnId-"+sno;
-            movebtntc.setAttribute("onclick", "moveTeams("+sno+","+playerId+",\""+playerCurrentTeam+"\")");
+            movebtntc.setAttribute("onclick", "moveTeams("+sno+","+playerId+",'"+playerName+"','"+playerCurrentTeamName+"',"+playerCurrentTeamId+")");
             movebtntc.disabled = true;
             dr.insertCell().appendChild(movebtntc);
+        }
+        function showLoading() {
+          if (document.getElementById("divLoadingFrame") != null) {
+            return;
+          }
+          var style = document.createElement("style");
+          style.id = "styleLoadingWindow";
+          style.innerHTML = `
+                .loading-frame {
+                    position: fixed;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    left: 0;
+                    top: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 4;
+                }
+
+                .loading-track {
+                    height: 50px;
+                    display: inline-block;
+                    position: absolute;
+                    top: calc(50% - 50px);
+                    left: 50%;
+                }
+
+                .loading-dot {
+                    height: 5px;
+                    width: 5px;
+                    background-color: white;
+                    border-radius: 100%;
+                    opacity: 0;
+                }
+
+                .loading-dot-animated {
+                    animation-name: loading-dot-animated;
+                    animation-direction: alternate;
+                    animation-duration: .75s;
+                    animation-iteration-count: infinite;
+                    animation-timing-function: ease-in-out;
+                }
+
+                @keyframes loading-dot-animated {
+                    from {
+                        opacity: 0;
+                    }
+
+                    to {
+                        opacity: 1;
+                    }
+                }
+            `
+          document.body.appendChild(style);
+          var frame = document.createElement("div");
+          frame.id = "divLoadingFrame";
+          frame.classList.add("loading-frame");
+          for (var i = 0; i < 10; i++) {
+            var track = document.createElement("div");
+            track.classList.add("loading-track");
+            var dot = document.createElement("div");
+            dot.classList.add("loading-dot");
+            track.style.transform = "rotate(" + String(i * 36) + "deg)";
+            track.appendChild(dot);
+            frame.appendChild(track);
+          }
+          document.body.appendChild(frame);
+          var wait = 0;
+          var dots = document.getElementsByClassName("loading-dot");
+          for (var i = 0; i < dots.length; i++) {
+            window.setTimeout(function(dot) {
+              dot.classList.add("loading-dot-animated");
+            }, wait, dots[i]);
+            wait += 150;
+          }
+        }
+
+        function removeLoading() {
+          document.body.removeChild(document.getElementById("divLoadingFrame"));
+          document.body.removeChild(document.getElementById("styleLoadingWindow"));
         }
     </script>
 </html>
