@@ -126,6 +126,7 @@
         var matchUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatchInfo?clubId=27594&v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&matchId=";
         var playerRemoveUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/deletePlayerFromTeam?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594&teamId=";
         var playerAddUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/addPlayerToTeam?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594";
+        var playerDetailsUrl = "https://ccapi.cricclubs.com/CCAPI/user/getUserDetails?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594&playerId=";
         const seriesToDivMap = new Map();//Map<series, List<divIds>>
         const teamIdToNameMap = new Map();//Map<teamId, teamName>
         const teamIdToDivIdMap = new Map();//Map<teamId, divId>
@@ -302,49 +303,94 @@
             }
             else if(inputDivSelectedOption == "playerId") {
                 showLoading();
+                var playersCalls = [];
                 var givenPlayerId = document.querySelector('#playerIdInput').value;
-                teamIdToNameMap.forEach((team, teamId) => {
-                    $.getJSON(playersURL+teamId, function (data) {
-                        $.each(data.data.teamPlayers, function (index, player) {
-                            if(givenPlayerId == player.playerID) {
-                                var playerMatchCount = 0;
-                                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
-                                    matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+teamId, function (data) {
-                                        $.each(data.data, function (idx, matchVal) {
-                                            matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
-                                                if(matchData.data.teamOne == teamId) {
-                                                    $.each(matchData.data.team1Players, function (idx, playerStat){
-                                                            if(playerStat.playerID == givenPlayerId) {
-                                                                playerMatchCount += 1;
-                                                            }
-                                                        }
-                                                    );
-                                                }
-                                                else if(matchData.data.teamTwo == teamId) {
-                                                    $.each(matchData.data.team2Players, function (idx, playerStat){
-                                                            if(playerStat.playerID == givenPlayerId) {
-                                                                playerMatchCount += 1;
-                                                            }
-                                                        }
-                                                    );
-                                                }
-                                            }))
-                                        })
-                                    })) 
-                                );
-                                $.when.apply($,matchesCalls).then(function() {
-                                    $.when.apply($,matchCalls).then(function() {
-                                        if(playerMatchCount == 0)
-                                            fillTable(1, player.playerID, player.firstName + " " + player.lastName, team, teamId);
-                                        else
-                                            console.log(player.playerID+", "+player.firstName + " " + player.lastName+", "+ team+", played: "+ playerMatchCount);
-                                        removeLoading();
-                                    });
-                                });
-                            }
+                $.getJSON(playerDetailsUrl+givenPlayerId, function (data) {
+                    var playerName = data.data.firstName+" "+data.data.lastName;
+                    var currentTeamName = data.data.currentTeam;
+                    var currentTeamId = null;
+                    if(currentTeamName != null) {
+                        //player is part of some team. checking if player is part of any current teams
+                        teamIdToNameMap.forEach((team, teamId) => {
+                            if(team == currentTeamName)
+                                currentTeamId = teamId;
                         });
-                    });
-                })
+                        if(currentTeamId != null) {
+                            //player is part of a current team. Check if player is part of this team in this league
+                            var isPlayerInThisTeamInThisLeague = false;
+                            playersCalls.push($.getJSON(playersURL+currentTeamId, function (data) {
+                                $.each(data.data.teamPlayers, function (index, player) {
+                                    if(givenPlayerId == player.playerID) {
+                                        isPlayerInThisTeamInThisLeague = true;
+                                    }
+                                })
+                            }));
+                            $.when.apply($,playersCalls).then(function() {
+                                if(isPlayerInThisTeamInThisLeague == false) {
+                                    //player is part of this team but not in current league. so free to move him
+                                    console.log("player is part of "+currentTeamName+" but not in current league. so free to move him");
+                                    fillTable(1, givenPlayerId, playerName, "", -1);
+                                    removeLoading();
+                                }
+                                else {
+                                    $.getJSON(playersURL+currentTeamId, function (data) {
+                                        $.each(data.data.teamPlayers, function (index, player) {
+                                            if(givenPlayerId == player.playerID) {
+                                                isPlayerInATeamInThisLeague = true;
+                                                var playerMatchCount = 0;
+                                                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
+                                                    matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+currentTeamId, function (data) {
+                                                        $.each(data.data, function (idx, matchVal) {
+                                                            matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
+                                                                if(matchData.data.teamOne == currentTeamId) {
+                                                                    $.each(matchData.data.team1Players, function (idx, playerStat){
+                                                                            if(playerStat.playerID == givenPlayerId) {
+                                                                                playerMatchCount += 1;
+                                                                            }
+                                                                        }
+                                                                    );
+                                                                }
+                                                                else if(matchData.data.teamTwo == currentTeamId) {
+                                                                    $.each(matchData.data.team2Players, function (idx, playerStat){
+                                                                            if(playerStat.playerID == givenPlayerId) {
+                                                                                playerMatchCount += 1;
+                                                                            }
+                                                                        }
+                                                                    );
+                                                                }
+                                                            }))
+                                                        })
+                                                    })) 
+                                                );
+                                                $.when.apply($,matchesCalls).then(function() {
+                                                    $.when.apply($,matchCalls).then(function() {
+                                                        if(playerMatchCount == 0)
+                                                            fillTable(1, player.playerID, playerName, currentTeamName, currentTeamId);
+                                                        else
+                                                            console.log(player.playerID+", "+playerName+", "+ currentTeamName+", played: "+ playerMatchCount);
+                                                        removeLoading();
+                                                    });
+                                                });
+                                            }
+                                        });
+                                    });
+                                }
+                            });
+                        }
+                        else {
+                            //player not part of current team
+                            console.log("player is part of "+currentTeamName+" that is not part of current team");
+                            fillTable(1, givenPlayerId, playerName, "", -1);
+                            removeLoading();
+                        }
+                    }
+                    else {
+                        // player not part of any team
+                        console.log("player is part of any team yet");
+                        fillTable(1, givenPlayerId, playerName, "", -1);
+                        removeLoading();
+                    }
+                });
             }
             else if(inputDivSelectedOption == "playerName") {
                 var snoCount = 1;
@@ -408,28 +454,54 @@
             var newTeamName = $('#moveToList-'+idx+' :selected').text();
             var newTeamId = $('#moveToList-'+idx+' :selected').val();
             var newTeamDivId = teamIdToDivIdMap.get(newTeamId);
-            alert("Please confirm to move "+playerName+"("+playerId+") from "+currentTeamName+"("+currentTeamId+") to "+newTeamName+"("+newTeamId+")");
-            console.log("Moving "+playerName+"("+playerId+") from "+currentTeamName+"("+currentTeamId+") to "+newTeamName+"("+newTeamId+")");
+            console.log(newTeamDivId);
+            if(newTeamName == "remove-only") {
+                console.log("Remove-only action. Player will be removed from "+currentTeamName+"("+currentTeamId+") but not added to any team");
+                alert("Remove-only action. Please confirm "+playerName+"("+playerId+") to remove from "+currentTeamName+"("+currentTeamId+")");
+                removeAndLog(-1,newTeamId,newTeamName,playerId,playerName,currentTeamName,currentTeamId,true);
+            }
+            else if(currentTeamId == -1) {
+                console.log("Player is not an active part of any existing team. Skipping removal path");
+                alert("Removal skipped. Please confirm "+playerName+"("+playerId+") to add to "+newTeamName+"("+newTeamId+")");
+                addAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName);
+            }
+            else {
+                console.log("Moving "+playerName+"("+playerId+") from "+currentTeamName+"("+currentTeamId+") to "+newTeamName+"("+newTeamId+")");
+                alert("Please confirm to move "+playerName+"("+playerId+") from "+currentTeamName+"("+currentTeamId+") to "+newTeamName+"("+newTeamId+")");
+                removeAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName,currentTeamId,false);
+            }
+        }
+
+        function removeAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName,currentTeamId,remove_only){
             var removePromise = removeFromTeam(playerId, currentTeamId);
             removePromise.then(function (removeData) {
                 if(removeData.responseState == true && removeData.data == "1 Players Deleted") {
                     console.log(playerName+"("+playerId+") successfully removed from "+currentTeamName+"("+currentTeamId+")");
-                    console.log("Adding "+playerName+"("+playerId+") to "+newTeamName+"("+newTeamId+")");
-                    var addPromise = addToTeam(newTeamDivId,newTeamId,playerId);
-                    addPromise.then(function (addData) {
-                        if(addData.responseState) {
-                            console.log(playerName+"("+playerId+") successfully added from "+newTeamName+"("+newTeamId+")");
-                            alert(playerName+" moved successfully to "+newTeamName);
-                        }
-                        else if(addData.data == null || addData.responseState == false) {
-                            console.log(playerName+"("+playerId+") addition to "+newTeamName+"("+newTeamId+") failed. Player is now in available list");
-                            alert(playerName+" successfully removed from "+currentTeamName+". But didn't get added to "+newTeamName);
-                        }
-                    })
+                    if(!remove_only) {
+                        addAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName);
+                    }
+                    else {
+                        alert(playerName+"("+playerId+") successfully removed from "+currentTeamName+"("+currentTeamId+")");
+                    }
                 }
                 else if(removeData.data == null || removeData.data == "0 Players Deleted" || removeData.responseState == false) {
                     console.log(playerName+"("+playerId+") removal from "+newTeamName+"("+newTeamId+") failed.");
                     alert(playerName+" couldn't be removed from "+currentTeamName);
+                }
+            });
+        }
+
+        function addAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName) {
+            console.log("Adding "+playerName+"("+playerId+") to "+newTeamName+"("+newTeamId+")");
+            var addPromise = addToTeam(newTeamDivId,newTeamId,playerId);
+            addPromise.then(function (addData) {
+                if(addData.responseState) {
+                    console.log(playerName+"("+playerId+") successfully added from "+newTeamName+"("+newTeamId+")");
+                    alert(playerName+" successfully moved to "+newTeamName);
+                }
+                else if(addData.data == null || addData.responseState == false) {
+                    console.log(playerName+"("+playerId+") addition to "+newTeamName+"("+newTeamId+") failed. Player is now in available list");
+                    alert(playerName+" successfully removed from "+currentTeamName+". But didn't get added to "+newTeamName);
                 }
             });
         }
@@ -509,6 +581,10 @@
                 moveToOption.text = value;
                 moveToListtc.appendChild(moveToOption);
             })
+            var moveToRemoveOption = document.createElement('option');
+            moveToRemoveOption.value =  "remove";
+            moveToRemoveOption.text = "remove-only";
+            moveToListtc.appendChild(moveToRemoveOption);
             dr.insertCell().appendChild(moveToListtc);
 
             var movebtntc = document.createElement('input');
