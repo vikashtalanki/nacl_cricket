@@ -204,7 +204,6 @@
         });
         $("#playerInfoDivSubmit").show();
         $("#playerInfoDivSubmit").click(function () {
-            //var teamToPlayerMap = prepareTeamToPlayerMap(selectedSeries);
             var playersMatchCountMap = new Map();
 
             $("#playersTableBody").html("");
@@ -248,7 +247,6 @@
                 var snoCount = 1;
                 var selectedTeam = $('#selTeam :selected').val();
                 var selectedTeamName = $('#selTeam :selected').text();
-                
                 seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
                     matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+selectedTeam, function (data) {
                         $.each(data.data, function (idx, matchVal) {
@@ -273,13 +271,14 @@
                 );
                 $.when.apply($,matchesCalls).then(function() {
                     $.when.apply($,matchCalls).then(function() {
-                        console.log(playersMatchCountMap)
                         $.getJSON(playersURL+selectedTeam, function (data) {
                             $.each(data.data.teamPlayers, function (index, value) {
                                 if(!playersMatchCountMap.has(value.playerID)) {
                                     fillTable(snoCount, value.playerID, value.firstName + " " + value.lastName, selectedTeamName);
                                     snoCount += 1;
                                 }
+                                else
+                                    console.log(value.playerID+", "+value.firstName + " " + value.lastName+", "+ selectedTeamName+", played: "+ playersMatchCountMap.get(value.playerID));
                             });
                         });
                     });
@@ -316,9 +315,55 @@
                                 );
                                 $.when.apply($,matchesCalls).then(function() {
                                     $.when.apply($,matchCalls).then(function() {
-                                        console.log(playerMatchCount)
                                         if(playerMatchCount == 0)
                                             fillTable(1, player.playerID, player.firstName + " " + player.lastName, team);
+                                        else
+                                            console.log(player.playerID+", "+player.firstName + " " + player.lastName+", "+ team+", played: "+ playerMatchCount);
+                                    });
+                                });
+                            }
+                        });
+                    });
+                })
+            }
+            else if(inputDivSelectedOption == "playerName") {
+                var snoCount = 1;
+                var givenPlayerName = document.querySelector('#playerNameInput').value;
+                teamIdToNameMap.forEach((team, teamId) => {
+                    $.getJSON(playersURL+teamId, function (data) {
+                        $.each(data.data.teamPlayers, function (index, player) {
+                            if(player.firstName.toLowerCase().startsWith(givenPlayerName.toLowerCase())) {
+                                var playerMatchCount = 0;
+                                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
+                                    matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+teamId, function (data) {
+                                        $.each(data.data, function (idx, matchVal) {
+                                            matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
+                                                if(matchData.data.teamOne == teamId) {
+                                                    $.each(matchData.data.team1Players, function (idx, playerStat){
+                                                            if(playerStat.playerID == player.playerID)
+                                                                playerMatchCount += 1;
+                                                        }
+                                                    );
+                                                }
+                                                else if(matchData.data.teamTwo == teamId) {
+                                                    $.each(matchData.data.team2Players, function (idx, playerStat){
+                                                            if(playerStat.playerID == player.playerID)
+                                                                playerMatchCount += 1;
+                                                        }
+                                                    );
+                                                }
+                                            }))
+                                        })
+                                    })) 
+                                );
+                                $.when.apply($,matchesCalls).then(function() {
+                                    $.when.apply($,matchCalls).then(function() {
+                                        if(playerMatchCount == 0) {
+                                            fillTable(snoCount, player.playerID, player.firstName + " " + player.lastName, team);
+                                            snoCount += 1;
+                                        }
+                                        else
+                                            console.log(player.playerID+", "+player.firstName + " " + player.lastName+", "+ team+", played: "+ playerMatchCount);
                                     });
                                 });
                             }
@@ -386,52 +431,5 @@
             movebtntc.disabled = true;
             dr.insertCell().appendChild(movebtntc);
         }
-
-        /*function prepareTeamToPlayerMap(series) {
-            const teamToPlayerMap = new Map();
-            var matchesCalls=[];
-            var matchCalls=[];
-            var playerCalls = [];
-            teamIdToNameMap.forEach((teamName, teamId) => {
-                teamToPlayerMap.set(teamId, new Map());
-                playerCalls.push($.getJSON(playersURL+teamId, function (data) {
-                    $.each(data.data.teamPlayers, function (index, player) {
-                        teamToPlayerMap.get(teamId).set(player.playerID, [{playerId: player.playerID, playerName: player.firstName + " " + player.lastName, matchesPlayed: 0}]);
-                    })
-                }))
-            });
-            $.when.apply($,playerCalls).then(function() {
-                alert("hi");
-                seriesToDivMap.get(parseInt(series)).forEach((divId) =>
-                    teamIdToNameMap.forEach((teamName, teamId) => {
-                        matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+teamId, function (data) {
-                            $.each(data.data, function (idx, matchVal) {
-                                matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
-                                    if(matchData.data.teamOne == teamName) {
-                                        $.each(matchData.data.team1Players, function (idx, playerStat) {
-                                            var currentMatchesPlayed = teamToPlayerMap.get(teamId).get(playerStat.playerID).matchesPlayed;
-                                            teamToPlayerMap.get(teamId).get(playerStat.playerID).matchesPlayed = currentMatchesPlayed+1;
-                                        });
-                                    }
-                                    else if(matchData.data.teamTwo == teamName) {
-                                        $.each(matchData.data.team2Players, function (idx, playerStat) {
-                                            var currentMatchesPlayed = teamToPlayerMap.get(teamId).get(playerStat.playerID).matchesPlayed;
-                                            teamToPlayerMap.get(teamId).get(playerStat.playerID).matchesPlayed = currentMatchesPlayed+1;
-                                        });
-                                    }
-                                }))
-                            })
-                        }))
-                    })
-                );
-                $.when.apply($,matchesCalls).then(function() {
-                    $.when.apply($,matchCalls).then(function() {
-                        alert("hello");
-                        console.log(teamToPlayerMap)
-                        return teamToPlayerMap;
-                    });
-                });
-            });
-        }*/
     </script>
 </html>
