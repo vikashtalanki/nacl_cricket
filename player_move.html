@@ -150,13 +150,19 @@
         var selectedSeries = 0;
         var selectedSeriesName = "";
         var inputDivSelectedOption = "";
-        var playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId=27594&teamId=";
-        var teamMatchesUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatches?clubId=27594&seriesId=";
-        var matchUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatchInfo?clubId=27594&v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&matchId=";
-        var playerRemoveUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/deletePlayerFromTeam?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594&teamId=";
-        var playerAddUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/addPlayerToTeam?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594";
-        var playerDetailsUrl = "https://ccapi.cricclubs.com/CCAPI/user/getUserDetails?v=4.0.412&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&clubId=27594&playerId=";
-        var allPlayersUrl = "https://ccapi.cricclubs.com/CCAPI/player/getAllPlayersInClub?clubId=27594&limit=0&offSet=0&searchStr=";
+        var ccAuthToken = "6a768e47-dc6a-4eef-96c3-5ed7eedfd282";
+        var ccVersion = "4.0.412";
+        var ccClubId = "27594";
+        var playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId="+ccClubId+"&teamId=";
+        var teamMatchesUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatches?clubId="+ccClubId+"&seriesId=";
+        var matchUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatchInfo?clubId="+ccClubId+"&v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&matchId=";
+        var playerRemoveUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/deletePlayerFromTeam?v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&clubId="+ccClubId+"&teamId=";
+        var playerAddUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/addPlayerToTeam?v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&clubId="+ccClubId+"";
+        var playerDetailsUrl = "https://ccapi.cricclubs.com/CCAPI/user/getUserDetails?v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&clubId="+ccClubId+"&playerId=";
+        var allPlayersUrl = "https://ccapi.cricclubs.com/CCAPI/player/getAllPlayersInClub?clubId="+ccClubId+"&limit=0&offSet=0&searchStr=";
+        var seriesListURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId="+ccClubId;
+        var seriesDetailsURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesDetails?clubId="+ccClubId+"&X-Auth-Token="+ccAuthToken+"&seriesId=";
+        var teamsUrl = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId="+ccClubId+"&seriesId=";
         const seriesToDivMap = new Map();//Map<series, List<divIds>>
         const teamIdToNameMap = new Map();//Map<teamId, teamName>
         const teamIdToDivIdMap = new Map();//Map<teamId, divId>
@@ -164,8 +170,6 @@
             $("#selSeries").html("");
             $("#playersTableBody").html("");
             $("#selSeries").append('<option value="">Select Season</option>');
-            var seriesListURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId=27594";
-            var seriesDetailsURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesDetails?clubId=27594&X-Auth-Token=6a768e47-dc6a-4eef-96c3-5ed7eedfd282&seriesId=";
             $.getJSON(seriesListURL, function (data) {
                 $.each(data.data.seriesList, function (index, series) {
                     var seriesId = series.seriesID;
@@ -193,9 +197,8 @@
             var teamsCalls = [];
             selectedSeries = $('#selSeries :selected').val();
             selectedSeriesName = $('#selSeries :selected').text();
-            const url = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId=27594&seriesId=";
             seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) => 
-                teamsCalls.push($.getJSON(url+divId, function (data) {
+                teamsCalls.push($.getJSON(teamsUrl+divId, function (data) {
                     $.each(data.data.teamsList, function (index, value) {
                         $.each(value.teams, function (index, value) {
                             teamIdToDivIdMap.set(value.teamID,divId);
