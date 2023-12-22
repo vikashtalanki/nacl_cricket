@@ -89,6 +89,25 @@
                 border-radius: 8px;
                 margin-left :15px
             }
+
+            .overlay{
+                display: none;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                z-index: 999;
+                background: rgba(255,255,255,0.8) url("https://i.stack.imgur.com/FhHRx.gif") center no-repeat;
+            }
+            /* Turn off scrollbar when body element has the loading class */
+            body.loading{
+                overflow: hidden;   
+            }
+            /* Make spinner image visible when body element has the loading class */
+            body.loading .overlay{
+                display: block;
+            }
         </style>    
     </head>
     <body>
@@ -116,8 +135,18 @@
             </div><br>
             <div id="playersTableBody"></div>
         </div>
+        <div class="overlay"></div>
     </body>
     <script>
+        // Add remove loading class on body element based on Ajax request status
+        $(document).on({
+            ajaxStart: function(){
+                $("body").addClass("loading"); 
+            },
+            ajaxStop: function(){ 
+                $("body").removeClass("loading"); 
+            }    
+        });
         var selectedSeries = 0;
         var selectedSeriesName = "";
         var inputDivSelectedOption = "";
@@ -520,14 +549,17 @@
                     }
                     else {
                         alert(playerName+"("+playerId+") successfully removed from "+currentTeamName+"("+currentTeamId+")");
-                        $("#row-"+idx).fadeTo("slow",0.7, function(){
-                            $(this).remove();
-                        });
+                        //code to fadeout and delete a row if required
+                        /*$("#row-"+idx).fadeTo("slow",0.7, function(){
+                            $(this).style.backgroundColor="#00FF00";
+                        });*/
+                        changeTableRowBGColor(idx, "green");
                     }
                 }
                 else if(removeData.data == null || removeData.data == "0 Players Deleted" || removeData.responseState == false) {
                     console.log(playerName+"("+playerId+") removal from "+newTeamName+"("+newTeamId+") failed.");
                     alert(playerName+" couldn't be removed from "+currentTeamName);
+                    changeTableRowBGColor(idx, "red");
                 }
             });
         }
@@ -539,13 +571,16 @@
                 if(addData.responseState) {
                     console.log(playerName+"("+playerId+") successfully added from "+newTeamName+"("+newTeamId+")");
                     alert(playerName+" successfully moved to "+newTeamName);
-                    $("#row-"+idx).fadeTo("slow",0.7, function(){
-                        $(this).remove();
-                    });
+                    //code to fadeout and delete a row if required
+                    /*$("#row-"+idx).fadeTo("slow",0.7, function(){
+                        $(this).style.backgroundColor="#00FF00";
+                    });*/
+                    changeTableRowBGColor(idx, "green");
                 }
                 else if(addData.data == null || addData.responseState == false) {
                     console.log(playerName+"("+playerId+") addition to "+newTeamName+"("+newTeamId+") failed. Player is now in available list");
                     alert(playerName+" successfully removed from "+currentTeamName+". But didn't get added to "+newTeamName);
+                    changeTableRowBGColor(idx, "red");
                 }
             });
         }
@@ -642,6 +677,15 @@
             
 
             dr.insertCell().appendChild(movebtntc);
+        }
+
+        function changeTableRowBGColor(rowId, color) {
+            console.log(rowId);
+            var els = document.getElementById("row-"+rowId).getElementsByTagName("td");
+
+            for(var i=0;i<els.length;i++){
+                els[i].style.background = color;   
+            }
         }
     </script>
 </html>
