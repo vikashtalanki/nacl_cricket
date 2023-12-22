@@ -450,8 +450,10 @@
                                                     );
                                                     $.when.apply($,matchesCalls).then(function() {
                                                         $.when.apply($,matchCalls).then(function() {
-                                                            if(playerMatchCount == 0)
-                                                                fillTable(1, playerId, playerName, currentTeamName, currentTeamId);
+                                                            if(playerMatchCount == 0) {
+                                                                fillTable(snoCount, playerId, playerName, currentTeamName, currentTeamId);
+                                                                snoCount += 1;
+                                                            }
                                                             else
                                                                 console.log(playerId+", "+playerName+", "+ currentTeamName+", played: "+ playerMatchCount);
                                                         });
@@ -494,30 +496,33 @@
             if(newTeamName == "remove-only") {
                 console.log("Remove-only action. Player will be removed from "+currentTeamName+"("+currentTeamId+") but not added to any team");
                 alert("Remove-only action. Please confirm "+playerName+"("+playerId+") to remove from "+currentTeamName+"("+currentTeamId+")");
-                removeAndLog(-1,newTeamId,newTeamName,playerId,playerName,currentTeamName,currentTeamId,true);
+                removeAndLog(idx,-1,newTeamId,newTeamName,playerId,playerName,currentTeamName,currentTeamId,true);
             }
             else if(currentTeamId == -1) {
                 console.log("Player is not an active part of any existing team. Skipping removal path");
                 alert("Removal skipped. Please confirm "+playerName+"("+playerId+") to add to "+newTeamName+"("+newTeamId+")");
-                addAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName);
+                addAndLog(idx,newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName);
             }
             else {
                 console.log("Moving "+playerName+"("+playerId+") from "+currentTeamName+"("+currentTeamId+") to "+newTeamName+"("+newTeamId+")");
                 alert("Please confirm to move "+playerName+"("+playerId+") from "+currentTeamName+"("+currentTeamId+") to "+newTeamName+"("+newTeamId+")");
-                removeAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName,currentTeamId,false);
+                removeAndLog(idx,newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName,currentTeamId,false);
             }
         }
 
-        function removeAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName,currentTeamId,remove_only){
+        function removeAndLog(idx,newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName,currentTeamId,remove_only){
             var removePromise = removeFromTeam(playerId, currentTeamId);
             removePromise.then(function (removeData) {
                 if(removeData.responseState == true && removeData.data == "1 Players Deleted") {
                     console.log(playerName+"("+playerId+") successfully removed from "+currentTeamName+"("+currentTeamId+")");
                     if(!remove_only) {
-                        addAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName);
+                        addAndLog(idx,newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName);
                     }
                     else {
                         alert(playerName+"("+playerId+") successfully removed from "+currentTeamName+"("+currentTeamId+")");
+                        $("#row-"+idx).fadeTo("slow",0.7, function(){
+                            $(this).remove();
+                        });
                     }
                 }
                 else if(removeData.data == null || removeData.data == "0 Players Deleted" || removeData.responseState == false) {
@@ -527,13 +532,16 @@
             });
         }
 
-        function addAndLog(newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName) {
+        function addAndLog(idx,newTeamDivId,newTeamId,newTeamName,playerId,playerName,currentTeamName) {
             console.log("Adding "+playerName+"("+playerId+") to "+newTeamName+"("+newTeamId+")");
             var addPromise = addToTeam(newTeamDivId,newTeamId,playerId);
             addPromise.then(function (addData) {
                 if(addData.responseState) {
                     console.log(playerName+"("+playerId+") successfully added from "+newTeamName+"("+newTeamId+")");
                     alert(playerName+" successfully moved to "+newTeamName);
+                    $("#row-"+idx).fadeTo("slow",0.7, function(){
+                        $(this).remove();
+                    });
                 }
                 else if(addData.data == null || addData.responseState == false) {
                     console.log(playerName+"("+playerId+") addition to "+newTeamName+"("+newTeamId+") failed. Player is now in available list");
@@ -585,6 +593,7 @@
         function fillTable(sno, playerId, playerName, playerCurrentTeamName, playerCurrentTeamId ) {
             var tbl = document.getElementById("playerDetailsTable");
             var dr = tbl.insertRow();
+            dr.setAttribute("id", "row-" + sno);
 
             var snotc = document.createElement("Label");
             snotc.innerHTML = sno;
@@ -630,6 +639,8 @@
             movebtntc.id = "movebtnId-"+sno;
             movebtntc.setAttribute("onclick", "moveTeams("+sno+","+playerId+",'"+playerName+"','"+playerCurrentTeamName+"',"+playerCurrentTeamId+")");
             movebtntc.disabled = true;
+            
+
             dr.insertCell().appendChild(movebtntc);
         }
     </script>
