@@ -654,6 +654,7 @@
             moveToListtc.setAttribute("id", "moveToList-" + sno);
             moveToListtc.setAttribute("class", "selectItems");
             moveToListtc.setAttribute("onChange", "enableMoveButton("+sno+")");
+            moveToListtc.setAttribute("style", "color: black;");
             var moveToDefaultOption = document.createElement('option');
             moveToDefaultOption.value =  "select";
             moveToDefaultOption.text = "select";
@@ -671,6 +672,7 @@
             dr.insertCell().appendChild(moveToListtc);
 
             var movebtntc = document.createElement('input');
+            movebtntc.setAttribute("style", "color: black;");
             movebtntc.type = "button";
             movebtntc.className = "movebtn";
             movebtntc.value = "Move";
