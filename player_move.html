@@ -163,6 +163,7 @@
         var seriesListURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId="+ccClubId;
         var seriesDetailsURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesDetails?clubId="+ccClubId+"&X-Auth-Token="+ccAuthToken+"&seriesId=";
         var teamsUrl = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId="+ccClubId+"&seriesId=";
+        var playerFieldingStats = "https://ccapi.cricclubs.com/CCAPI/stats/getFeildingStats?v=4.0.512&clubId="+ccClubId+"&seriesId=";
         const seriesToDivMap = new Map();//Map<series, List<divIds>>
         const teamIdToNameMap = new Map();//Map<teamId, teamName>
         const teamIdToDivIdMap = new Map();//Map<teamId, divId>
@@ -242,7 +243,6 @@
         });
         $("#playerInfoDivSubmit").show();
         $("#playerInfoDivSubmit").click(function () {
-            var playersMatchCountMap = new Map();
 
             $("#playersTableBody").html("");
             var tbl = document.createElement("table");
@@ -280,56 +280,31 @@
             body.insertBefore(tbl, body.firstChild);
 
             var matchesCalls=[];
-            var matchCalls=[];
             if (inputDivSelectedOption == "playerTeam") {
                 var snoCount = 1;
-                var loadingCount = 0;
                 var selectedTeam = $('#selTeam :selected').val();
                 var selectedTeamName = $('#selTeam :selected').text();
-                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
-                    matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+selectedTeam, function (data) {
-                        $.each(data.data, function (idx, matchVal) {
-                            matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
-                                if(matchData.data.teamOne == selectedTeam) {
-                                    $.each(matchData.data.team1Players, function (idx, playerStat) {
-                                        //console.log(playerStat.playerName);
-                                        if(!playersMatchCountMap.has(playerStat.playerID)) {
-                                            playersMatchCountMap.set(playerStat.playerID, 0);
-                                            loadingCount += 1;
-                                        }
-                                        playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
-                                    });
-                                }
-                                else if(matchData.data.teamTwo == selectedTeam) {
-                                    $.each(matchData.data.team2Players, function (idx, playerStat) {
-                                        //console.log(playerStat.playerName);
-                                        if(!playersMatchCountMap.has(playerStat.playerID)) {
-                                            playersMatchCountMap.set(playerStat.playerID, 0);
-                                            loadingCount += 1;
-                                        }
-                                        playersMatchCountMap.set(playerStat.playerID, playersMatchCountMap.get(playerStat.playerID)+1);
-                                    });
-                                }
-                            }))
-                        })
-                    })) 
-                );
-                $.when.apply($,matchesCalls).then(function() {
-                    $.when.apply($,matchCalls).then(function() {
-                        $.getJSON(playersURL+selectedTeam, function (data) {
-                            $.each(data.data.teamPlayers, function (index, value) {
-                                if(!playersMatchCountMap.has(value.playerID)) {
-                                    fillTable(snoCount, value.playerID, value.firstName + " " + value.lastName, selectedTeamName, selectedTeam);
-                                    snoCount += 1;
-                                }
-                                else {
-                                    console.log(value.playerID+", "+value.firstName + " " + value.lastName+", "+ selectedTeamName+", played: "+ playersMatchCountMap.get(value.playerID));
-                                    loadingCount -= 1;
-                                }
+                var thisTeamDivId = teamIdToDivIdMap.get(parseInt(selectedTeam));
+                $.getJSON(playersURL+selectedTeam, function (data) {
+                    $.each(data.data.teamPlayers, function (index, player) {
+                        var playerId = player.playerID;
+                        var playerName = player.firstName + " " + player.lastName;
+                        var totalMatchesPlayedInThisLeague = 0;
+                        matchesCalls.push($.getJSON(playerFieldingStats+thisTeamDivId+"&playerId="+playerId, function (data) {
+                            $.each(data.data, function (idx, playerStat) {
+                                totalMatchesPlayedInThisLeague += playerStat.totalMatches;
                             });
+                        }))
+                        $.when.apply($,matchesCalls).then(function() {
+                            if(totalMatchesPlayedInThisLeague == 0) {
+                                fillTable(snoCount, playerId, playerName, selectedTeamName, selectedTeam);
+                                snoCount += 1;
+                            }
+                            else
+                                console.log(playerId+", "+playerName+", "+ selectedTeamName+", played: "+ totalMatchesPlayedInThisLeague);
                         });
-                    });
-                });
+                    })
+                })
             }
             else if(inputDivSelectedOption == "playerId") {
                 var playersCalls = [];
@@ -361,45 +336,19 @@
                                     fillTable(1, givenPlayerId, playerName, "", -1);
                                 }
                                 else {
-                                    $.getJSON(playersURL+currentTeamId, function (data) {
-                                        $.each(data.data.teamPlayers, function (index, player) {
-                                            if(givenPlayerId == player.playerID) {
-                                                isPlayerInATeamInThisLeague = true;
-                                                var playerMatchCount = 0;
-                                                seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
-                                                    matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+currentTeamId, function (data) {
-                                                        $.each(data.data, function (idx, matchVal) {
-                                                            matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
-                                                                if(matchData.data.teamOne == currentTeamId) {
-                                                                    $.each(matchData.data.team1Players, function (idx, playerStat){
-                                                                            if(playerStat.playerID == givenPlayerId) {
-                                                                                playerMatchCount += 1;
-                                                                            }
-                                                                        }
-                                                                    );
-                                                                }
-                                                                else if(matchData.data.teamTwo == currentTeamId) {
-                                                                    $.each(matchData.data.team2Players, function (idx, playerStat){
-                                                                            if(playerStat.playerID == givenPlayerId) {
-                                                                                playerMatchCount += 1;
-                                                                            }
-                                                                        }
-                                                                    );
-                                                                }
-                                                            }))
-                                                        })
-                                                    })) 
-                                                );
-                                                $.when.apply($,matchesCalls).then(function() {
-                                                    $.when.apply($,matchCalls).then(function() {
-                                                        if(playerMatchCount == 0)
-                                                            fillTable(1, player.playerID, playerName, currentTeamName, currentTeamId);
-                                                        else
-                                                            console.log(player.playerID+", "+playerName+", "+ currentTeamName+", played: "+ playerMatchCount);
-                                                    });
-                                                });
-                                            }
-                                        });
+                                    var totalMatchesPlayedInThisLeague = 0;
+                                    seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
+                                        matchesCalls.push($.getJSON(playerFieldingStats+divId+"&playerId="+givenPlayerId, function (data) {
+                                            $.each(data.data, function (idx, playerStat) {
+                                                totalMatchesPlayedInThisLeague += playerStat.totalMatches;
+                                            });
+                                        }))
+                                    );
+                                    $.when.apply($,matchesCalls).then(function() {
+                                        if(totalMatchesPlayedInThisLeague == 0)
+                                            fillTable(1, givenPlayerId, playerName, currentTeamName, currentTeamId);
+                                        else
+                                            console.log(givenPlayerId+", "+playerName+", "+ currentTeamName+", played: "+ totalMatchesPlayedInThisLeague);
                                     });
                                 }
                             });
@@ -451,47 +400,21 @@
                                         snoCount += 1;
                                     }
                                     else {
-                                        $.getJSON(playersURL+currentTeamId, function (data) {
-                                            $.each(data.data.teamPlayers, function (index, player) {
-                                                if(playerId == player.playerID) {
-                                                    isPlayerInATeamInThisLeague = true;
-                                                    var playerMatchCount = 0;
-                                                    seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
-                                                        matchesCalls.push($.getJSON(teamMatchesUrl+divId+"&teamId="+currentTeamId, function (data) {
-                                                            $.each(data.data, function (idx, matchVal) {
-                                                                matchCalls.push($.getJSON(matchUrl+matchVal.matchId, function (matchData) {
-                                                                    if(matchData.data.teamOne == currentTeamId) {
-                                                                        $.each(matchData.data.team1Players, function (idx, playerStat){
-                                                                                if(playerStat.playerID == playerId) {
-                                                                                    playerMatchCount += 1;
-                                                                                }
-                                                                            }
-                                                                        );
-                                                                    }
-                                                                    else if(matchData.data.teamTwo == currentTeamId) {
-                                                                        $.each(matchData.data.team2Players, function (idx, playerStat){
-                                                                                if(playerStat.playerID == playerId) {
-                                                                                    playerMatchCount += 1;
-                                                                                }
-                                                                            }
-                                                                        );
-                                                                    }
-                                                                }))
-                                                            })
-                                                        })) 
-                                                    );
-                                                    $.when.apply($,matchesCalls).then(function() {
-                                                        $.when.apply($,matchCalls).then(function() {
-                                                            if(playerMatchCount == 0) {
-                                                                fillTable(snoCount, playerId, playerName, currentTeamName, currentTeamId);
-                                                                snoCount += 1;
-                                                            }
-                                                            else
-                                                                console.log(playerId+", "+playerName+", "+ currentTeamName+", played: "+ playerMatchCount);
-                                                        });
-                                                    });
-                                                }
-                                            });
+                                        var totalMatchesPlayedInThisLeague = 0;
+                                        seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) =>
+                                            matchesCalls.push($.getJSON(playerFieldingStats+divId+"&playerId="+playerId, function (data) {
+                                                $.each(data.data, function (idx, playerStat) {
+                                                    totalMatchesPlayedInThisLeague += playerStat.totalMatches;
+                                                });
+                                            }))
+                                        );
+                                        $.when.apply($,matchesCalls).then(function() {
+                                            if(totalMatchesPlayedInThisLeague == 0) {
+                                                fillTable(snoCount, playerId, playerName, currentTeamName, currentTeamId);
+                                                snoCount += 1;
+                                            }
+                                            else
+                                                console.log(playerId+", "+playerName+", "+ currentTeamName+", played: "+ totalMatchesPlayedInThisLeague);
                                         });
                                     }
                                 });
