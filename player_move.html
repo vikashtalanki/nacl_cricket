@@ -112,7 +112,7 @@
     </head>
     <body>
         <div id="initDiv">
-            <div id="inputDiv">
+            <div id="inputDiv" style="display: none;">
                 <select id="selSeries" class="selectItems">
                     <option value="">Select Series</option>
                 </select>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -150,46 +150,60 @@
         var selectedSeries = 0;
         var selectedSeriesName = "";
         var inputDivSelectedOption = "";
-        var ccAuthToken = "6a768e47-dc6a-4eef-96c3-5ed7eedfd282";
+        var playersURL = "";
+        var teamMatchesUrl = "";
+        var matchUrl = "";
+        var playerRemoveUrl = "";
+        var playerAddUrl = "";
+        var playerDetailsUrl = "";
+        var allPlayersUrl = "";
+        var seriesListURL = "";
+        var seriesDetailsURL = "";
+        var teamsUrl = "";
+        var playerFieldingStats = "";
+        var ccAuthToken = "";
         var ccVersion = "4.0.412";
         var ccClubId = "27594";
-        var playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId="+ccClubId+"&teamId=";
-        var teamMatchesUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatches?clubId="+ccClubId+"&seriesId=";
-        var matchUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatchInfo?clubId="+ccClubId+"&v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&matchId=";
-        var playerRemoveUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/deletePlayerFromTeam?v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&clubId="+ccClubId+"&teamId=";
-        var playerAddUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/addPlayerToTeam?v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&clubId="+ccClubId+"";
-        var playerDetailsUrl = "https://ccapi.cricclubs.com/CCAPI/user/getUserDetails?v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&clubId="+ccClubId+"&playerId=";
-        var allPlayersUrl = "https://ccapi.cricclubs.com/CCAPI/player/getAllPlayersInClub?clubId="+ccClubId+"&limit=0&offSet=0&searchStr=";
-        var seriesListURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId="+ccClubId;
-        var seriesDetailsURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesDetails?clubId="+ccClubId+"&X-Auth-Token="+ccAuthToken+"&seriesId=";
-        var teamsUrl = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId="+ccClubId+"&seriesId=";
-        var playerFieldingStats = "https://ccapi.cricclubs.com/CCAPI/stats/getFeildingStats?v=4.0.512&clubId="+ccClubId+"&seriesId=";
+        var getAuthTokenUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/user/login?v=4.0.412&mobileNotificationToken=null";
         const seriesToDivMap = new Map();//Map<series, List<divIds>>
         const teamIdToNameMap = new Map();//Map<teamId, teamName>
         const teamIdToDivIdMap = new Map();//Map<teamId, divId>
         $(document).ready(function () {
-            $("#selSeries").html("");
-            $("#playersTableBody").html("");
-            $("#selSeries").append('<option value="">Select Season</option>');
-            $.getJSON(seriesListURL, function (data) {
-                $.each(data.data.seriesList, function (index, series) {
-                    var seriesId = series.seriesID;
-                    var seriesName = series.seriesName
-                    if(series.parentSeriesId == 0) {// show only parent series
-                        $("#selSeries").append('<option value="' + seriesId + '">' + seriesName + "</option>");
-                    }
-                    $.getJSON(seriesDetailsURL+seriesId, function (data1) {
-                        seriesToDivMap.set(seriesId,[]);
-                        if(data1.data.hasDivisions) {
-                            $.each(data1.data.divisions, function (index, divs) {
-                                seriesToDivMap.get(seriesId).push(divs.leagueId);
+            var uidpwd=prompt("Please enter your userId/password","");
+            if (uidpwd!=null){
+                var uid = uidpwd.split('/')[0];
+                var pwd = uidpwd.split('/')[1];
+                $.getJSON(getAuthTokenUrl+"&username="+uid+"&password="+pwd, function (data) {
+                    if(data.data == null)
+                        alert(data.errorMessage+"Please refresh the page & enter valid username/password");
+                    else {
+                        updateURLs(data.data.authToken);
+                        $("#selSeries").html("");
+                        $("#playersTableBody").html("");
+                        $("#inputDiv").show();
+                        $("#selSeries").append('<option value="">Select Season</option>');
+                        $.getJSON(seriesListURL, function (data) {
+                            $.each(data.data.seriesList, function (index, series) {
+                                var seriesId = series.seriesID;
+                                var seriesName = series.seriesName
+                                if(series.parentSeriesId == 0) {// show only parent series
+                                    $("#selSeries").append('<option value="' + seriesId + '">' + seriesName + "</option>");
+                                }
+                                $.getJSON(seriesDetailsURL+seriesId, function (data1) {
+                                    seriesToDivMap.set(seriesId,[]);
+                                    if(data1.data.hasDivisions) {
+                                        $.each(data1.data.divisions, function (index, divs) {
+                                            seriesToDivMap.get(seriesId).push(divs.leagueId);
+                                        });
+                                    }
+                                    else
+                                        seriesToDivMap.get(seriesId).push(seriesId);
+                                });
                             });
-                        }
-                        else
-                            seriesToDivMap.get(seriesId).push(seriesId);
-                    });
+                        });
+                    }
                 });
-            });
+            }
         });
         var body = document.getElementById("playersTableBody");
         $("#inputDivSubmit").show();
@@ -483,8 +497,8 @@
                     }
                 }
                 else if(removeData.data == null || removeData.data == "0 Players Deleted" || removeData.responseState == false) {
-                    console.log(playerName+"("+playerId+") removal from "+newTeamName+"("+newTeamId+") failed.");
-                    alert(playerName+" couldn't be removed from "+currentTeamName);
+                    console.log(playerName+"("+playerId+") removal from "+currentTeamName+"("+currentTeamId+") failed.");
+                    alert(removeData.errorMessage+". "+playerName+" couldn't be removed from "+currentTeamName);
                     changeTableRowBGColor(idx, "red");
                 }
             });
@@ -505,7 +519,7 @@
                 }
                 else if(addData.data == null || addData.responseState == false) {
                     console.log(playerName+"("+playerId+") addition to "+newTeamName+"("+newTeamId+") failed. Player is now in available list");
-                    alert(playerName+" successfully removed from "+currentTeamName+". But didn't get added to "+newTeamName);
+                    alert(addData.errorMessage+". "+playerName+" successfully removed from "+currentTeamName+". But didn't get added to "+newTeamName);
                     changeTableRowBGColor(idx, "red");
                 }
             });
@@ -614,6 +628,20 @@
             for(var i=0;i<els.length;i++){
                 els[i].style.background = color;   
             }
+        }
+
+        function updateURLs(ccAuthToken) {
+            playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId="+ccClubId+"&teamId=";
+            teamMatchesUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatches?clubId="+ccClubId+"&seriesId=";
+            matchUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatchInfo?clubId="+ccClubId+"&v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&matchId=";
+            playerRemoveUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/deletePlayerFromTeam?v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&clubId="+ccClubId+"&teamId=";
+            playerAddUrl = "https://ccapi-prod-origin.cricclubs.com/CCAPI/admin/addPlayerToTeam?v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&clubId="+ccClubId+"";
+            playerDetailsUrl = "https://ccapi.cricclubs.com/CCAPI/user/getUserDetails?v="+ccVersion+"&X-Auth-Token="+ccAuthToken+"&clubId="+ccClubId+"&playerId=";
+            allPlayersUrl = "https://ccapi.cricclubs.com/CCAPI/player/getAllPlayersInClub?clubId="+ccClubId+"&limit=0&offSet=0&searchStr=";
+            seriesListURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId="+ccClubId;
+            seriesDetailsURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesDetails?clubId="+ccClubId+"&X-Auth-Token="+ccAuthToken+"&seriesId=";
+            teamsUrl = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId="+ccClubId+"&seriesId=";
+            playerFieldingStats = "https://ccapi.cricclubs.com/CCAPI/stats/getFeildingStats?v=4.0.512&clubId="+ccClubId+"&seriesId=";
         }
     </script>
 </html>
