@@ -147,6 +147,25 @@
               flex-direction: row;
             }
 
+            .overlay{
+                display: none;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                z-index: 999;
+                background: rgba(255,255,255,0.8) url("https://i.stack.imgur.com/FhHRx.gif") center no-repeat;
+            }
+            /* Turn off scrollbar when body element has the loading class */
+            body.loading{
+                overflow: hidden;   
+            }
+            /* Make spinner image visible when body element has the loading class */
+            body.loading .overlay{
+                display: block;
+            }
+
         </style>
     </head>
     <body>
@@ -159,14 +178,23 @@
             </div>
             <div id="statsTableBody"></div>
         </div>
+        <div class="overlay"></div>
     </body>
 
     <script>
+        $(document).on({
+            ajaxStart: function(){
+                $("body").addClass("loading"); 
+            },
+            ajaxStop: function(){ 
+                $("body").removeClass("loading"); 
+            }    
+        });
         var script_url ="https://script.google.com/macros/s/AKfycbyy4BY8sb963Fk9_0TTF1_AP71OgD2yOL-5VzPufVpU0kNIf5GfO_iBUrQN0JmoPNVCAQ/exec";
         var emailcheck=false;
         var minPartnershipStatRuns = 30;
         var minBatsmanStatScore = 30;
-        var minBowlerStatWkts = 0;
+        var minBowlerStatWkts = 2;
         //var matchDates = ['02/11/2023','02/12/2023'];
         var matchDates = [];
         var seriesCalls = [];
@@ -275,7 +303,6 @@
 
             $("#submit").show();
             $("#submit").click(function () {
-                showLoading();
                 var selectedSeries = $('#selSeries :selected').text();
                 var selectedStatType = $('#selStatType :selected').text();
                 $("#statsTableBody").html("");
@@ -802,6 +829,8 @@
                                 var winMargin = document.createElement("Label");
                                 if(match.result.includes("Forfeited") || match.result.includes("Abandoned") || match.result.includes("Super Over"))
                                     winMargin.innerHTML = "0 Run(s)";
+                                else if(match.result.includes("(D/L)"))
+                                    winMargin.innerHTML = match.result.split(' ')[match.result.split(' ').length-3] + " " + match.result.split(' ')[match.result.split(' ').length-2] + " "+match.result.split(' ')[match.result.split(' ').length-1];
                                 else
                                     winMargin.innerHTML = match.result.split(' ')[match.result.split(' ').length-2] + " "+match.result.split(' ')[match.result.split(' ').length-1];
                                 dr.insertCell().appendChild(winMargin);
@@ -1320,7 +1349,7 @@
                     }
                 }
                 $.when.apply($,calls).then(function() {
-                    removeLoading();
+                    //removeLoading();
                 });
                 body.insertBefore(tbl, body.firstChild);
             });
@@ -1561,86 +1590,6 @@
             else
                 res = result;
             return res.charAt(0).toUpperCase() + res.slice(1);
-        }
-
-        function showLoading() {
-          if (document.getElementById("divLoadingFrame") != null) {
-            return;
-          }
-          var style = document.createElement("style");
-          style.id = "styleLoadingWindow";
-          style.innerHTML = `
-                .loading-frame {
-                    position: fixed;
-                    background-color: rgba(0, 0, 0, 0.8);
-                    left: 0;
-                    top: 0;
-                    right: 0;
-                    bottom: 0;
-                    z-index: 4;
-                }
-
-                .loading-track {
-                    height: 50px;
-                    display: inline-block;
-                    position: absolute;
-                    top: calc(50% - 50px);
-                    left: 50%;
-                }
-
-                .loading-dot {
-                    height: 5px;
-                    width: 5px;
-                    background-color: white;
-                    border-radius: 100%;
-                    opacity: 0;
-                }
-
-                .loading-dot-animated {
-                    animation-name: loading-dot-animated;
-                    animation-direction: alternate;
-                    animation-duration: .75s;
-                    animation-iteration-count: infinite;
-                    animation-timing-function: ease-in-out;
-                }
-
-                @keyframes loading-dot-animated {
-                    from {
-                        opacity: 0;
-                    }
-
-                    to {
-                        opacity: 1;
-                    }
-                }
-            `
-          document.body.appendChild(style);
-          var frame = document.createElement("div");
-          frame.id = "divLoadingFrame";
-          frame.classList.add("loading-frame");
-          for (var i = 0; i < 10; i++) {
-            var track = document.createElement("div");
-            track.classList.add("loading-track");
-            var dot = document.createElement("div");
-            dot.classList.add("loading-dot");
-            track.style.transform = "rotate(" + String(i * 36) + "deg)";
-            track.appendChild(dot);
-            frame.appendChild(track);
-          }
-          document.body.appendChild(frame);
-          var wait = 0;
-          var dots = document.getElementsByClassName("loading-dot");
-          for (var i = 0; i < dots.length; i++) {
-            window.setTimeout(function(dot) {
-              dot.classList.add("loading-dot-animated");
-            }, wait, dots[i]);
-            wait += 150;
-          }
-        }
-
-        function removeLoading() {
-          document.body.removeChild(document.getElementById("divLoadingFrame"));
-          document.body.removeChild(document.getElementById("styleLoadingWindow"));
         }
     </script>
 </html>
