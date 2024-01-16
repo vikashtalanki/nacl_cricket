@@ -13,6 +13,8 @@ import javafx.util.Pair;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 
 public class Scheduler {
@@ -61,7 +63,12 @@ public class Scheduler {
 
     public static void updateData(List<Game> games) throws Exception {
         Sheets sheet = new Sheets(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance(), authorize());
-        Collections.sort(games, (o1, o2) -> (o1.allotedTime.compareTo(o2.allotedTime)));
+
+        //Sorting games based on time slot, ground for better updation in google sheets
+        Comparator<Game> comparator = Comparator.comparing(game -> game.allotedTime);
+        comparator = comparator.thenComparing(Comparator.comparing(game -> game.allotedGround));
+        Stream<Game> sortedGamesStream = games.stream().sorted(comparator);
+        games = sortedGamesStream.collect(Collectors.toList());
 
         try {
             List<List<Object>> writeData = new ArrayList<>();
@@ -153,6 +160,16 @@ public class Scheduler {
         for(String team: umpiringTeams) {
             localUmpiringTeamsCopy.add(team);
         }
+        //Sorting umpiring teams based on team name
+        Collections.sort(localUmpiringTeamsCopy);
+
+        //Sorting games based on ground, time slot for better umpiring assignment
+        Comparator<Game> comparator = Comparator.comparing(game -> game.allotedGround);
+        comparator = comparator.thenComparing(Comparator.comparing(game -> game.allotedTime));
+        Stream<Game> sortedGamesStream = games.stream().sorted(comparator);
+        games = sortedGamesStream.collect(Collectors.toList());
+        printSchedule(games);
+
         return assignUmpiringDutiesBT(games, localUmpiringTeamsCopy, groupsMap, 0);
     }
 
@@ -242,7 +259,7 @@ public class Scheduler {
     public static void printSchedule(List<Game> bestResult) {
         System.out.println("--------------------------------------------------");
         for(Game game: bestResult) {
-            System.out.println(game.team1 +" vs "+game.team2+", umpiring: "+game.umpiringTeam1);
+            System.out.println(game.allotedTime +","+game.allotedGround+", "+game.team1 +" vs "+game.team2+", umpiring: "+game.umpiringTeam1);
         }
         System.out.println("--------------------------------------------------");
     }
@@ -495,7 +512,6 @@ public class Scheduler {
         for (int i = 1; i < games.size(); i++) {
             umpiringTeams.add(games.get(i).get(3));
         }
-        System.out.println(umpiringTeams);
 
         // Read Grounds
         try {
