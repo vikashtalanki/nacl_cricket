@@ -5,10 +5,12 @@ import java.io.IOException;
 import java.util.*;
 
 public class NACLUmpiringCheck {
-    static Set<String> divAGroupA = new HashSet<>(Arrays.asList("2point0","Dark Knights","Dragons","Fire Friends","Grizzlies","Mighty Warriors","Knight Walkers (CA)","Royal Kings","Kings X1","Lords","Seamers"));
-    static Set<String> divAGroupB = new HashSet<>(Arrays.asList("Astros+","Bleed Blue","Money Heist","Ghadeer CC","Thunderbolts","Royal Knights","P@nthers XI","CSK Yorkers","Singh Cricket Club","JerseyXI","Smoking Sadhoos"));
-    static Set<String> divBGroupA = new HashSet<>(Arrays.asList("Baazigar of Bay","BAY Tigers","Challengers CC","Raynor Royals","Daredevils","MINIONS","YAM CC-14","Rising Stars","Skippers","CricKings","Tailenders"));
-    static Set<String> divBGroupB = new HashSet<>(Arrays.asList("Alviso Warriors","Barely XI","BraveHearts","Deccan United CC","Champions","Breaking Bats","Extraas","Mavericks","Titans","Veer Jawan","Unstoppable"));
+    static Set<String> divAGroupA = new HashSet<>(Arrays.asList("Mighty Warriors","Fire Friends","Royal Knights","Knight Walkers (CA)","Astros+","BraveHearts","JerseyXI","Challengers CC"));
+    static Set<String> divAGroupB = new HashSet<>(Arrays.asList("CSK Yorkers","Dream Killers","2point0","Dragons","Money Heist","Royal Kings","Singh Cricket Club","Deccan United CC"));
+    static Set<String> divBGroupA = new HashSet<>(Arrays.asList("Seamers","Rising Stars","Kings X1","P@nthers XI","Breaking Bats","Titans","Daredevils","CricKings"));
+    static Set<String> divBGroupB = new HashSet<>(Arrays.asList("Champions","Lords","Chargers","Unstoppable","Baazigar of Bay","Bleed Blue","Smoking Sadhoos","Skippers"));
+    static Set<String> divCGroupA = new HashSet<>(Arrays.asList("Nexus XI","Tailenders","Raynor Royals","Mavericks","Avengers","Bay Tigers","IndianChamps","UC11"));
+    static Set<String> divCGroupB = new HashSet<>(Arrays.asList("Barely XI","Alviso Warriors","Bay Boys","Centurions","Sunny","MINIONS","YAM CC-14","WCC Gladiators"));
     public static void main(String[] args) throws FileNotFoundException {
         Map<String, Set> map = new HashMap<>();
         for (String team: divAGroupA) {
@@ -23,11 +25,17 @@ public class NACLUmpiringCheck {
         for (String team: divBGroupB) {
             map.put(team, divBGroupB);
         }
-        try (BufferedReader br = new BufferedReader(new FileReader("/Users/sreevik/Desktop/NACL/Winter_202324_RR.csv"))) {
+        for (String team: divCGroupA) {
+            map.put(team, divCGroupA);
+        }
+        for (String team: divCGroupB) {
+            map.put(team, divCGroupB);
+        }
+        try (BufferedReader br = new BufferedReader(new FileReader("/Users/sreevik/Desktop/NACL/Spring_2024_RR.csv"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] fixtures = line.split("\\t");
-                if(map.get(fixtures[0]) == map.get(fixtures[3]) || map.get(fixtures[1]) == map.get(fixtures[3])) {
+                if(map.get(fixtures[0]) == map.get(fixtures[3]) || map.get(fixtures[1]) == map.get(fixtures[3]) || map.get(fixtures[0]) == map.get(fixtures[4]) || map.get(fixtures[1]) == map.get(fixtures[4])) {
                     System.out.println(line);
                 }
             }

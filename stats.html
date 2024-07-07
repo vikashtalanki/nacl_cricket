@@ -60,6 +60,34 @@
             #summaryTable td:nth-child(1){
                 background-color: #da291c;
             }
+
+            #t12SummaryTable tr:first-child{
+                text-align: center;
+                background-color: #da291c;
+            }
+
+            #t12SummaryTable tr:nth-child(2){
+                text-align: center;
+                background-color: #da291c;
+            }
+
+            #t12SummaryTable td:nth-child(1){
+                background-color: #da291c;
+            }
+
+            #boxSummaryTable tr:first-child{
+                text-align: center;
+                background-color: #da291c;
+            }
+
+            #boxSummaryTable tr:nth-child(2){
+                text-align: center;
+                background-color: #da291c;
+            }
+
+            #boxSummaryTable td:nth-child(1){
+                background-color: #da291c;
+            }
             
             #statsTableBody,
             #sel,
@@ -669,6 +697,22 @@
                     winter202324BTH.appendChild(document.createTextNode("Winter 2023-24 - B"));
                     tr.appendChild(winter202324BTH);
 
+                    var spring2024ATH = document.createElement('th');
+                    spring2024ATH.appendChild(document.createTextNode("Spring 2024 - A"));
+                    tr.appendChild(spring2024ATH);
+
+                    var spring2024BTH = document.createElement('th');
+                    spring2024BTH.appendChild(document.createTextNode("Spring 2024 - B"));
+                    tr.appendChild(spring2024BTH);
+
+                    var spring2024CTH = document.createElement('th');
+                    spring2024CTH.appendChild(document.createTextNode("Spring 2024 - C"));
+                    tr.appendChild(spring2024CTH);
+
+                    var IndCup2024TH = document.createElement('th');
+                    IndCup2024TH.appendChild(document.createTextNode("Independence Cup 2024"));
+                    tr.appendChild(IndCup2024TH);
+
                     tbl.appendChild(tr);
                 }
                 else if(selectedStatType === "Summary") {
@@ -676,7 +720,7 @@
                     var headRow1 = tbl.insertRow(0);
 
                     var seriesCell = headRow1.insertCell(0);
-                    seriesCell.innerHTML= "SERIES"
+                    seriesCell.innerHTML= "360 SERIES"
                     seriesCell.rowSpan = 2
 
                     var divACell = headRow1.insertCell(1);
@@ -686,6 +730,10 @@
                     var divBCell = headRow1.insertCell(2);
                     divBCell.innerHTML= "DIVISION B"
                     divBCell.colSpan = 2
+
+                    var divCCell = headRow1.insertCell(3);
+                    divCCell.innerHTML= "DIVISION C"
+                    divCCell.colSpan = 2
 
                     var headRow2 = tbl.insertRow(1);
 
@@ -705,12 +753,22 @@
                     divBRunnersUp.innerHTML= "RUNNERS-UP";
                     divBRunnersUp.style.backgroundColor = "#da291c"; 
 
+                    var divCWinners = headRow2.insertCell(2);
+                    divCWinners.innerHTML= "CHAMPIONS";
+                    divCWinners.style.backgroundColor = "#da291c"; 
+
+                    var divCRunnersUp = headRow2.insertCell(3);
+                    divCRunnersUp.innerHTML= "RUNNERS-UP";
+                    divCRunnersUp.style.backgroundColor = "#da291c"; 
+
                     var spring2021Row = tbl.insertRow(2);
                     spring2021Row.insertCell(0).innerHTML= "SPRING 2021";
                     spring2021Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/qjrm4tX/Bullets.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>BULLETS</h4></div>';
                     spring2021Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/K5WxbRB/Royal-Kings.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>ROYAL KINGS</h4></div>';
                     spring2021Row.insertCell(3).innerHTML= "-";
                     spring2021Row.insertCell(4).innerHTML= "-";
+                    spring2021Row.insertCell(5).innerHTML= "-";
+                    spring2021Row.insertCell(6).innerHTML= "-";
 
 
                     var sum2021Row = tbl.insertRow(2);
@@ -719,6 +777,8 @@
                     sum2021Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/qjrm4tX/Bullets.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>BULLETS</h4></div>';
                     sum2021Row.insertCell(3).innerHTML= "-";
                     sum2021Row.insertCell(4).innerHTML= "-";
+                    sum2021Row.insertCell(5).innerHTML= "-";
+                    sum2021Row.insertCell(6).innerHTML= "-";
 
                     var win202122Row = tbl.insertRow(2);
                     win202122Row.insertCell(0).innerHTML= "WINTER 2021-22";
@@ -726,6 +786,8 @@
                     win202122Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/ZLsxGXQ/MW.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>MIGHTY WARRIORS</h4></div>';
                     win202122Row.insertCell(3).innerHTML= "-";
                     win202122Row.insertCell(4).innerHTML= "-";
+                    win202122Row.insertCell(5).innerHTML= "-";
+                    win202122Row.insertCell(6).innerHTML= "-";
 
                     var spring2022Row = tbl.insertRow(2);
                     spring2022Row.insertCell(0).innerHTML= "SPRING 2022";
@@ -733,6 +795,8 @@
                     spring2022Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Tv5Y3bV/CSK.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>CSK YORKERS</h4></div>';
                     spring2022Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/dPdN0tJ/Raynor-Royals.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>RAYNOR ROYALS</h4></div>';
                     spring2022Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/9VBN1Pj/LordsXI.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>LORDS XI</h4></div>';
+                    spring2022Row.insertCell(5).innerHTML= "-";
+                    spring2022Row.insertCell(6).innerHTML= "-";
                     
 
                     var sum2022Row = tbl.insertRow(2);
@@ -741,6 +805,8 @@
                     sum2022Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/ZLsxGXQ/MW.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>MIGHTY WARRIORS</h4></div>';
                     sum2022Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/RHST4Zd/Tailenders.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>TAILENDERS</h4></div>';
                     sum2022Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/J3hH24k/Unstoppable.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>UNSTOPPABLE</h4></div>';
+                    sum2022Row.insertCell(5).innerHTML= "-";
+                    sum2022Row.insertCell(6).innerHTML= "-";
                     
 
                     var win202223Row = tbl.insertRow(2);
@@ -751,6 +817,8 @@
                     win202223BDivCell = win202223Row.insertCell(2);
                     win202223BDivCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/K5WxbRB/Royal-Kings.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>ROYAL KINGS&nbsp;&nbsp;&nbsp;&nbsp;&</h4>&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://i.ibb.co/CvZsmht/2pointo.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>2POINT0</h4></div>';
                     win202223BDivCell.colSpan = 2;
+                    win202223Row.insertCell(3).innerHTML= "-";
+                    win202223Row.insertCell(4).innerHTML= "-";
 
                     var spring2023Row = tbl.insertRow(2);
                     spring2023Row.insertCell(0).innerHTML= "SPRING 2023";
@@ -758,13 +826,9 @@
                     spring2023Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/qFhzncs/Money-Hiest.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>MONEY HEIST</h4></div>';
                     spring2023Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Nj4hm1C/Knight-Walkers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>KNIGHT WALKERS (CA)</h4></div>';
                     spring2023Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/J3hH24k/Unstoppable.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>UNSTOPPABLE</h4></div>';
+                    spring2023Row.insertCell(5).innerHTML= "-";
+                    spring2023Row.insertCell(6).innerHTML= "-";
 
-                    var indCup2023Row = tbl.insertRow(2);
-                    indCup2023Row.insertCell(0).innerHTML= "INDEPENDENCE CUP 2023";
-                    indCup2023Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/pZL4Dgh/Ghadheer-CC.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>GHADEER CC</h4></div>';
-                    indCup2023Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/fM0RQ1q/Sadhoos.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>SMOKING SADHOOS</h4></div>';
-                    indCup2023Row.insertCell(3).innerHTML= "-";
-                    indCup2023Row.insertCell(4).innerHTML= "-";
 
                     var sum2023Row = tbl.insertRow(2);
                     sum2023Row.insertCell(0).innerHTML= "SUMMER 2023";
@@ -772,14 +836,85 @@
                     sum2023Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Tv5Y3bV/CSK.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>CSK YORKERS</h4></div>';
                     sum2023Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/K5WxbRB/Royal-Kings.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>ROYAL KINGS</h4></div>';
                     sum2023Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/BcFxbtP/Bleed-Blue.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>BLEED BLUE</h4></div>';
+                    sum2023Row.insertCell(5).innerHTML= "-";
+                    sum2023Row.insertCell(6).innerHTML= "-";
 
+                    var win202324Row = tbl.insertRow(2);
+                    win202324Row.insertCell(0).innerHTML= "WINTER 2023-24";
+                    win202324Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/ZLsxGXQ/MW.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>MIGHTY WARRIORS</h4></div>';
+                    win202324Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Tv5Y3bV/CSK.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>CSK YORKERS</h4></div>';
+                    win202324Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/njqYJ1m/Deccan-United-CC.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>Deccan United CC</h4></div>';
+                    win202324Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/HPTf5Xw/Bravehearts.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>Bravehearts</h4></div>';
+                    win202324Row.insertCell(5).innerHTML= "-";
+                    win202324Row.insertCell(6).innerHTML= "-";
 
-                    var vetCup2023Row = tbl.insertRow(2);
+                    var spring2024Row = tbl.insertRow(2);
+                    spring2024Row.insertCell(0).innerHTML= "SPRING 2024";
+                    spring2024Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/ZLsxGXQ/MW.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>MIGHTY WARRIORS</h4></div>';
+                    spring2024Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/CvZsmht/2pointo.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>2POINT0</h4></div>';
+                    spring2024Row.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/xFP9SMY/Seamers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>SEAMERS</h4></div>';
+                    spring2024Row.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/bPkHH25/Rising-Stars.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>RISING STARS</h4></div>';
+                    spring2024Row.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/RHST4Zd/Tailenders.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>TAILENDERS</h4></div>';
+                    spring2024Row.insertCell(6).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/XpjYcqF/UC11.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>UC11</h4></div>';
+
+                    var t12tbl = document.createElement("table");
+                    t12tbl.setAttribute("class", "styled-table");
+                    t12tbl.setAttribute("style","table-layout:fixed");
+                    t12tbl.setAttribute("id", "t12SummaryTable");
+                    var t12headRow1 = t12tbl.insertRow(0);
+
+                    var t12SeriesCell = t12headRow1.insertCell(0);
+                    t12SeriesCell.innerHTML= "T12 SERIES"
+
+                    var bheadRow2 = t12tbl.insertRow(1);
+
+                    var winners = t12headRow1.insertCell(1);
+                    winners.innerHTML= "CHAMPIONS";
+                    winners.style.backgroundColor = "#da291c";
+
+                    var runners = t12headRow1.insertCell(2);
+                    runners.innerHTML= "RUNNERS-UP";
+                    runners.style.backgroundColor = "#da291c";  
+
+                    var indCup2023Row = t12tbl.insertRow(2);
+                    indCup2023Row.insertCell(0).innerHTML= "INDEPENDENCE CUP 2023";
+                    indCup2023Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/pZL4Dgh/Ghadheer-CC.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>GHADEER CC</h4></div>';
+                    indCup2023Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/fM0RQ1q/Sadhoos.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>SMOKING SADHOOS</h4></div>';
+
+                    var vetCup2023Row = t12tbl.insertRow(2);
                     vetCup2023Row.insertCell(0).innerHTML= "VETERANS CUP 2023";
                     vetCup2023Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/bR0FZyS/Challengers-CC.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>CHALLENGERS CC</h4></div>';
                     vetCup2023Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Wc4DrBx/Astros.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>ASTROS+</h4></div>';
-                    vetCup2023Row.insertCell(3).innerHTML= "-";
-                    vetCup2023Row.insertCell(4).innerHTML= "-";
+
+                    var indCup2024Row = t12tbl.insertRow(2);
+                    indCup2024Row.insertCell(0).innerHTML= "INDEPENDENCE CUP 2024";
+                    indCup2024Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Nj4hm1C/Knight-Walkers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>KNIGHT WALKERS (CA)</h4></div>';
+                    indCup2024Row.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/fM0RQ1q/Sadhoos.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>SMOKING SADHOOS</h4></div>';
+
+
+                    var btbl = document.createElement("table");
+                    btbl.setAttribute("class", "styled-table");
+                    btbl.setAttribute("style","table-layout:fixed");
+                    btbl.setAttribute("id", "boxSummaryTable");
+                    var bheadRow1 = btbl.insertRow(0);
+
+                    var seriesCell = bheadRow1.insertCell(0);
+                    seriesCell.innerHTML= "BOX SERIES"
+
+                    var bheadRow2 = btbl.insertRow(1);
+
+                    var winners = bheadRow1.insertCell(1);
+                    winners.innerHTML= "CHAMPIONS";
+                    winners.style.backgroundColor = "#da291c";
+
+                    var runners = bheadRow1.insertCell(2);
+                    runners.innerHTML= "RUNNERS-UP";
+                    runners.style.backgroundColor = "#da291c";  
+
+                    var mar2024Row = btbl.insertRow(2);
+                    mar2024Row.insertCell(0).innerHTML= "MARCH 2024";
+                    mar2024Row.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/q9SB8w5/Breaking-Bats.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h4>BREAKING BATS</h4></div>';
+                    mar2024Row.insertCell(2).innerHTML= '<div class="logo-txt-container">&nbsp;&nbsp;&nbsp;&nbsp;<h4>TURF TITANS</h4></div>';
 
                 }
                 var calls = [];
@@ -1346,12 +1481,30 @@
                         var winter2324BTeamName = document.createElement("Label");
                         winter2324BTeamName.innerHTML = getithRankedTeam("Winter 2023-24 - B", i);
                         dr.insertCell().appendChild(winter2324BTeamName);
+
+                        var spring24ATeamName = document.createElement("Label");
+                        spring24ATeamName.innerHTML = getithRankedTeam("Spring 2024 - A", i);
+                        dr.insertCell().appendChild(spring24ATeamName);
+
+                        var spring24BTeamName = document.createElement("Label");
+                        spring24BTeamName.innerHTML = getithRankedTeam("Spring 2024 - B", i);
+                        dr.insertCell().appendChild(spring24BTeamName);
+
+                        var spring24CTeamName = document.createElement("Label");
+                        spring24CTeamName.innerHTML = getithRankedTeam("Spring 2024 - C", i);
+                        dr.insertCell().appendChild(spring24CTeamName);
+
+                        var indCup24TeamName = document.createElement("Label");
+                        indCup24TeamName.innerHTML = getithRankedTeam("Independence Cup 2024", i);
+                        dr.insertCell().appendChild(indCup24TeamName);
                     }
                 }
                 $.when.apply($,calls).then(function() {
                     //removeLoading();
                 });
                 body.insertBefore(tbl, body.firstChild);
+                body.insertBefore(t12tbl, body.firstChild);
+                body.insertBefore(btbl, body.firstChild);
             });
         });
         
@@ -1560,7 +1713,7 @@
                 case 'Summer 2021':
                     return ["Bullets","Royal Kings","Skippers 2.0","Seamers","Royal Strikerz","Unstoppable","CSK Yorkers","Smoking Sadhoos","Green Rebels","MINIONS","Shockers","Dixon 11","Alviso Warriors","Ghadeer CC","SWAT","Raptors","Ravens XI","Unshackled11","Dragons","Wolves XI","Vaders","Challengers 11","Avengers","Falcons"];
                 case 'Summer 2022':
-                    return ["CSK Yorkers","Mighty Warriors","Seamers","Grizzlies","Singh Cricket Club","Knight Walkers","Fairfield Hawks","Dragons","Ghadeer CC","Royal Kings","Drunken Hammers","Raynor Royals","Astros+","Fire Friends","Rising Stars","Vaders","Tailenders","Unstoppable","Bleed Blue","MCC","Titans","Chargers","SilverSwords","Minions","Yodhas","Daredevils","Team Tsunami","Smoking Sadhoos","Avengers","Valley Lions","Alviso Warriors ","P@nthers","Skywalkers","Crickings","Blossom Blasters","Bay Boys"];
+                    return ["CSK Yorkers","Mighty Warriors","Seamers","Grizzlies","Singh Cricket Club","Knight Walkers","Fairfield Hawks","Dragons","Ghadeer CC","Royal Kings","Drunken Hammers","Raynor Royals","Astros+","Fire Friends","Rising Stars","Vaders","Tailenders","Unstoppable","Bleed Blue","MCC","Titans","Chargers","SilverSwords","MINIONS","Yodhas","Daredevils","Team Tsunami","Smoking Sadhoos","Avengers","Valley Lions","Alviso Warriors ","P@nthers","Skywalkers","Crickings","Blossom Blasters","Bay Boys"];
                 case 'Winter 2022-23':
                     return ["Seamers / Grizzlies","-","CSK Yorkers","Singh Cricket Club","Astros+","Fire Friends","Thunderbolts","Blazing Broncos","MCC","Ghadeer CC","Dark Knights","Baazigar of Bay","Tailenders","Chargers","Knight Walkers (CA)","Rising Stars","Unstoppable","Dragons","Bay Boys","Titans","Skywalkers","Smoking Sadhoos","Cric Blasters","Weekend Cricketers","Royal Kings / 2point0","-","MINIONS","Fairfield Hawks","Raynor Royals","Juggernaut","Calivasis","Yodhas","Now Warriors","Alviso Warriors","Champions","HITMEN XI","Bleed Blue","Money Heist","CricKings","Thunder Wolves XI","Bulls","P@nthers XI","Mavericks","Avengers","YAM CC-14","Blossom Blasters","Silverswords","Breaking Bats"];
                 case 'Spring 2023':
@@ -1574,9 +1727,17 @@
                 case 'Veterans Cup 2023':
                     return ["Challengers CC","Astros+","Thunderbolts","Deccan United CC","HTM","Fire Friends","YAM CC-14","Gully Boys","Gully Cricketers","Veer Jawan","Koolagents","Now Warriors","CricKings","Thunder Wolves XI","Miya Bhaiz","Khalsa Warriors"];
                 case 'Winter 2023-24 - A':
-                    return ["-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-"];
+                    return ["Mighty Warriors","CSK Yorkers","Grizzlies","JerseyXI","Royal Knights","Astros+","Singh Cricket Club","Royal Kings","2point0","Money Heist","Knight Walkers (CA)","Ghadeer CC","Dragons","Bleed Blue","Fire Friends","Lords","Thunderbolts","Kings X1","Seamers","Dark Knights","P@nthers XI","Smoking Sadhoos"];
                 case 'Winter 2023-24 - B':
-                    return ["-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-"];
+                    return ["Deccan United CC","Bravehearts","Challengers CC","Rising Stars","Daredevils","Titans","Skippers","Baazigar of Bay","Unstoppable","CricKings","Champions","Breaking Bats","Extraas","Barely XI","Alviso Warriors","Tailenders","Raynor Royals","Veer Jawan","YAM CC-14","Mavericks","Bay Tigers","MINIONS"];
+                case 'Spring 2024 - A':
+                    return ["Mighty Warriors","2point0","CSK Yorkers","Challengers CC","Astros+","Singh Cricket Club","Bravehearts","Money Heist","Royal Knights","JerseyXI","Dream Killers","Royal Kings","Dragons","Knight Walkers (CA)","Fire Friends","Deccan United CC"];
+                case 'Spring 2024 - B':
+                    return ["Seamers","Rising Stars","Kings XI","Daredevils","Lords","Unstoppable","Chargers","Baazigar of Bay","Breaking Bats","Smoking Sadhoos","Champions","Titans","Skippers","P@nthers XI","Bleed Blue","CricKings"];
+                case 'Spring 2024 - C':
+                    return ["Tailenders","UC11","Mavericks","Alviso Warriors","Centurions","YAM CC-14","Bay Tigers","WCC Gladiators","Nexus XI","Bay Boys","MINIONS","Sunny","Barely XI","IndianChamps","Raynor Royals","Avengers"];
+                case 'Independence Cup 2024':
+                    return ["Knight Walkers (CA)","Smoking Sadhoos","Dream Killers","Singh Warriors","Vikings","Punjab Warriors","Fire Friends","Breaking Bats","Bay Boys","Super Saiyans","IndianChamps","The Snow Lions","Barely XI","RCB","Super Giants","Sunny"];
             }
         }
 
