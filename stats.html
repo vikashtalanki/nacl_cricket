@@ -219,6 +219,8 @@
             }    
         });
         var script_url ="https://script.google.com/macros/s/AKfycbyy4BY8sb963Fk9_0TTF1_AP71OgD2yOL-5VzPufVpU0kNIf5GfO_iBUrQN0JmoPNVCAQ/exec";
+        var cricclubs_url = "https://core-prod-origin.cricclubs.com/core/";
+        var url_params = "clubId=27594&x-api-key=Z!wocr8&x-consumer-key=Y6%26afRE";
         var emailcheck=false;
         var minPartnershipStatRuns = 30;
         var minBatsmanStatScore = 30;
@@ -235,7 +237,7 @@
             $("#selSeries").append('<option value="">Select Season</option>');
             $("#selSeries").show();
             $("#statsTableBody").html("");
-            var seriesURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId=27594";
+            var seriesURL = cricclubs_url+"series/getSeriesList?"+url_params;
             seriesCalls.push($.getJSON(seriesURL, function (data) {
                 $.each(data.data.seriesList, function (index, series) {
                     allSeriesMap.set(series.seriesID, series.seriesName);
@@ -253,7 +255,7 @@
                     $("#selSeries").append('<option value="' + seriesName + '">' + seriesName + "</option>");
                     allPlayersMap.set(seriesName, new Map());
                     allTeamsMap.set(seriesName, new Map());
-                    var allMatchesPerSeriesUrl = "https://ccapi.cricclubs.com/CCAPI/match/getMatches?X-Auth-Token=&clubId=27594&seriesId="+seriesId+"&teamId=&limit=10000";
+                    var allMatchesPerSeriesUrl = cricclubs_url+"match/getMatches?"+url_params+"&X-Auth-Token=&seriesId="+seriesId+"&teamId=&limit=10000";
                     $.getJSON(allMatchesPerSeriesUrl, function (data) {
                         $.each(data.data, function (idx, val) {
                             if(matchDates.includes(val.matchDate) || matchDates.length==0) {
@@ -268,12 +270,12 @@
                             }
                         });
                     });
-                    var allTeamsPerSeriesUrl = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId=27594&seriesId="+seriesId;
+                    var allTeamsPerSeriesUrl = cricclubs_url+"team/getTeamsList?"+url_params+"&seriesId="+seriesId;
                     $.getJSON(allTeamsPerSeriesUrl, function (data) {
                         $.each(data.data.teamsList, function (index, teamsList) {
                             $.each(teamsList.teams, function (index, team) {
                                 allPlayersMap.get(seriesName).set(team.teamName, new Map());
-                                var playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId=27594&teamId=" + team.teamID;
+                                var playersURL = cricclubs_url+"team/getTeamPlayers?"+url_params+"&teamId=" + team.teamID;
                                 $.getJSON(playersURL, function (data) {
                                     $.each(data.data.teamPlayers, function (index, player) {
                                         allPlayersMap.get(seriesName).get(team.teamName).set(player.playerID,player.firstName + " " + player.lastName);
@@ -989,7 +991,7 @@
                                 var result = document.createElement("a");
                                 var linkText = document.createTextNode(match.result);
                                 result.appendChild(linkText);
-                                result.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?matchId="+matchId+"&clubId=27594";
+                                result.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?"+url_params+"&matchId="+matchId;
                                 result.title = match.result;
                                 result.style.color = "#dddddd";
                                 dr.insertCell().appendChild(result);
@@ -998,7 +1000,7 @@
                         else if(selectedStatType === "Bowling Figures") {
                             value.forEach(function (match) {
                                 var matchId = match.matchId;
-                                var matchUrl = "https://ccapi.cricclubs.com/CCAPI/scoreCard/getScoreCard?matchId="+matchId+"&clubId=27594";
+                                var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
                                     $.getJSON(matchUrl, function (data) {
                                         var bowlerTeamName = data.data.innings2.teamName;
@@ -1096,7 +1098,7 @@
                         else if(selectedStatType === "Batting Figures") {
                             value.forEach(function (match) {
                                 var matchId = match.matchId;
-                                var matchUrl = "https://ccapi.cricclubs.com/CCAPI/scoreCard/getScoreCard?matchId="+matchId+"&clubId=27594";
+                                var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
                                     $.getJSON(matchUrl, function (data) {
                                         var batterTeamName = data.data.innings1.teamName;
@@ -1204,7 +1206,7 @@
                         else if(selectedStatType === "Partnerships") {
                             value.forEach(function (match) {
                                 var matchId = match.matchId;
-                                var matchUrl = "https://ccapi.cricclubs.com/CCAPI/scoreCard/getScoreCard?matchId="+matchId+"&clubId=27594";
+                                var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
                                     $.getJSON(matchUrl, function(data) {
                                         var team1Name = data.data.matchInfo.teamOneName;
@@ -1269,7 +1271,7 @@
                                                     var scorecard = document.createElement("a");
                                                     var linkText = document.createTextNode(match.result);
                                                     scorecard.appendChild(linkText);
-                                                    scorecard.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?matchId="+matchId+"&clubId=27594";
+                                                    scorecard.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?"+url_params+"&matchId="+matchId;
                                                     scorecard.title = match.result;
                                                     scorecard.style.color = "#dddddd";
                                                     dr.insertCell().appendChild(scorecard);
@@ -1397,7 +1399,7 @@
                                     var result = document.createElement("a");
                                     var linkText = document.createTextNode(getPOVResult(match.result, selectedTeam));
                                     result.appendChild(linkText);
-                                    result.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?matchId="+matchId+"&clubId=27594";
+                                    result.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?"+url_params+"&matchId="+matchId;
                                     result.title = getPOVResult(match.result, selectedTeam);
                                     result.style.color = "#dddddd";
                                     dr.insertCell().appendChild(result);
