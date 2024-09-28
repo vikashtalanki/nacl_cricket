@@ -713,6 +713,18 @@
                     IndCup2024TH.appendChild(document.createTextNode("Independence Cup 2024"));
                     tr.appendChild(IndCup2024TH);
 
+                    var summer2024ATH = document.createElement('th');
+                    summer2024ATH.appendChild(document.createTextNode("Summer 2024 - A"));
+                    tr.appendChild(summer2024ATH);
+
+                    var summer2024BTH = document.createElement('th');
+                    summer2024BTH.appendChild(document.createTextNode("Summer 2024 - B"));
+                    tr.appendChild(summer2024BTH);
+
+                    var summer2024CTH = document.createElement('th');
+                    summer2024CTH.appendChild(document.createTextNode("Summer 2024 - C"));
+                    tr.appendChild(summer2024CTH);
+
                     tbl.appendChild(tr);
                 }
                 else if(selectedStatType === "Summary") {
@@ -1497,6 +1509,18 @@
                         var indCup24TeamName = document.createElement("Label");
                         indCup24TeamName.innerHTML = getithRankedTeam("Independence Cup 2024", i);
                         dr.insertCell().appendChild(indCup24TeamName);
+
+                        var summer24ATeamName = document.createElement("Label");
+                        summer24ATeamName.innerHTML = getithRankedTeam("Summer 2024 - A", i);
+                        dr.insertCell().appendChild(summer24ATeamName);
+
+                        var summer24BTeamName = document.createElement("Label");
+                        summer24BTeamName.innerHTML = getithRankedTeam("Summer 2024 - B", i);
+                        dr.insertCell().appendChild(summer24BTeamName);
+
+                        var summer24CTeamName = document.createElement("Label");
+                        summer24CTeamName.innerHTML = getithRankedTeam("Summer 2024 - C", i);
+                        dr.insertCell().appendChild(summer24CTeamName);
                     }
                 }
                 $.when.apply($,calls).then(function() {
@@ -1738,6 +1762,12 @@
                     return ["Tailenders","UC11","Mavericks","Alviso Warriors","Centurions","YAM CC-14","Bay Tigers","WCC Gladiators","Nexus XI","Bay Boys","MINIONS","Sunny","Barely XI","IndianChamps","Raynor Royals","Avengers"];
                 case 'Independence Cup 2024':
                     return ["Knight Walkers (CA)","Smoking Sadhoos","Dream Killers","Singh Warriors","Vikings","Punjab Warriors","Fire Friends","Breaking Bats","Bay Boys","Super Saiyans","IndianChamps","The Snow Lions","Barely XI","RCB","Super Giants","Sunny"];
+                case 'Summer 2024 - A':
+                    return ["-","-","-","-","-","-","-","-","Astros+","Royal Kings","CSK Yorkers","Knight Walkers (CA)","2point0","Rising Stars","JerseyXI","Dragons"];
+                case 'Summer 2024 - B':
+                    return ["-","-","-","-","-","-","-","-","Champions","Chargers","Smoking Sadhoos","Unstoppable","Baazigar of Bay","Breaking Bats","Fire Friends","Mavericks"];
+                case 'Summer 2024 - C':
+                    return ["-","-","-","-","-","-","-","-","CricKings","Avengers","Alviso Warriors","Sunny","Super Saiyans","Nexus XI","YAM CC-14","Barely XI","Centurions","IndianChamps","WCC Gladiators","Raynor Royals"];
             }
         }
 

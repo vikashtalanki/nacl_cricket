@@ -53,7 +53,7 @@ public class Scheduler {
         for (List<Object> listObject : data) {
             List<String> row = new ArrayList<>(listObject.size());
             for (Object object : listObject) {
-                row.add(object != null ? object.toString() : null);
+                row.add(object != null && !object.toString().isEmpty() ? object.toString() : null);
             }
             results.add(row);
         }
@@ -78,6 +78,7 @@ public class Scheduler {
             dataHeader.add("Team 2");
             dataHeader.add("Ground");
             dataHeader.add("UmpiringTeam1");
+            dataHeader.add("UmpiringTeam2");
             dataHeader.add("Failure Score");
             dataHeader.add("Team with bad timing");
             dataHeader.add("Team 1 num completed games on ground");
@@ -91,6 +92,7 @@ public class Scheduler {
                 dataRow.add(game.team2);
                 dataRow.add(game.allotedGround);
                 dataRow.add(game.umpiringTeam1);
+                dataRow.add(game.umpiringTeam2);
                 dataRow.add(game.qualityScore);
                 dataRow.add(game.teamWithDishonoredTicket);
                 dataRow.add(game.team1NumGamesOnAllotedGround);
@@ -100,7 +102,7 @@ public class Scheduler {
 
             ValueRange vr = new ValueRange().setValues(writeData).setMajorDimension("ROWS");
             sheet.spreadsheets().values()
-                    .update(spreadSheetId, "Output!A1:I", vr)
+                    .update(spreadSheetId, "Output!A1:J", vr)
                     .setValueInputOption("RAW")
                     .execute();
         } catch (Exception e) {
@@ -152,9 +154,41 @@ public class Scheduler {
     }
 
     /**
+     * Assign umpiring duties to best result of games - works for 2 neutral umpires per game
+     */
+    public static void assign2UmpiringDuties(List<Game> games, Map<String,Integer> umpiringTeamsMap, Map<String, Pair<String,String>> groupsMap) {
+        for(Game game: games) {
+            umpiringTeamsMap.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+            String division = groupsMap.get(game.team1).getValue();
+            String group = groupsMap.get(game.team1).getKey();
+            for(Map.Entry<String,Integer> entry : umpiringTeamsMap.entrySet()) {
+                String uTeamName = entry.getKey();
+                int remainingUmpiringCount = entry.getValue();
+                if(remainingUmpiringCount > 0) {
+                    String uTeamDivision = groupsMap.get(uTeamName).getValue();
+                    String uTeamGroup = groupsMap.get(uTeamName).getKey();
+                    if(uTeamDivision.equals(division) && !uTeamGroup.equals(group)) {
+                        if(game.umpiringTeam1.isEmpty()) {
+                            game.umpiringTeam1 = uTeamName;
+                            remainingUmpiringCount--;
+                        }
+                        if(game.umpiringTeam2.isEmpty()) {
+                            if(remainingUmpiringCount > 0) {
+                                game.umpiringTeam2 = uTeamName;
+                                remainingUmpiringCount--;
+                            }
+                        }
+                        umpiringTeamsMap.put(uTeamName, remainingUmpiringCount);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Assign umpiring duties to best result of games - works for only 1 neutral umpire per game
      */
-    public static boolean assignUmpiringDuties(List<Game> games, List<String> umpiringTeams, Map<String, String> groupsMap) {
+    public static boolean assignUmpiringDuties(List<Game> games, List<String> umpiringTeams, Map<String, Pair<String,String>> groupsMap) {
         //deep copy umpiringTeams as we are replacing the values in inplace
         List<String> localUmpiringTeamsCopy = new ArrayList<>();
         for(String team: umpiringTeams) {
@@ -174,7 +208,7 @@ public class Scheduler {
     }
 
     // A recursive utility function to assign umpiring duties
-    public static boolean assignUmpiringDutiesBT(List<Game> games, List<String> umpiringTeams, Map<String, String> groupsMap, int gameIndex) {
+    public static boolean assignUmpiringDutiesBT(List<Game> games, List<String> umpiringTeams, Map<String, Pair<String,String>> groupsMap, int gameIndex) {
         // Base case: If all umpiring duties are assigned then return true
         if(gameIndex >= umpiringTeams.size())
             return true;
@@ -182,9 +216,9 @@ public class Scheduler {
         for(int i = 0; i < umpiringTeams.size(); i++) {
             //Use this umpiring team only if its not empty
             if(!umpiringTeams.get(i).isEmpty()) {
-                String umpiringTeamGroup = groupsMap.get(umpiringTeams.get(i));
-                String playingTeam1Group = groupsMap.get(games.get(gameIndex).team1);
-                String playingTeam2Group = groupsMap.get(games.get(gameIndex).team2);
+                String umpiringTeamGroup = groupsMap.get(umpiringTeams.get(i)).getKey();
+                String playingTeam1Group = groupsMap.get(games.get(gameIndex).team1).getKey();
+                String playingTeam2Group = groupsMap.get(games.get(gameIndex).team2).getKey();
                 //Check if this umpiring team is from different group as playing teams
                 if(!umpiringTeamGroup.equals(playingTeam1Group) & !umpiringTeamGroup.equals(playingTeam2Group)) {
                     String umpiringTeam = umpiringTeams.get(i);
@@ -207,7 +241,7 @@ public class Scheduler {
     /**
      * Function to validate correct assignment of umpiring duties
      */
-    public static boolean validateUmpiringAssignments(List<Game> games, List<String> umpiringTeams, Map<String, String> groupsMap) {
+    public static boolean validateUmpiringAssignments(List<Game> games, List<String> umpiringTeams, Map<String, Pair<String,String>> groupsMap) {
         //Base case
         if(games.size() == 0 || groupsMap.size() == 0) {
             System.out.println("Games or Groups cannot be empty");
@@ -240,6 +274,36 @@ public class Scheduler {
     }
 
     /**
+     * Function to validate correct assignment of umpiring duties
+     */
+    public static boolean validate2UmpiringAssignments(List<Game> games, Map<String, Pair<String,String>> groupsMap) {
+        //Base case
+        if(games.size() == 0 || groupsMap.size() == 0) {
+            System.out.println("Games or Groups cannot be empty");
+            return false;
+        }
+
+        for(Game game: games) {
+            String playingTeam1 = game.team1;
+            String umpiringTeam1 = game.umpiringTeam1;
+            String umpiringTeam2 = game.umpiringTeam2;
+            String playingTeam1Division = groupsMap.get(playingTeam1).getValue();
+            String playingTeam1Group = groupsMap.get(playingTeam1).getKey();
+            String umpiringTeam1Division = groupsMap.get(umpiringTeam1).getValue();
+            String umpiringTeam1Group = groupsMap.get(umpiringTeam1).getKey();
+            String umpiringTeam2Division = groupsMap.get(umpiringTeam2).getValue();
+            String umpiringTeam2Group = groupsMap.get(umpiringTeam2).getKey();
+            //Return false if umpiring is assigned from diff division
+            if(!playingTeam1Division.equals(umpiringTeam1Division) || !playingTeam1Division.equals(umpiringTeam2Division))
+                return false;
+            //Return false if umpiring is assigned from same group
+            if(playingTeam1Group.equals(umpiringTeam1Group) || playingTeam1Group.equals(umpiringTeam2Group))
+                return false;
+        }
+        return true;
+    }
+
+    /**
      * Given a time slot, it traverses grounds to find all possible grounds
      */
     public static List<Pair<Integer, Integer>> findOpenGroundsForSlot(String slot, List<List<String>> grounds) {
@@ -268,6 +332,7 @@ public class Scheduler {
         String team1;
         String team2;
         String umpiringTeam1 = "";
+        String umpiringTeam2 = "";
         String allotedGround="";
         String allotedTime="";
         int qualityScore;
@@ -430,13 +495,16 @@ public class Scheduler {
         }
         System.out.println(groups);
         // Convert Groups into Map<Team Name, Group Name> for Easy Look Up
-        Map<String, String> groupsMap = new HashMap<>();
+        Map<String, Pair<String,String>> groupsMap = new HashMap<>();
         for (int i = 1; i < groups.size(); i++) {
             for(int j=0; j < groups.get(0).size(); j++){
-                groupsMap.put(groups.get(i).get(j), groups.get(0).get(j));
+                String division = groups.get(0).get(j).split("-")[0];
+                String group = groups.get(0).get(j).split("-")[1];
+                if(groups.get(i).get(j) != null)
+                    groupsMap.put(groups.get(i).get(j), new Pair<>(group, division));
             }
         }
-
+        System.out.println(groupsMap);
         // Read Tickets
         try {
             tickets = getData("Tickets");
@@ -507,10 +575,18 @@ public class Scheduler {
                 return;
             }
         }
-        //Collect Umpiring teams - Assuming 1 umpiring duty per game
+        //Collect Umpiring teams - Assuming 1 umpire per game
         List<String> umpiringTeams = new ArrayList<>();
         for (int i = 1; i < games.size(); i++) {
             umpiringTeams.add(games.get(i).get(3));
+        }
+
+        //Collect Umpiring teams map - Assuming 2 umpires per game
+        Map<String, Integer> umpiringTeamsMap = new HashMap<>();
+        for (int i = 1; i < games.size(); i++) {
+            umpiringTeamsMap.put(games.get(i).get(3), umpiringTeamsMap.getOrDefault(games.get(i).get(3),0) + 1);
+            if(games.get(i).get(4) != null)
+                umpiringTeamsMap.put(games.get(i).get(4), umpiringTeamsMap.getOrDefault(games.get(i).get(4),0) + 1);
         }
 
         // Read Grounds
@@ -643,15 +719,21 @@ public class Scheduler {
         System.out.println("*** BEST RESULT ****");
         System.out.println("Num games scheduled: " + numBestGamesScheduled);
         System.out.println("Quality Score: " + bestSchedulingQuality);
-
         try {
-            if (!assignUmpiringDuties(bestResults, umpiringTeams, groupsMap)) {
+            /*if (!assignUmpiringDuties(bestResults, umpiringTeams, groupsMap)) {
                 System.out.println("Cannot assign umpiring duties");
                 printSchedule(bestResults);
                 return;
-            }
+            }*/
+            assign2UmpiringDuties(bestResults, umpiringTeamsMap, groupsMap);
             System.out.println("Umpiring assignment successful");
-            if(!validateUmpiringAssignments(bestResults, umpiringTeams, groupsMap)) {
+            /*if(!validateUmpiringAssignments(bestResults, umpiringTeams, groupsMap)) {
+                System.out.println("Invalid umpiring assignments");
+                printSchedule(bestResults);
+                return;
+            }
+            System.out.println("Umpiring assignment validation successful");*/
+            if(!validate2UmpiringAssignments(bestResults, groupsMap)) {
                 System.out.println("Invalid umpiring assignments");
                 printSchedule(bestResults);
                 return;

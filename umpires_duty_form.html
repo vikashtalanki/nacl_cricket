@@ -127,6 +127,8 @@
 
     <script>
         var script_url ="https://script.google.com/macros/s/AKfycbw3bDebOYV8VnIP24DxkuoyGpNY6aR_yczobPICzfyPlubPYdvlQELxG0l_WlC-SziPqg/exec";
+        var cricclubs_url = "https://core-prod-origin.cricclubs.com/core/";
+        var url_params = "clubId=27594&x-api-key=Z!wocr8&x-consumer-key=Y6%26afRE";
         var emailcheck=false;
         var selectedSeries = 0;
         var selectedSeriesName = "";
@@ -134,8 +136,8 @@
         $(document).ready(function () {
             $("#selSeries").html("");
             $("#selSeries").append('<option value="">Select Season</option>');
-            var seriesListURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesList?clubId=27594";
-            var seriesDetailsURL = "https://ccapi.cricclubs.com/CCAPI/series/getSeriesDetails?clubId=27594&X-Auth-Token=&seriesId=";
+            var seriesListURL = cricclubs_url+"series/getSeriesList?"+url_params;
+            var seriesDetailsURL = cricclubs_url+"series/getSeriesDetails?"+url_params+"&X-Auth-Token=&seriesId=";
             $.getJSON(seriesListURL, function (data) {
                 $.each(data.data.seriesList, function (index, series) {
                     var seriesId = series.seriesID;
@@ -167,7 +169,7 @@
                     $("#sel").append('<option value="">Select Umpiring Team</option>');
                     $("#sel").show();
                     $("#umpireTables").html("");
-                    const url = "https://ccapi.cricclubs.com/CCAPI/team/getTeamsList?clubId=27594&seriesId=";
+                    const url = cricclubs_url+"team/getTeamsList?"+url_params+"&seriesId=";
                     seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) => $.getJSON(url+divId, function (data) {
                         $.each(data.data.teamsList, function (index, value) {
                             $.each(value.teams, function (index, value) {
@@ -182,10 +184,10 @@
                 $("#umpireTables").html("");
                 var umpireTeamName = this.options[this.selectedIndex].text;
                 var umpireTeamId = this.options[this.selectedIndex].value;
-                //const scheduleUrls = ["https://ccapi.cricclubs.com/CCAPI/match/getSchedule?clubId=27594&seriesId="+selectedSeries];
-                scheduleUrl = "https://ccapi.cricclubs.com/CCAPI/match/getSchedule?clubId=27594&seriesId=";
-                var playersURL = "https://ccapi.cricclubs.com/CCAPI/team/getTeamPlayers?clubId=27594&teamId=" + umpireTeamId;
-                const teamMatchesUrls = ["https://ccapi.cricclubs.com/CCAPI/match/getMatches?clubId=27594&seriesId="+selectedSeries+"&teamId="];
+                //const scheduleUrls = ["https://core-prod-origin.cricclubs.com/core/match/getSchedule?clubId=27594&seriesId="+selectedSeries];
+                scheduleUrl = cricclubs_url+"match/getSchedule?"+url_params+"&seriesId=";
+                var playersURL = cricclubs_url+"team/getTeamPlayers?"+url_params+"&teamId=" + umpireTeamId;
+                const teamMatchesUrls = [cricclubs_url+"match/getMatches?"+url_params+"&seriesId="+selectedSeries+"&teamId="];
                 var playersMatchCountMap = new Map();
                 var calls = [];
                 /*calls.push(
@@ -193,7 +195,7 @@
                     $.getJSON(teamMatchesUrl+umpireTeamId, function (data) {
                         $.each(data.data, function (idx, matchVal) {
                             if(matchVal.matchType == "l") {
-                                var matchUrl = "https://ccapi.cricclubs.com/CCAPI/scoreCard/getScoreCard?clubId=27594&matchId="+matchVal.matchId;
+                                var matchUrl = "https://core-prod-origin.cricclubs.com/core/scoreCard/getScoreCard?clubId=27594&matchId="+matchVal.matchId;
                                 $.getJSON(matchUrl, function (matchData) {
                                     if(matchData.data.matchInfo.teamOne == umpireTeamId) {
                                         $.each(matchData.data.innings1.batting, function (idx1, playerStat) {
