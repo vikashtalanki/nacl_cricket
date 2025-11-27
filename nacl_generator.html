@@ -1,0 +1,433 @@
+import React, { useState, useCallback, useRef } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, Plus, Trash2, Loader2 } from 'lucide-react';
+
+const CricketTournamentScheduler = () => {
+  // Configuration state with flexible division, group, and team counts
+  const [divisions, setDivisions] = useState([
+    { 
+      groups: [{ teamsCount: 4 }]
+    }
+  ]);
+  const [maxGamesPerWeek, setMaxGamesPerWeek] = useState(10);
+  const [gameFormat, setGameFormat] = useState('round-robin');
+
+  // Schedule and error states
+  const [schedule, setSchedule] = useState([]);
+  const [errors, setErrors] = useState([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Cancellation ref
+  const cancelTokenRef = useRef(null);
+
+  // Add a new division
+  const addDivision = () => {
+    setDivisions(prev => [...prev, { 
+      groups: [{ teamsCount: 4 }]
+    }]);
+  };
+
+  // Remove a division
+  const removeDivision = (divisionIndex) => {
+    setDivisions(prev => prev.filter((_, index) => index !== divisionIndex));
+  };
+
+  // Add a new group to a division
+  const addGroup = (divisionIndex) => {
+    setDivisions(prev => {
+      const newDivisions = [...prev];
+      newDivisions[divisionIndex].groups.push({ teamsCount: 4 });
+      return newDivisions;
+    });
+  };
+
+  // Remove a group from a division
+  const removeGroup = (divisionIndex, groupIndex) => {
+    setDivisions(prev => {
+      const newDivisions = [...prev];
+      newDivisions[divisionIndex].groups = newDivisions[divisionIndex].groups
+        .filter((_, index) => index !== groupIndex);
+      return newDivisions;
+    });
+  };
+
+  // Update teams count in a group
+  const updateTeamsCount = (divisionIndex, groupIndex, teamsCount) => {
+    setDivisions(prev => {
+      const newDivisions = [...prev];
+      newDivisions[divisionIndex].groups[groupIndex].teamsCount = 
+        Math.max(2, Number(teamsCount));
+      return newDivisions;
+    });
+  };
+
+  // Validate inputs
+  const validateInputs = () => {
+    const newErrors = [];
+
+    // Check overall tournament structure
+    if (divisions.length === 0) {
+      newErrors.push("At least one division is required");
+      return newErrors;
+    }
+
+    // Validate each division
+    divisions.forEach((division, divIndex) => {
+      if (division.groups.length === 0) {
+        newErrors.push(`Division ${divIndex + 1} must have at least one group`);
+      }
+
+      division.groups.forEach((group, groupIndex) => {
+        if (group.teamsCount < 2) {
+          newErrors.push(`Division ${divIndex + 1}, Group ${groupIndex + 1} must have at least 2 teams`);
+        }
+      });
+    });
+
+    if (maxGamesPerWeek < 1) {
+      newErrors.push("Max games per week must be at least 1");
+    }
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
+  // Generate team names automatically
+  const generateTeamNames = () => {
+    const teamNames = [];
+
+    divisions.forEach((division, divIndex) => {
+      division.groups.forEach((group, groupIndex) => {
+        for (let teamNum = 1; teamNum <= group.teamsCount; teamNum++) {
+          teamNames.push(`Div${divIndex + 1}-Grp${groupIndex + 1}-Team${teamNum}`);
+        }
+      });
+    });
+    
+    return teamNames;
+  };
+
+  // Async scheduler with yield points
+  const generateScheduleAsync = useCallback(() => {
+    // Reset cancellation
+    cancelTokenRef.current = { cancelled: false };
+    setIsGenerating(true);
+    setErrors([]);
+    setSchedule([]);
+
+    // Validate inputs
+    if (!validateInputs()) {
+      setIsGenerating(false);
+      return;
+    }
+
+    // Yield to allow UI to update
+    const yieldToMain = () => new Promise(resolve => setTimeout(resolve, 0));
+
+    // Async scheduling function
+    const asyncScheduler = async () => {
+      try {
+        // Generate team names
+        const allTeams = generateTeamNames();
+
+        // Generate complete round-robin matches within groups
+        const allMatches = [];
+        let teamIndex = 0;
+
+        // Generate matches for each division and group
+        divisions.forEach((division, divIndex) => {
+          division.groups.forEach((group, groupIndex) => {
+            // Extract teams for this group
+            const groupTeams = allTeams.slice(
+              teamIndex, 
+              teamIndex + group.teamsCount
+            );
+            
+            // Generate matches for this group (Round Robin)
+            for (let i = 0; i < groupTeams.length; i++) {
+              for (let j = i + 1; j < groupTeams.length; j++) {
+                allMatches.push([groupTeams[i], groupTeams[j]]);
+              }
+            }
+            
+            // Move team index
+            teamIndex += group.teamsCount;
+          });
+        });
+
+        // Yield to prevent blocking
+        await yieldToMain();
+
+        // Check if cancelled
+        if (cancelTokenRef.current.cancelled) return [];
+
+        // Umpire assignment logic
+        const matchesWithUmpires = allMatches.map(match => {
+          // Track division and group for each team/potential umpire
+          const getTeamDivisionGroup = (team) => {
+            let runningIndex = 0;
+            for (let divIndex = 0; divIndex < divisions.length; divIndex++) {
+              const division = divisions[divIndex];
+              for (let groupIndex = 0; groupIndex < division.groups.length; groupIndex++) {
+                const group = division.groups[groupIndex];
+                const groupTeamCount = group.teamsCount;
+                
+                const teamIndexInList = allTeams.indexOf(team);
+                
+                if (teamIndexInList >= runningIndex && 
+                    teamIndexInList < runningIndex + groupTeamCount) {
+                  return { divIndex, groupIndex };
+                }
+                
+                runningIndex += groupTeamCount;
+              }
+            }
+            return { divIndex: -1, groupIndex: -1 };
+          };
+
+          // Find two umpires from different groups/divisions
+          const { divIndex: team1Div, groupIndex: team1Group } = getTeamDivisionGroup(match[0]);
+          
+          // Find possible umpires (not from same division or group)
+          const possibleUmpires = allTeams.filter(team => {
+            const { divIndex: umpireDiv, groupIndex: umpireGroup } = getTeamDivisionGroup(team);
+            
+            return (umpireDiv !== team1Div || umpireGroup !== team1Group);
+          });
+
+          // Randomly select two umpires
+          const umpireIndices = new Set();
+          while (umpireIndices.size < 2) {
+            const randomIndex = Math.floor(Math.random() * possibleUmpires.length);
+            umpireIndices.add(possibleUmpires[randomIndex]);
+          }
+
+          const umpires = Array.from(umpireIndices);
+          return [...match, ...umpires];
+        });
+
+        // Yield to prevent blocking
+        await yieldToMain();
+
+        // Check if cancelled
+        if (cancelTokenRef.current.cancelled) return [];
+
+        // Distribute matches across weeks
+        const scheduledMatches = [];
+        const teamWeeklyGames = {};
+        const teamWeeklyUmpiring = {};
+
+        // Initialize tracking
+        allTeams.forEach(team => {
+          teamWeeklyGames[team] = {};
+          teamWeeklyUmpiring[team] = {};
+        });
+
+        let currentWeek = 1;
+        let gamesThisWeek = 0;
+
+        // Shuffle matches to distribute more evenly
+        const shuffledMatches = matchesWithUmpires.sort(() => Math.random() - 0.5);
+
+        // Tracking completed matches
+        const completedMatches = new Set();
+
+        // Multiple pass approach to schedule all matches
+        while (completedMatches.size < shuffledMatches.length) {
+          // Reset for this week
+          gamesThisWeek = 0;
+
+          // Temporary storage for tracking in this week's iteration
+          const weeklyTeamGames = {};
+          const weeklyTeamUmpiring = {};
+          const weekMatches = [];
+
+          for (const match of shuffledMatches) {
+            // Skip already scheduled matches
+            const matchKey = `${match[0]}-${match[1]}`;
+            const reverseMatchKey = `${match[1]}-${match[0]}`;
+            if (completedMatches.has(matchKey) || completedMatches.has(reverseMatchKey)) {
+              continue;
+            }
+
+            const [team1, team2, umpire1, umpire2] = match;
+
+            // Initialize weekly tracking
+            weeklyTeamGames[team1] = weeklyTeamGames[team1] || 0;
+            weeklyTeamGames[team2] = weeklyTeamGames[team2] || 0;
+            weeklyTeamUmpiring[umpire1] = weeklyTeamUmpiring[umpire1] || 0;
+            weeklyTeamUmpiring[umpire2] = weeklyTeamUmpiring[umpire2] || 0;
+
+            // Check if any team is already booked this week
+            const isTeamAvailable = 
+              (weeklyTeamGames[team1] === 0) && 
+              (weeklyTeamGames[team2] === 0) &&
+              (weeklyTeamUmpiring[team1] === 0) && 
+              (weeklyTeamUmpiring[team2] === 0) &&
+              (weeklyTeamUmpiring[umpire1] < 4) &&
+              (weeklyTeamUmpiring[umpire2] < 4);
+
+            if (isTeamAvailable && gamesThisWeek < maxGamesPerWeek) {
+              // Schedule the match
+              weekMatches.push([
+                currentWeek, 
+                team1, 
+                team2, 
+                umpire1, 
+                umpire2
+              ]);
+
+              // Mark match as completed
+              completedMatches.add(matchKey);
+
+              // Update weekly tracking
+              weeklyTeamGames[team1]++;
+              weeklyTeamGames[team2]++;
+              weeklyTeamUmpiring[umpire1]++;
+              weeklyTeamUmpiring[umpire2]++;
+
+              gamesThisWeek++;
+            }
+
+            // Yield periodically to prevent blocking
+            if (completedMatches.size % 50 === 0) {
+              await yieldToMain();
+              
+              // Check if cancelled
+              if (cancelTokenRef.current.cancelled) return [];
+            }
+          }
+
+          // Add week's matches to overall schedule
+          scheduledMatches.push(...weekMatches);
+
+          // Move to next week
+          currentWeek++;
+
+          // Yield at the end of each week
+          await yieldToMain();
+        }
+
+        return scheduledMatches;
+      } catch (error) {
+        console.error('Schedule generation error:', error);
+        setErrors(['An error occurred while generating the schedule']);
+        return [];
+      }
+    };
+
+    // Run async scheduler
+    asyncScheduler()
+      .then(generatedSchedule => {
+        if (!cancelTokenRef.current.cancelled) {
+          setSchedule(generatedSchedule);
+        }
+        setIsGenerating(false);
+      })
+      .catch(error => {
+        console.error('Schedule generation failed:', error);
+        setErrors(['An unexpected error occurred']);
+        setIsGenerating(false);
+      });
+  }, [divisions, maxGamesPerWeek]);
+
+  // Cancel schedule generation
+  const cancelScheduleGeneration = () => {
+    if (cancelTokenRef.current) {
+      cancelTokenRef.current.cancelled = true;
+    }
+    setIsGenerating(false);
+  };
+
+  // Render schedule as CSV for easy copying
+  const renderScheduleAsCSV = () => {
+    if (schedule.length === 0) return '';
+    
+    // Styling characters for borders
+    const TOP_LEFT = '┌';
+    const TOP_RIGHT = '┐';
+    const BOTTOM_LEFT = '└';
+    const BOTTOM_RIGHT = '┘';
+    const HORIZONTAL = '─';
+    const VERTICAL = '│';
+    const CROSS = '┼';
+    const T_RIGHT = '├';
+    const T_LEFT = '┤';
+
+    // CSV headers with more descriptive columns
+    const headers = [
+      'Week Number', 
+      'Team 1 (Playing)', 
+      'Team 2 (Playing)', 
+      'Umpire 1', 
+      'Umpire 2',
+      'Total Games This Week',
+      'Cumulative Games'
+    ];
+
+    // Track games per week
+    const gamesPerWeek = {};
+    schedule.forEach(match => {
+      const week = match[0];
+      gamesPerWeek[week] = (gamesPerWeek[week] || 0) + 1;
+    });
+
+    // Calculate column widths
+    const columnWidths = headers.map((header, index) => {
+      const headerWidth = header.length;
+      const maxColumnWidth = Math.max(
+        headerWidth,
+        ...schedule.map(match => String(match[index] || '').length)
+      );
+      return maxColumnWidth + 2; // Add padding
+    });
+
+    // Pad function to ensure consistent column width
+    const pad = (str, width) => {
+      const paddedStr = String(str).padEnd(width);
+      return paddedStr.slice(0, width);
+    };
+
+    // Create top border
+    const topBorder = TOP_LEFT + 
+      columnWidths.map(width => HORIZONTAL.repeat(width)).join(CROSS) + 
+      TOP_RIGHT;
+
+    // Create header row
+    const headerRow = VERTICAL + 
+      headers.map((header, index) => pad(header, columnWidths[index])).join(VERTICAL) + 
+      VERTICAL;
+
+    // Create separator
+    const separator = T_RIGHT + 
+      columnWidths.map(width => HORIZONTAL.repeat(width)).join(CROSS) + 
+      T_LEFT;
+
+    // Create data rows
+    let cumulativeGames = 0;
+    const dataRows = schedule.map(match => {
+      cumulativeGames++;
+      const rowData = [
+        match[0], 
+        match[1], 
+        match[2], 
+        match[3], 
+        match[4],
+        gamesPerWeek[match[0]],
+        cumulativeGames
+      ];
+      
+      return VERTICAL + 
+        rowData.map((item, index) => pad(item, columnWidths[index])).join(VERTICAL) + 
+        VERTICAL;
+    });
+
+    // Create bottom border
+    const bottomBorder = BOTTOM_LEFT + 
+      columnWidths.map(width => HORIZONTAL.repeat(width)).join(CROSS) + 
+      BOTTOM_RIGHT;
+
+    // Combine all parts
+    const table

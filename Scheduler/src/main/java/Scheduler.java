@@ -240,9 +240,6 @@ public class Scheduler {
         return false;
     }
 
-    /**
-     * Assign umpiring duties to best result of games - works for only 1 neutral umpire per game
-     */
     public static boolean assignUmpiringDuties2(List<Game> games, Map<String,Integer> umpiringTeamsMap, Map<String, Pair<String,String>> groupsMap) {
         //deep copy umpiringTeams as we are replacing the values in inplace
         Map<String,Integer> localUmpiringTeamsMapCopy = new TreeMap<>(umpiringTeamsMap);
@@ -253,10 +250,10 @@ public class Scheduler {
         Stream<Game> sortedGamesStream = games.stream().sorted(comparator);
         games = sortedGamesStream.collect(Collectors.toList());
 
-        return assignUmpiringDutiesBT2(games, localUmpiringTeamsMapCopy, groupsMap, 0);
+        return assignUmpiringDutiesBT3(games, localUmpiringTeamsMapCopy, groupsMap, 0);
     }
 
-    // A recursive utility function to assign umpiring duties - works for 2 umpires per game. Umpiring assigned from different Div
+    // A recursive utility function to assign umpiring duties - works for 2 umpires per game. Umpiring assigned from different Div or different group from same div
     public static boolean assignUmpiringDutiesBT2(List<Game> games, Map<String,Integer> umpiringTeamsMap, Map<String, Pair<String,String>> groupsMap, int gameIndex) {
         // Base case: If all umpiring duties are assigned then return true
         if(gameIndex >= games.size())
@@ -266,9 +263,12 @@ public class Scheduler {
             int remainingUmpiringsForThisTeam = entry.getValue();
             if(remainingUmpiringsForThisTeam > 0) {
                 String umpiringTeamDiv = groupsMap.get(umpiringTeam).getValue();
+                String umpiringTeamGrp = groupsMap.get(umpiringTeam).getKey();
                 String playingTeam1Div = groupsMap.get(games.get(gameIndex).team1).getValue();
+                String playingTeam1Grp = groupsMap.get(games.get(gameIndex).team1).getKey();
                 String playingTeam2Div = groupsMap.get(games.get(gameIndex).team2).getValue();
-                if(!umpiringTeamDiv.equals(playingTeam1Div) && !umpiringTeamDiv.equals(playingTeam2Div)) {
+                String playingTeam2Grp = groupsMap.get(games.get(gameIndex).team2).getKey();
+                if((!umpiringTeamDiv.equals(playingTeam1Div) || !umpiringTeamGrp.equals(playingTeam1Grp)) && (!umpiringTeamDiv.equals(playingTeam2Div) || !umpiringTeamGrp.equals(playingTeam2Grp))) {
                     //both umpiring duties of the game are not assigned and this umpiring team has atleast 2 umpiring duties remaining
                     if(games.get(gameIndex).umpiringTeam1.isEmpty() &&  games.get(gameIndex).umpiringTeam2.isEmpty() && remainingUmpiringsForThisTeam >= 2) {
                         games.get(gameIndex).umpiringTeam1 = umpiringTeam;
@@ -306,6 +306,95 @@ public class Scheduler {
         //if an umpiring team cannot be assigned to any game, return false
         return false;
     }
+
+    /* Summer 2025 Format
+    If the game is in DivA or DivB → Umpiring teams must be from a different division.
+    If the game is in DivC → Umpiring teams must be:
+        From a different group in DivC, or
+        From any group in DivA or DivB.
+    Never allow teams to umpire their own group’s game in DivC.
+    */
+    public static boolean assignUmpiringDutiesBT3(List<Game> games, Map<String,Integer> umpiringTeamsMap, Map<String, Pair<String,String>> groupsMap, int gameIndex) {
+        if (gameIndex >= games.size())
+            return true;
+
+        Game currentGame = games.get(gameIndex);
+        String playingTeam1 = currentGame.team1;
+        String playingTeam2 = currentGame.team2;
+
+        String playingTeam1Div = groupsMap.get(playingTeam1).getValue();
+        String playingTeam2Div = groupsMap.get(playingTeam2).getValue();
+
+        String playingTeam1Grp = groupsMap.get(playingTeam1).getKey();
+        String playingTeam2Grp = groupsMap.get(playingTeam2).getKey();
+
+        for (Map.Entry<String,Integer> entry : umpiringTeamsMap.entrySet()) {
+            String umpiringTeam = entry.getKey();
+            int remainingUmpiringsForThisTeam = entry.getValue();
+
+            if (remainingUmpiringsForThisTeam > 0) {
+                String umpiringTeamDiv = groupsMap.get(umpiringTeam).getValue();
+                String umpiringTeamGrp = groupsMap.get(umpiringTeam).getKey();
+
+                boolean validUmpire = false;
+
+                if (playingTeam1Div.equals("DivC") && playingTeam2Div.equals("DivC")) {
+                    // ✅ Umpiring allowed from:
+                    //  - different group in DivC
+                    //  - any group in DivA or DivB
+                    if (!umpiringTeamGrp.equals(playingTeam1Grp) && !umpiringTeamGrp.equals(playingTeam2Grp)) {
+                        validUmpire = true;
+                    }
+                } else {
+                    // ✅ For DivA/DivB games, only allow umpiring from another division
+                    if (!umpiringTeamDiv.equals(playingTeam1Div) && !umpiringTeamDiv.equals(playingTeam2Div)) {
+                        validUmpire = true;
+                    }
+                }
+
+                if (validUmpire) {
+                    // Try assigning both duties if both slots are empty and team has 2 duties left
+                    if (currentGame.umpiringTeam1.isEmpty() && currentGame.umpiringTeam2.isEmpty() && remainingUmpiringsForThisTeam >= 2) {
+                        currentGame.umpiringTeam1 = umpiringTeam;
+                        currentGame.umpiringTeam2 = umpiringTeam;
+                        umpiringTeamsMap.put(umpiringTeam, remainingUmpiringsForThisTeam - 2);
+
+                        if (assignUmpiringDutiesBT2(games, umpiringTeamsMap, groupsMap, gameIndex + 1))
+                            return true;
+
+                        // backtrack
+                        currentGame.umpiringTeam1 = "";
+                        currentGame.umpiringTeam2 = "";
+                        umpiringTeamsMap.put(umpiringTeam, remainingUmpiringsForThisTeam);
+                    }
+                    // Try assigning one duty if one slot is open and team has 1 duty left
+                    else if ((currentGame.umpiringTeam1.isEmpty() || currentGame.umpiringTeam2.isEmpty()) && remainingUmpiringsForThisTeam % 2 == 1) {
+                        if (currentGame.umpiringTeam1.isEmpty()) {
+                            currentGame.umpiringTeam1 = umpiringTeam;
+                        } else {
+                            currentGame.umpiringTeam2 = umpiringTeam;
+                        }
+                        umpiringTeamsMap.put(umpiringTeam, remainingUmpiringsForThisTeam - 1);
+
+                        if (assignUmpiringDutiesBT2(games, umpiringTeamsMap, groupsMap,
+                                (currentGame.umpiringTeam1.isEmpty() || currentGame.umpiringTeam2.isEmpty()) ? gameIndex : gameIndex + 1))
+                            return true;
+
+                        // backtrack
+                        if (currentGame.umpiringTeam1.equals(umpiringTeam)) {
+                            currentGame.umpiringTeam1 = "";
+                        } else {
+                            currentGame.umpiringTeam2 = "";
+                        }
+                        umpiringTeamsMap.put(umpiringTeam, remainingUmpiringsForThisTeam);
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
 
     /**
      * Function to validate correct assignment of umpiring duties
@@ -390,12 +479,22 @@ public class Scheduler {
             String umpiringTeam1 = game.umpiringTeam1;
             String umpiringTeam2 = game.umpiringTeam2;
             String playingTeam1Division = groupsMap.get(playingTeam1).getValue();
+            String playingTeam1Group = groupsMap.get(playingTeam1).getKey();
             String playingTeam2Division = groupsMap.get(playingTeam2).getValue();
+            String playingTeam2Group = groupsMap.get(playingTeam2).getKey();
             String umpiringTeam1Division = groupsMap.get(umpiringTeam1).getValue();
+            String umpiringTeam1Group = groupsMap.get(umpiringTeam1).getKey();
             String umpiringTeam2Division = groupsMap.get(umpiringTeam2).getValue();
+            String umpiringTeam2Group = groupsMap.get(umpiringTeam2).getKey();
 
-            //For cross group gaming in Divs A & B and RR grouping in Div C
-            if(playingTeam1Division.equals(umpiringTeam1Division) || playingTeam1Division.equals(umpiringTeam2Division) || playingTeam2Division.equals(umpiringTeam1Division) || playingTeam2Division.equals(umpiringTeam2Division))
+            //Rejest if umpiring is form same div and group
+            if(playingTeam1Division.equals(umpiringTeam1Division) && playingTeam1Group.equals(umpiringTeam1Group))
+                return false;
+            if(playingTeam1Division.equals(umpiringTeam2Division) && playingTeam1Group.equals(umpiringTeam2Group))
+                return false;
+            if(playingTeam2Division.equals(umpiringTeam1Division) && playingTeam2Group.equals(umpiringTeam1Group))
+                return false;
+            if(playingTeam2Division.equals(umpiringTeam2Division) && playingTeam2Group.equals(umpiringTeam2Group))
                 return false;
             localUmpiringTeamsMapCopy.put(umpiringTeam1,localUmpiringTeamsMapCopy.getOrDefault(umpiringTeam1,0)+1);
             localUmpiringTeamsMapCopy.put(umpiringTeam2,localUmpiringTeamsMapCopy.getOrDefault(umpiringTeam2,0)+1);
@@ -408,6 +507,85 @@ public class Scheduler {
                 return false;
             }
         }
+        return true;
+    }
+
+    /* Validates
+    DivC umpires must not come from the same group.
+    DivC umpires may come from:
+        Another group in DivC
+        Any group in DivA or DivB
+    DivA/B games must be umpired by teams from another division.
+    Assignment counts are validated.
+     */
+    public static boolean validateUmpiringAssignments3(List<Game> games, Map<String,Integer> umpiringTeamsMap, Map<String, Pair<String,String>> groupsMap) {
+        if (games.isEmpty() || groupsMap.isEmpty()) {
+            System.out.println("Games or Groups cannot be empty");
+            return false;
+        }
+
+        Map<String, Integer> localUmpiringTeamsMapCopy = new TreeMap<>();
+
+        for (Game game : games) {
+            String team1 = game.team1;
+            String team2 = game.team2;
+            String ump1 = game.umpiringTeam1;
+            String ump2 = game.umpiringTeam2;
+
+            String team1Div = groupsMap.get(team1).getValue();
+            String team1Grp = groupsMap.get(team1).getKey();
+            String team2Div = groupsMap.get(team2).getValue();
+            String team2Grp = groupsMap.get(team2).getKey();
+
+            String ump1Div = groupsMap.get(ump1).getValue();
+            String ump1Grp = groupsMap.get(ump1).getKey();
+            String ump2Div = groupsMap.get(ump2).getValue();
+            String ump2Grp = groupsMap.get(ump2).getKey();
+
+            boolean isDivCGame = team1Div.equals("DivC") && team2Div.equals("DivC");
+
+            // Validation for ump1
+            if (isDivCGame) {
+                if ((ump1Div.equals("DivC") && (ump1Grp.equals(team1Grp) || ump1Grp.equals(team2Grp)))) {
+                    System.out.println("Invalid umpire (ump1) from same group in DivC for game: " + team1 + " vs " + team2);
+                    return false;
+                }
+            } else {
+                if (ump1Div.equals(team1Div) || ump1Div.equals(team2Div)) {
+                    System.out.println("Invalid umpire (ump1) from same division for DivA/B game: " + team1 + " vs " + team2);
+                    return false;
+                }
+            }
+
+            // Validation for ump2
+            if (isDivCGame) {
+                if ((ump2Div.equals("DivC") && (ump2Grp.equals(team1Grp) || ump2Grp.equals(team2Grp)))) {
+                    System.out.println("Invalid umpire (ump2) from same group in DivC for game: " + team1 + " vs " + team2);
+                    return false;
+                }
+            } else {
+                if (ump2Div.equals(team1Div) || ump2Div.equals(team2Div)) {
+                    System.out.println("Invalid umpire (ump2) from same division for DivA/B game: " + team1 + " vs " + team2);
+                    return false;
+                }
+            }
+
+            // Track umpire count
+            localUmpiringTeamsMapCopy.put(ump1, localUmpiringTeamsMapCopy.getOrDefault(ump1, 0) + 1);
+            localUmpiringTeamsMapCopy.put(ump2, localUmpiringTeamsMapCopy.getOrDefault(ump2, 0) + 1);
+        }
+
+        // Validate umpire assignment counts
+        for (Map.Entry<String, Integer> entry : localUmpiringTeamsMapCopy.entrySet()) {
+            int expected = umpiringTeamsMap.getOrDefault(entry.getKey(), 0);
+            int assigned = entry.getValue();
+            if (assigned != expected) {
+                System.out.println("Invalid umpiring assignment counts for team: " + entry.getKey() +
+                        ". Expected: " + expected + ", Assigned: " + assigned);
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -863,7 +1041,7 @@ public class Scheduler {
                 return;
             }
             System.out.println("Umpiring assignment successful");
-            if(!validateUmpiringAssignments2(bestResults, umpiringTeamsMap, groupsMap)) {
+            if(!validateUmpiringAssignments3(bestResults, umpiringTeamsMap, groupsMap)) {
                 System.out.println("Invalid umpiring assignments");
                 printSchedule(bestResults);
                 return;

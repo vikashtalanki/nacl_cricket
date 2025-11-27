@@ -727,6 +727,54 @@
                     summer2024CTH.appendChild(document.createTextNode("Summer 2024 - C"));
                     tr.appendChild(summer2024CTH);
 
+                    var winter202425ATH = document.createElement('th');
+                    winter202425ATH.appendChild(document.createTextNode("Winter 2024-25 - A"));
+                    tr.appendChild(winter202425ATH);
+
+                    var winter202425BTH = document.createElement('th');
+                    winter202425BTH.appendChild(document.createTextNode("Winter 2024-25 - B"));
+                    tr.appendChild(winter202425BTH);
+
+                    var winter202425CTH = document.createElement('th');
+                    winter202425CTH.appendChild(document.createTextNode("Winter 2024-25 - C"));
+                    tr.appendChild(winter202425CTH);
+
+                    var PreCup2025TH = document.createElement('th');
+                    PreCup2025TH.appendChild(document.createTextNode("Presidents Cup 2025"));
+                    tr.appendChild(PreCup2025TH);
+
+                    var spring2025ATH = document.createElement('th');
+                    spring2025ATH.appendChild(document.createTextNode("Spring 2025 - A"));
+                    tr.appendChild(spring2025ATH);
+
+                    var spring2025BTH = document.createElement('th');
+                    spring2025BTH.appendChild(document.createTextNode("Spring 2025 - B"));
+                    tr.appendChild(spring2025BTH);
+
+                    var spring2025CTH = document.createElement('th');
+                    spring2025CTH.appendChild(document.createTextNode("Spring 2025 - C"));
+                    tr.appendChild(spring2025CTH);
+
+                    var IndCup2025TH = document.createElement('th');
+                    IndCup2025TH.appendChild(document.createTextNode("Independence Cup 2025"));
+                    tr.appendChild(IndCup2025TH);
+
+                    var summer2025ATH = document.createElement('th');
+                    summer2025ATH.appendChild(document.createTextNode("Summer 2025 - A"));
+                    tr.appendChild(summer2025ATH);
+
+                    var summer2025BTH = document.createElement('th');
+                    summer2025BTH.appendChild(document.createTextNode("Summer 2025 - B"));
+                    tr.appendChild(summer2025BTH);
+
+                    var summer2025CTH = document.createElement('th');
+                    summer2025CTH.appendChild(document.createTextNode("Summer 2025 - C"));
+                    tr.appendChild(summer2025CTH);
+
+                    var DiwCup2025TH = document.createElement('th');
+                    DiwCup2025TH.appendChild(document.createTextNode("Diwali Cup 2025"));
+                    tr.appendChild(DiwCup2025TH);
+
                     tbl.appendChild(tr);
                 }
                 else if(selectedStatType === "Summary") {
@@ -910,7 +958,7 @@
                     var win202223Row = tbl.insertRow(2);
                     win202223Row.insertCell(0).innerHTML= "WINTER 2022-23";
                     win202223ADivCell = win202223Row.insertCell(1);
-                    win202223ADivCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/xFP9SMY/Seamers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3>SEAMERS&nbsp;&nbsp;&nbsp;&nbsp;&</h3>&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://i.ibb.co/Lx6HQ4F/Grizzlies.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3>GRIZZLIES</h3></div>';
+                    win202223ADivCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/xFP9SMY/Seamers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3>SEAMERS&nbsp;&nbsp;&nbsp;&nbsp;&</h3>&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://i.ibb.co/Lx6HQ4F/Dream Killers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3>GRIZZLIES</h3></div>';
                     win202223ADivCell.colSpan = 2;
                     win202223BDivCell = win202223Row.insertCell(2);
                     win202223BDivCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/K5WxbRB/Royal-Kings.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3>ROYAL KINGS&nbsp;&nbsp;&nbsp;&nbsp;&</h3>&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://i.ibb.co/CvZsmht/2pointo.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3>2POINT0</h3></div>';
@@ -950,7 +998,7 @@
                     seriesCell.innerHTML= "SUMMER 2023";
                     seriesCell.rowSpan = 2;
                     AChampionCell = teamsRow.insertCell(0);
-                    AChampionCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/7pbCbdv/Lords.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">LORDS<br><b style="color:#ffff00">139(20)</h3></div>';
+                    AChampionCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/mCrbsxV3/Lords-new.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">LORDS<br><b style="color:#ffff00">139(20)</h3></div>';
                     AChampionCell.style.backgroundColor="#012169";
                     teamsRow.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Tv5Y3bV/CSK.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">CSK YORKERS<br><b style="color:#ffff00">136/9(20)</h3></div>';
                     teamsRow.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/K5WxbRB/Royal-Kings.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ROYAL KINGS<br><b style="color:#ffff00">100/8(20)</h3></div>';
@@ -1048,6 +1096,84 @@
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
 
+                    var teamsRow = tbl.insertRow(2);
+                    var groundRow = tbl.insertRow(2);
+                    seriesCell = groundRow.insertCell(0);
+                    seriesCell.innerHTML= "WINTER 2024-25";
+                    seriesCell.rowSpan = 2;
+                    AChampionCell = teamsRow.insertCell(0);
+                    AChampionCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/ZLsxGXQ/MW.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">MIGHTY WARRIORS<br><b style="color:#ffff00">86/9(15)</h3></div>';
+                    AChampionCell.style.backgroundColor="#012169";
+                    teamsRow.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/qFhzncs/Money-Hiest.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">MONEY HEIST<br><b style="color:#ffff00">80/8(15)</h3></div>';
+                    teamsRow.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/mCrbsxV3/Lords-new.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">LORDS XI<br><b style="color:#ffff00">78/9(15)</h3></div>';
+                    teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/X6NdC9n/Daredevils.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">DAREDEVILS<br><b style="color:#ffff00">39(11.3)</h3></div>';
+                    teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Kz7sJ5Xq/Fire-Friends.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">FIRE FRIENDS<br><b style="color:#ffff00">111/8(15)</h3></div>';
+                    teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Rp1f2Pfp/Avengers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">AVENGERS<br><b style="color:#ffff00">85(13.4)</h3></div>';
+                    groundACell = groundRow.insertCell(1);
+                    groundACell.innerHTML= "16-Feb-2025, Sierramont, San Jose";
+                    groundACell.style.textAlign = "center";
+                    groundACell.colSpan = 2;
+                    groundBCell = groundRow.insertCell(2);
+                    groundBCell.innerHTML= "16-Feb-2025, Sierramont, San Jose";
+                    groundBCell.style.textAlign = "center";
+                    groundBCell.colSpan = 2;
+                    groundCCell = groundRow.insertCell(3);
+                    groundCCell.innerHTML= "16-Feb-2025, Murphy Park, Milpitas";
+                    groundCCell.style.textAlign = "center";
+                    groundCCell.colSpan = 2;
+
+                    var teamsRow = tbl.insertRow(2);
+                    var groundRow = tbl.insertRow(2);
+                    seriesCell = groundRow.insertCell(0);
+                    seriesCell.innerHTML= "SPRING 2025";
+                    seriesCell.rowSpan = 2;
+                    AChampionCell = teamsRow.insertCell(0);
+                    AChampionCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/qFhzncs/Money-Hiest.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">MONEY HEIST<br><b style="color:#ffff00">110/9(20)</h3></div>';
+                    teamsRow.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Wc4DrBx/Astros.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ASTROS+<br><b style="color:#ffff00">108(19.1)</h3></div>';
+                    AChampionCell.style.backgroundColor="#012169";
+                    teamsRow.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/J3hH24k/Unstoppable.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">UNSTOPPABLE<br><b style="color:#ffff00">135/9(20)</h3></div>';
+                    teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/1G5KrQxP/Royal-Knights.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ROYAL KNIGHTS<br><b style="color:#ffff00">134(20)</h3></div>';
+                    teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/d0d8sJ82/Orange-Army.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ORANGE ARMY<br><b style="color:#ffff00">126(19.5) SO:17/1</h3></div>';
+                    teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/39tFHpjn/Sabertooths.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">SABERTOOTHS<br><b style="color:#ffff00">126/6(20) SO:16/0</h3></div>';
+                    groundACell = groundRow.insertCell(1);
+                    groundACell.innerHTML= "07-Jun-2025, Kathryn Hughes, Santa Clara";
+                    groundACell.style.textAlign = "center";
+                    groundACell.colSpan = 2;
+                    groundBCell = groundRow.insertCell(2);
+                    groundBCell.innerHTML= "07-Jun-2025, Kathryn Hughes, Santa Clara";
+                    groundBCell.style.textAlign = "center";
+                    groundBCell.colSpan = 2;
+                    groundCCell = groundRow.insertCell(3);
+                    groundCCell.innerHTML= "07-Jun-2025, MLK, Hayward";
+                    groundCCell.style.textAlign = "center";
+                    groundCCell.colSpan = 2;
+
+                    var teamsRow = tbl.insertRow(2);
+                    var groundRow = tbl.insertRow(2);
+                    seriesCell = groundRow.insertCell(0);
+                    seriesCell.innerHTML= "SUMMER 2025";
+                    seriesCell.rowSpan = 2;
+                    AChampionCell = teamsRow.insertCell(0);
+                    AChampionCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/ZLsxGXQ/MW.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">MIGHTY WARRIORS<br><b style="color:#ffff00">172/8(20)</h3></div>';
+                    teamsRow.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/1G5KrQxP/Royal-Knights.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ROYAL KNIGHTS<br><b style="color:#ffff00">93(19.4)</h3></div>';
+                    AChampionCell.style.backgroundColor="#012169";
+                    teamsRow.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/d0d8sJ82/Orange-Army.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ORANGE ARMY<br><b style="color:#ffff00">76/4(12.4)</h3></div>';
+                    teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><h3 style="text-align: center;">KINGS XI<br><b style="color:#ffff00">71(19.1)</h3></div>';
+                    teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/0j7JwnrC/Escuela-Boys.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ESCUELA BOYS<br><b style="color:#ffff00">168/9(20)</h3></div>';
+                    teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/G3RNFp04/JerseyXI.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">JERSEY XI<br><b style="color:#ffff00">162/9(20)</h3></div>';
+                    groundACell = groundRow.insertCell(1);
+                    groundACell.innerHTML= "12-Oct-2025, Loren Eden, Hayward";
+                    groundACell.style.textAlign = "center";
+                    groundACell.colSpan = 2;
+                    groundBCell = groundRow.insertCell(2);
+                    groundBCell.innerHTML= "12-Oct-2025, Loren Eden, Hayward";
+                    groundBCell.style.textAlign = "center";
+                    groundBCell.colSpan = 2;
+                    groundCCell = groundRow.insertCell(3);
+                    groundCCell.innerHTML= "12-Oct-2025, MLK, Hayward";
+                    groundCCell.style.textAlign = "center";
+                    groundCCell.colSpan = 2;
+
                     var t12tbl = document.createElement("table");
                     t12tbl.setAttribute("class", "styled-table");
                     t12tbl.setAttribute("style","table-layout:fixed");
@@ -1106,6 +1232,48 @@
                     teamsRow.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/fM0RQ1q/Sadhoos.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">SMOKING SADHOOS<br><b style="color:#ffff00">107/6(12)</h3></div>';
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "30-Jun-2024, Kathryn Hughes, Santa Clara";
+                    groundACell.style.textAlign = "center";
+                    groundACell.colSpan = 2;
+
+                    var teamsRow = t12tbl.insertRow(2);
+                    var groundRow = t12tbl.insertRow(2);
+                    seriesCell = groundRow.insertCell(0);
+                    seriesCell.innerHTML= "PRESIDENTS CUP 2025";
+                    seriesCell.rowSpan = 2;
+                    AChampionCell = teamsRow.insertCell(0);
+                    AChampionCell.innerHTML= '<div class="logo-txt-container">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">JD ARMY<br><b style="color:#ffff00">113/4(11)</h3></div>';
+                    AChampionCell.style.backgroundColor="#012169";
+                    teamsRow.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/C0VJ5wb/SCC.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">SINGH CRICKET CLUB<br><b style="color:#ffff00">109/5(12)</h3></div>';
+                    groundACell = groundRow.insertCell(1);
+                    groundACell.innerHTML= "23-Feb-2025, Kathryn Hughes, Santa Clara";
+                    groundACell.style.textAlign = "center";
+                    groundACell.colSpan = 2;
+
+                    var teamsRow = t12tbl.insertRow(2);
+                    var groundRow = t12tbl.insertRow(2);
+                    seriesCell = groundRow.insertCell(0);
+                    seriesCell.innerHTML= "INDEPENDENCE CUP 2025";
+                    seriesCell.rowSpan = 2;
+                    AChampionCell = teamsRow.insertCell(0);
+                    AChampionCell.innerHTML= '<div class="logo-txt-container">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">JD ARMY<br><b style="color:#ffff00">89/7(12)</h3></div>';
+                    AChampionCell.style.backgroundColor="#012169";
+                    teamsRow.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/p6yCxwg8/Super-Saiyans.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">SUPER SAIYANS<br><b style="color:#ffff00">69/7(12)</h3></div>';
+                    groundACell = groundRow.insertCell(1);
+                    groundACell.innerHTML= "16-Jun-2025, Kathryn Hughes, Santa Clara";
+                    groundACell.style.textAlign = "center";
+                    groundACell.colSpan = 2;
+
+                    var teamsRow = t12tbl.insertRow(2);
+                    var groundRow = t12tbl.insertRow(2);
+                    seriesCell = groundRow.insertCell(0);
+                    seriesCell.innerHTML= "DIWALI CUP 2025";
+                    seriesCell.rowSpan = 2;
+                    AChampionCell = teamsRow.insertCell(0);
+                    AChampionCell.innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/PGQRcMJ8/AllStars.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ALL STARS<br><b style="color:#ffff00">124/5(12)</h3></div>';
+                    AChampionCell.style.backgroundColor="#012169";
+                    teamsRow.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/fdGNvts5/Singh-Warriors.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">SINGH WARRIORS<br><b style="color:#ffff00">114/8(11.1)</h3></div>';
+                    groundACell = groundRow.insertCell(1);
+                    groundACell.innerHTML= "19-Oct-2025, Murphy Park, Milpitas";
                     groundACell.style.textAlign = "center";
                     groundACell.colSpan = 2;
 
@@ -1727,6 +1895,55 @@
                         var summer24CTeamName = document.createElement("Label");
                         summer24CTeamName.innerHTML = getithRankedTeam("Summer 2024 - C", i);
                         dr.insertCell().appendChild(summer24CTeamName);
+
+                        var winter2425ATeamName = document.createElement("Label");
+                        winter2425ATeamName.innerHTML = getithRankedTeam("Winter 2024-25 - A", i);
+                        dr.insertCell().appendChild(winter2425ATeamName);
+
+                        var winter2425BTeamName = document.createElement("Label");
+                        winter2425BTeamName.innerHTML = getithRankedTeam("Winter 2024-25 - B", i);
+                        dr.insertCell().appendChild(winter2425BTeamName);
+
+                        var winter2425CTeamName = document.createElement("Label");
+                        winter2425CTeamName.innerHTML = getithRankedTeam("Winter 2024-25 - C", i);
+                        dr.insertCell().appendChild(winter2425CTeamName);
+
+                        var preCup25TeamName = document.createElement("Label");
+                        preCup25TeamName.innerHTML = getithRankedTeam("Presidents Cup 2025", i);
+                        dr.insertCell().appendChild(preCup25TeamName);
+
+                        var spring25ATeamName = document.createElement("Label");
+                        spring25ATeamName.innerHTML = getithRankedTeam("Spring 2025 - A", i);
+                        dr.insertCell().appendChild(spring25ATeamName);
+
+                        var spring25BTeamName = document.createElement("Label");
+                        spring25BTeamName.innerHTML = getithRankedTeam("Spring 2025 - B", i);
+                        dr.insertCell().appendChild(spring25BTeamName);
+
+                        var spring25CTeamName = document.createElement("Label");
+                        spring25CTeamName.innerHTML = getithRankedTeam("Spring 2025 - C", i);
+                        dr.insertCell().appendChild(spring25CTeamName);
+
+                        var indCup25TeamName = document.createElement("Label");
+                        indCup25TeamName.innerHTML = getithRankedTeam("Independence Cup 2025", i);
+                        dr.insertCell().appendChild(indCup25TeamName);
+
+                        var summer25ATeamName = document.createElement("Label");
+                        summer25ATeamName.innerHTML = getithRankedTeam("Summer 2025 - A", i);
+                        dr.insertCell().appendChild(summer25ATeamName);
+
+                        var summer25BTeamName = document.createElement("Label");
+                        summer25BTeamName.innerHTML = getithRankedTeam("Summer 2025 - B", i);
+                        dr.insertCell().appendChild(summer25BTeamName);
+
+                        var summer25CTeamName = document.createElement("Label");
+                        summer25CTeamName.innerHTML = getithRankedTeam("Summer 2025 - C", i);
+                        dr.insertCell().appendChild(summer25CTeamName);
+
+                        var diwCup25TeamName = document.createElement("Label");
+                        diwCup25TeamName.innerHTML = getithRankedTeam("Diwali Cup 2025", i);
+                        dr.insertCell().appendChild(diwCup25TeamName);
+
                     }
                 }
                 $.when.apply($,calls).then(function() {
@@ -1755,12 +1972,30 @@
         }
 
         function getTeamRank(series, team) {
-        	var allRanksMap = getRankArray(series);
-            if(allRanksMap.includes(team)) {
-                return (allRanksMap.indexOf(team)+1)+" / "+allRanksMap.length;
+            var allRanksMap = getRankArray(series);
+            var rank = "";
+            if (allRanksMap.includes(team)) {
+                let teamIndex = allRanksMap.indexOf(team) + 1;
+                let totalTeams = allRanksMap.length;
+
+                // Assign rank title based on index
+                if (teamIndex === 1) {
+                    rank = "Champions";
+                } else if (teamIndex === 2) {
+                    rank = "Runners Up";
+                } else if (teamIndex === 3 || teamIndex === 4) {
+                    rank = "Semi Finalists";
+                } else if (teamIndex >= 5 && teamIndex <= 8) {
+                    rank = "Quarter Finalists";
+                } else {
+                    rank = teamIndex + " / " + totalTeams;
+                }
+
+                return rank;
             }
-            return "- / "+allRanksMap.length;
+            return "- / " + allRanksMap.length;
         }
+
 
         function getFormattedDate(date) {
             let year = date.getFullYear();
@@ -1943,21 +2178,21 @@
                 case 'Summer 2021':
                     return ["Bullets","Royal Kings","Skippers 2.0","Seamers","Royal Strikerz","Unstoppable","CSK Yorkers","Smoking Sadhoos","Green Rebels","MINIONS","Shockers","Dixon 11","Alviso Warriors","Ghadeer CC","SWAT","Raptors","Ravens XI","Unshackled11","Dragons","Wolves XI","Vaders","Challengers 11","Avengers","Falcons"];
                 case 'Summer 2022':
-                    return ["CSK Yorkers","Mighty Warriors","Seamers","Grizzlies","Singh Cricket Club","Knight Walkers","Fairfield Hawks","Dragons","Ghadeer CC","Royal Kings","Drunken Hammers","Raynor Royals","Astros+","Fire Friends","Rising Stars","Vaders","Tailenders","Unstoppable","Bleed Blue","MCC","Titans","Chargers","SilverSwords","MINIONS","Yodhas","Daredevils","Team Tsunami","Smoking Sadhoos","Avengers","Valley Lions","Alviso Warriors ","P@nthers","Skywalkers","Crickings","Blossom Blasters","Bay Boys"];
+                    return ["CSK Yorkers","Mighty Warriors","Seamers","Dream Killers","Singh Cricket Club","Knight Walkers","Fairfield Hawks","Dragons","Ghadeer CC","Royal Kings","Drunken Hammers","Raynor Royals","Astros+","Fire Friends","Rising Stars","Vaders","Tailenders","Unstoppable","Bleed Blue","MCC","Titans","Chargers","SilverSwords","MINIONS","Yodhas","Daredevils","Team Tsunami","Smoking Sadhoos","Avengers","Valley Lions","Alviso Warriors ","P@nthers","Skywalkers","Crickings","Blossom Blasters","Bay Boys"];
                 case 'Winter 2022-23':
-                    return ["Seamers / Grizzlies","-","CSK Yorkers","Singh Cricket Club","Astros+","Fire Friends","Thunderbolts","Blazing Broncos","MCC","Ghadeer CC","Dark Knights","Baazigar of Bay","Tailenders","Chargers","Knight Walkers (CA)","Rising Stars","Unstoppable","Dragons","Bay Boys","Titans","Skywalkers","Smoking Sadhoos","Cric Blasters","Weekend Cricketers","Royal Kings / 2point0","-","MINIONS","Fairfield Hawks","Raynor Royals","Juggernaut","Calivasis","Yodhas","Now Warriors","Alviso Warriors","Champions","HITMEN XI","Bleed Blue","Money Heist","CricKings","Thunder Wolves XI","Bulls","P@nthers XI","Mavericks","Avengers","YAM CC-14","Blossom Blasters","Silverswords","Breaking Bats"];
+                    return ["Seamers / Dream Killers","-","CSK Yorkers","Singh Cricket Club","Astros+","Fire Friends","Thunderbolts","Blazing Broncos","MCC","Ghadeer CC","Dark Knights","Baazigar of Bay","Tailenders","Chargers","Knight Walkers (CA)","Rising Stars","Unstoppable","Dragons","Bay Boys","Titans","Skywalkers","Smoking Sadhoos","Cric Blasters","Weekend Cricketers","Royal Kings / 2point0","-","MINIONS","Fairfield Hawks","Raynor Royals","Juggernaut","Calivasis","Yodhas","Now Warriors","Alviso Warriors","Champions","HITMEN XI","Bleed Blue","Money Heist","CricKings","Thunder Wolves XI","Bulls","P@nthers XI","Mavericks","Avengers","YAM CC-14","Blossom Blasters","Silverswords","Breaking Bats"];
                 case 'Spring 2023':
-                    return ["Astros+","Money Heist","Dark Knights","Mighty Warriors","Thunderbolts","Seamers","Grizzlies","JerseyXI","Krazy Hitters","Singh Cricket Club","Rising Stars","Ghadeer CC","Smoking Sadhoos","Fire Friends","Dragons","CSK Yorkers","Lords","2point0","P@nthers XI","Alviso Warriors","Knight Walkers (CA)","Unstoppable","Breaking Bats","Baazigar of Bay","Mavericks","MINIONS","Royal Kings","MCC","Champions","Gully Cricketers","Yodhas","Tailenders","Chargers","Now Warriors","Bleed Blue","Daredevils","Fireballs","Skywalkers","Titans","HITMEN XI","CricKings","Vaders","YAM CC-14","Thunder Wolves XI"];
+                    return ["Astros+","Money Heist","Dark Knights","Mighty Warriors","Thunderbolts","Seamers","Dream Killers","JerseyXI","Krazy Hitters","Singh Cricket Club","Rising Stars","Ghadeer CC","Smoking Sadhoos","Fire Friends","Dragons","CSK Yorkers","Lords","2point0","P@nthers XI","Alviso Warriors","Knight Walkers (CA)","Unstoppable","Breaking Bats","Baazigar of Bay","Mavericks","MINIONS","Royal Kings","MCC","Champions","Gully Cricketers","Yodhas","Tailenders","Chargers","Now Warriors","Bleed Blue","Daredevils","Fireballs","Skywalkers","Titans","HITMEN XI","CricKings","Vaders","YAM CC-14","Thunder Wolves XI"];
                 case 'Independence Cup 2023':
                     return ["Ghadeer CC","Smoking Sadhoos","Bay Boys","Lords","2point0","Chargers","Avengers","Gully Boys","Gully Cricketers","Rising Stars","Art Villa","Champions","Yodhas","YAM CC-14","Blue Warriors","Calivaasis","UC11","Now Warriors","HITMEN XI"];
                 case 'Summer 2023 - A':
-                    return ["Lords","CSK Yorkers","Seamers","Singh Cricket Club","Grizzlies","Ghadeer CC","Money Heist","Mighty Warriors","Dark Knights","Smoking Sadhoos","Astros+","Fire Friends","2point0","Thunderbolts","JerseyXI","Dragons","Knight Walkers (CA)","Baazigar of Bay","Unstoppable","P@nthers XI","Alviso Warriors","Rising Stars"];
+                    return ["Lords","CSK Yorkers","Seamers","Singh Cricket Club","Dream Killers","Ghadeer CC","Money Heist","Mighty Warriors","Dark Knights","Smoking Sadhoos","Astros+","Fire Friends","2point0","Thunderbolts","JerseyXI","Dragons","Knight Walkers (CA)","Baazigar of Bay","Unstoppable","P@nthers XI","Alviso Warriors","Rising Stars"];
                 case 'Summer 2023 - B':
                     return ["Royal Kings","Bleed Blue","Kings XI","Royal Knights","Daredevils","Chargers","Breaking Bats","Champions","Tailenders","Titans","YAM CC-14","Mavericks","Raynor Royals","MINIONS","Veer Jawan","Extraas","Avengers","Skippers","MCC","Gully Cricketers","Thunder Wolves XI","CricKings"];
                 case 'Veterans Cup 2023':
                     return ["Challengers CC","Astros+","Thunderbolts","Deccan United CC","HTM","Fire Friends","YAM CC-14","Gully Boys","Gully Cricketers","Veer Jawan","Koolagents","Now Warriors","CricKings","Thunder Wolves XI","Miya Bhaiz","Khalsa Warriors"];
                 case 'Winter 2023-24 - A':
-                    return ["Mighty Warriors","CSK Yorkers","Grizzlies","JerseyXI","Royal Knights","Astros+","Singh Cricket Club","Royal Kings","2point0","Money Heist","Knight Walkers (CA)","Ghadeer CC","Dragons","Bleed Blue","Fire Friends","Lords","Thunderbolts","Kings X1","Seamers","Dark Knights","P@nthers XI","Smoking Sadhoos"];
+                    return ["Mighty Warriors","CSK Yorkers","Dream Killers","JerseyXI","Royal Knights","Astros+","Singh Cricket Club","Royal Kings","2point0","Money Heist","Knight Walkers (CA)","Ghadeer CC","Dragons","Bleed Blue","Fire Friends","Lords","Thunderbolts","Kings X1","Seamers","Dark Knights","P@nthers XI","Smoking Sadhoos"];
                 case 'Winter 2023-24 - B':
                     return ["Deccan United CC","Bravehearts","Challengers CC","Rising Stars","Daredevils","Titans","Skippers","Baazigar of Bay","Unstoppable","CricKings","Champions","Breaking Bats","Extraas","Barely XI","Alviso Warriors","Tailenders","Raynor Royals","Veer Jawan","YAM CC-14","Mavericks","Bay Tigers","MINIONS"];
                 case 'Spring 2024 - A':
@@ -1969,11 +2204,35 @@
                 case 'Independence Cup 2024':
                     return ["Knight Walkers (CA)","Smoking Sadhoos","Dream Killers","Singh Warriors","Vikings","Punjab Warriors","Fire Friends","Breaking Bats","Bay Boys","Super Saiyans","IndianChamps","The Snow Lions","Barely XI","RCB","Super Giants","Sunny"];
                 case 'Summer 2024 - A':
-                    return ["Challengers CC","singh Cricket Club","Money Heist","Dream Killers","Seamers","Mighty Warriors","Kings X1","Royal Knights","Astros+","Royal Kings","CSK Yorkers","Knight Walkers (CA)","2point0","Rising Stars","JerseyXI","Dragons"];
+                    return ["Challengers CC","Singh Cricket Club","Money Heist","Dream Killers","Seamers","Mighty Warriors","Kings X1","Royal Knights","Astros+","Royal Kings","CSK Yorkers","Knight Walkers (CA)","2point0","Rising Stars","JerseyXI","Dragons"];
                 case 'Summer 2024 - B':
                     return ["Skippers","Ghadeer Lions","Titans","Lords","Deccan United CC","NextGen Tailenders","Daredevils","UC11","Champions","Chargers","Smoking Sadhoos","Unstoppable","Baazigar of Bay","Breaking Bats","Fire Friends","Mavericks"];
                 case 'Summer 2024 - C':
                     return ["Vikings","Singh Warriors","Stanford","Bay Tigers","MINIONS","Super Giants","Bleed Blue","Bay Boys","CricKings","Avengers","Alviso Warriors","Sunny","Super Saiyans","Nexus XI","YAM CC-14","Barely XI","Centurions","IndianChamps","WCC Gladiators","Raynor Royals"];
+                case 'Winter 2024-25 - A':
+                    return ["Mighty Warriors","Money Heist","Seamers","Astros+","Skippers","Singh Cricket Club","Challengers CC","Dream Killers","Knight Walkers (CA)","Royal Kings","Ghadeer Lions","CSK Yorkers","Kings X1","2point0","Rising Stars","Royal Knights"];
+                case 'Winter 2024-25 - B':
+                    return ["Lords","Daredevils","Unstoppable","Titans","NextGen Tailenders","Vikings","Champions","Smoking Sadhoos","Deccan United CC","Dragons","Stanford","UC11","Breaking Bats","Baazigar of Bay","JerseyXI","Singh Warriors"];
+                case 'Winter 2024-25 - C':
+                    return ["Fire Friends","Avengers","Bay Tigers","Bleed Blue","Bahubalis","Bay Boys","Alviso Warriors","Mavericks","Thunders","YAM CC-14","Sabertooths","IndianChamps","Centurions","MINIONS","Super Giants","Super Sayns","Smash Blasters","Sunny Devils","Delta Force","P@Nthers XI"];
+                case 'Presidents Cup 2025':
+                    return ["JD Army","Singh Cricket Club","Deccan United CC","Royal Knights","FC SPARTANS","Vulcans","Sunny Devils","Super Sayns","Delta Force","Chargers","Knight Walkers (CA)","Blazers Legends"];
+                case 'Spring 2025 - A':
+                    return ["Money Heist","Astros+","Seamers","Lords","CSK Yorkers","Mighty Warriors","Rebels","Titans","Skippers","Ghadeer Lions","Singh Cricket Club","2point0","Royal Kings","Daredevils","Kings X1","Knight Walkers (CA)"];
+                case 'Spring 2025 - B':
+                    return ["Unstoppable","Royal Knights","Vikings","Breaking Bats","Fire Friends","Dragons","Deccan United CC","Smoking Sadhoos","BAY TIGERS","Baazigar of Bay","Rising Stars","Champions","Stanford","NextGen Tailenders","UC11","Avengers"];
+                case 'Spring 2025 - C':
+                    return ["Orange Army","Sabertooths","Gladiators","Bleed Blue","Super Giants","Cali Lions","Vulcans","Bay Boys","Escuela Boys","Mavericks","Thunderhawks","Super Saiyans","Thunders","Alviso Warriors","Sunny Devils","FC SPARTANS","CricKings","IndianChamps","Bahubalis","JerseyXI","MINIONS","Delta Force","Centurions","Smash Blasters"];
+                case 'Independence Cup 2025':
+                    return ["JD Army","Super Saiyans","NextGen Tailenders","Fire Stars","Singh Cricket Club","Chargers","Smash Blasters","Escuela Boys","Rayalaseema Royals","Stanford"];
+                case 'Summer 2025 - A':
+                    return ["Mighty Warriors","Royal Knights","Money Heist","Titans","Seamers","Lords","Rebels","Singh Cricket Club","Ghadeer Lions","Skippers","Astros+","Unstoppable","CSK Yorkers","Royal Kings","2point0","Daredevils"];
+                case 'Summer 2025 - B':
+                    return ["Orange Army","Kings X1","NextGen Tailenders","Rising Stars","Fire Friends","Sabertooths","BAY TIGERS","Bleed Blue","Vikings","Knight Walkers (CA)","Dragons","Gladiators","Smoking Sadhoos","Breaking Bats","Baazigar of Bay","Champions"];
+                case 'Summer 2025 - C':
+                    return ["Escuela Boys","JerseyXI","UC11","Vulcans","Alviso Warriors","Super Saiyans","Super Giants","Cali Lions","MINIONS","CricKings","Thunderhawks","Thunders","Chargers","Sunny Devils","Deccan Chargers","FC SPARTANS","Smash Blasters","Bay Boys","Bahubalis","Centurions","Blue Warriors","Mavericks","Rayalaseema Royals","Bay Warriors","IndianChamps","Delta Force","Pittsburg Rangers"];
+                case 'Diwali Cup 2025':
+                    return ["All Stars","Singh Warriors","Sher E Punjab","Super Squad","Singh Cricket Club","Bahubalis","Chargers","Blue Warriors","Thunders","VK 18","Smoking Sadhoos","Centurions"];
             }
         }
 
