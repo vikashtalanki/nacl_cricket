@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NACL — Open a Ticket</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&family=Barlow:wght@500;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <style>
+    :root {
+      --navy:  #012169;
+      --red:   #da291c;
+      --white: #ffffff;
+      --light: #f0f3f9;
+      --mid:   #c8d1e8;
+      --text:  #0a1a3a;
+      --green: #22a855;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Roboto Condensed', sans-serif;
+      background: var(--light);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--navy);
+      padding: 0 24px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.3);
+      position: sticky; top: 0; z-index: 50;
+    }
+    .hdr-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
+    .hdr-title { color: #fff; font-family: 'Barlow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; }
+    .hdr-sub   { color: var(--mid); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+
+    /* ── Page shell ── */
+    .page-wrap {
+      max-width: 680px;
+      margin: 32px auto;
+      padding: 0 16px 60px;
+    }
+
+    /* ── Step indicator ── */
+    .steps {
+      display: flex;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #aaa;
+      font-weight: 700;
+    }
+    .step.active { color: var(--navy); }
+    .step.done   { color: var(--green); }
+    .step-num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      background: #ddd; color: #999;
+      flex-shrink: 0;
+    }
+    .step.active .step-num { background: var(--navy); color: #fff; }
+    .step.done   .step-num { background: var(--green); color: #fff; }
+    .step-line { flex: 1; height: 2px; background: #ddd; margin: 0 8px; }
+    .step-line.done { background: var(--green); }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 2px 20px rgba(1,33,105,.08);
+      overflow: hidden;
+    }
+    .card-head {
+      background: var(--navy);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-head-icon { font-size: 20px; }
+    .card-head-title {
+      color: #fff;
+      font-family: 'Barlow', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .card-head-sub { color: var(--mid); font-size: 12px; margin-top: 1px; }
+    .card-body { padding: 24px; }
+
+    /* ── Form fields ── */
+    .field { margin-bottom: 20px; }
+    .field:last-child { margin-bottom: 0; }
+    label.lbl {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    label.lbl .req { color: var(--red); margin-left: 2px; }
+    label.lbl .hint { color: #aaa; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 11px; margin-left: 6px; }
+
+    input[type=text], input[type=email], select, textarea {
+      width: 100%;
+      border: 2px solid var(--mid);
+      border-radius: 8px;
+      font-family: 'Roboto Condensed', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input[type=text], input[type=email], select {
+      height: 40px;
+      padding: 0 12px;
+    }
+    textarea {
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 110px;
+      line-height: 1.5;
+    }
+    input[type=text]:focus, input[type=email]:focus,
+    select:focus, textarea:focus { border-color: var(--navy); }
+    input.err, select.err, textarea.err { border-color: var(--red); }
+    .err-msg { color: var(--red); font-size: 11px; margin-top: 4px; display: none; }
+
+    /* ── Radio group ── */
+    .radio-group { display: flex; flex-direction: column; gap: 8px; }
+    .radio-opt {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 2px solid var(--mid);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .radio-opt:hover { border-color: var(--navy); background: var(--light); }
+    .radio-opt.selected { border-color: var(--navy); background: #edf0fa; }
+    .radio-opt input[type=radio] { display: none; }
+    .radio-dot {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--mid);
+      flex-shrink: 0;
+      margin-top: 1px;
+      position: relative;
+      transition: border-color .15s;
+    }
+    .radio-opt.selected .radio-dot { border-color: var(--navy); }
+    .radio-opt.selected .radio-dot::after {
+      content: '';
+      position: absolute;
+      width: 8px; height: 8px;
+      background: var(--navy);
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+    }
+    .radio-label { font-size: 14px; font-weight: 700; color: var(--navy); line-height: 1.3; }
+    .radio-desc  { font-size: 12px; color: #888; margin-top: 2px; }
+
+    /* ── Purpose badge row ── */
+    .purpose-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pbadge {
+      padding: 7px 14px;
+      border: 2px solid var(--mid);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      color: #666;
+      background: #fff;
+    }
+    .pbadge:hover   { border-color: var(--navy); color: var(--navy); }
+    .pbadge.selected { border-color: var(--navy); background: var(--navy); color: #fff; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--mid);
+      margin: 20px 0;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 14px;
+    }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+    .btn {
+      height: 42px;
+      padding: 0 24px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Roboto Condensed', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover    { opacity: .85; }
+    .btn:disabled { opacity: .4; cursor: default; }
+    .btn-primary  { background: var(--navy); color: #fff; }
+    .btn-secondary{ background: #eee; color: #555; }
+    .btn-submit   { background: var(--green); color: #fff; padding: 0 32px; }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-row {
+      display: flex; align-items: center; gap: 8px;
+      color: #888; font-size: 13px; padding: 8px 0;
+    }
+    .loading-row .spinner { border-color: rgba(0,0,0,.15); border-top-color: var(--navy); }
+
+    /* ── Success screen ── */
+    #successScreen {
+      display: none;
+      text-align: center;
+      padding: 48px 24px;
+    }
+    .success-icon {
+      width: 64px; height: 64px;
+      background: #e6f9ee;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 16px;
+    }
+    .success-title {
+      font-family: 'Barlow', sans-serif;
+      font-size: 22px; font-weight: 800;
+      color: var(--navy); margin-bottom: 8px;
+    }
+    .success-sub { color: #666; font-size: 14px; line-height: 1.6; max-width: 380px; margin: 0 auto; }
+    .ticket-ref {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 6px 16px;
+      background: var(--light);
+      border: 1px solid var(--mid);
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--navy);
+      letter-spacing: 1px;
+    }
+
+    /* ── Slot checkboxes ── */
+    .slot-grid { display: flex; flex-direction: column; gap: 8px; }
+    .slot-opt {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px;
+      border: 2px solid var(--mid); border-radius: 8px;
+      cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    .slot-opt:hover:not(.slot-disabled)  { border-color: var(--red); background: #fff5f5; }
+    .slot-opt.selected  { border-color: var(--red); background: #fff0f0; }
+    .slot-opt.slot-disabled { opacity: .4; cursor: not-allowed; }
+    .slot-check {
+      width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
+      border: 2px solid var(--mid); border-radius: 4px;
+      position: relative; transition: border-color .15s;
+    }
+    .slot-opt.selected .slot-check { border-color: var(--red); background: var(--red); }
+    .slot-opt.selected .slot-check::after {
+      content: '✓'; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%); color: #fff; font-size: 11px; font-weight: 700;
+    }
+    .slot-label { font-size: 14px; font-weight: 700; color: var(--navy); }
+    .slot-desc  { font-size: 12px; color: #888; margin-top: 2px; }
+
+    /* ── Acknowledgement ── */
+    .ack-opt {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 14px; border: 2px solid var(--gold);
+      border-radius: 8px; cursor: pointer;
+      background: #fffbea; transition: background .15s;
+    }
+    .ack-check {
+      width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px;
+      border: 2px solid var(--gold); border-radius: 4px;
+      position: relative;
+    }
+    .ack-check.checked { background: var(--gold); border-color: var(--gold); }
+    .ack-check.checked::after {
+      content: '✓'; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%); color: #fff; font-size: 11px; font-weight: 700;
+    }
+    .ack-text { font-size: 13px; color: #7a5f00; line-height: 1.5; }
+
+    select option[disabled] { color: #aaa; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-dot"></div>
+  <div>
+    <div class="hdr-title">NACL</div>
+    <div class="hdr-sub">Support Ticket</div>
+  </div>
+</header>
+
+<div class="page-wrap">
+
+  <!-- Step indicator -->
+  <div class="steps" id="stepIndicator">
+    <div class="step active" id="stp1"><div class="step-num">1</div>Basic Info</div>
+    <div class="step-line" id="line1"></div>
+    <div class="step" id="stp2"><div class="step-num">2</div>Details</div>
+    <div class="step-line" id="line2"></div>
+    <div class="step" id="stp3"><div class="step-num">3</div>Submit</div>
+  </div>
+
+  <!-- ══ PAGE 1 ══ -->
+  <div id="page1">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">🎫</div>
+        <div>
+          <div class="card-head-title">Open a Ticket</div>
+          <div class="card-head-sub">Tell us who you are and what this is about</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <div class="field">
+          <label class="lbl" for="fEmail">Email <span class="req">*</span></label>
+          <input type="email" id="fEmail" placeholder="your@email.com"/>
+          <div class="err-msg" id="eEmail">Please enter a valid email address.</div>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="fName">Your Name <span class="req">*</span></label>
+          <input type="text" id="fName" placeholder="First Last"/>
+          <div class="err-msg" id="eName">Name is required.</div>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="fSeason">Season <span class="req">*</span></label>
+          <select id="fSeason" onchange="onSeasonChange()">
+            <option value="" disabled selected>Loading seasons…</option>
+          </select>
+          <div class="err-msg" id="eSeason">Please select a season.</div>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="fTeam">Your Team <span class="req">*</span></label>
+          <select id="fTeam" onchange="onTeamChange()" disabled>
+            <option value="" disabled selected>Select a season first…</option>
+          </select>
+          <div class="err-msg" id="eTeam">Please select your team.</div>
+        </div>
+
+        <hr class="divider"/>
+
+        <div class="field">
+          <label class="lbl">Purpose <span class="req">*</span></label>
+          <div class="err-msg" id="ePurpose" style="display:none;margin-bottom:8px;">Please select a purpose.</div>
+          <div class="purpose-badges" id="purposeBadges">
+            <div class="pbadge" data-val="player-move"    onclick="selectPurpose(this)">👤 Player Move / Addition / Remove</div>
+            <div class="pbadge" data-val="scorecard"      onclick="selectPurpose(this)">📋 Scorecard Update</div>
+            <div class="pbadge" data-val="dispute"        onclick="selectPurpose(this)">⚖️ Issues &amp; Disputes</div>
+            <div class="pbadge" data-val="umpire"         onclick="selectPurpose(this)">🦺 Umpiring Complaint</div>
+            <div class="pbadge" data-val="ground"         onclick="selectPurpose(this)">🏟️ Ground Issues / Info</div>
+            <div class="pbadge" data-val="other"          onclick="selectPurpose(this)">💬 Other</div>
+            <div class="pbadge" data-val="scheduling"     onclick="selectPurpose(this)">📅 Scheduling Request</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="goPage2()">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE 2 ══ -->
+  <div id="page2" style="display:none">
+    <div class="card">
+      <div class="card-head" id="p2Head">
+        <div class="card-head-icon" id="p2Icon">📝</div>
+        <div>
+          <div class="card-head-title" id="p2Title">Ticket Details</div>
+          <div class="card-head-sub" id="p2Sub">Provide the details below</div>
+        </div>
+      </div>
+      <div class="card-body" id="p2Body">
+        <!-- filled dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SUCCESS ══ -->
+  <div class="card" id="successScreen">
+    <div id="successInner">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Ticket Submitted!</div>
+      <div class="success-sub">Your ticket has been received. The NACL committee will review it and get back to you at your provided email address.</div>
+      <div class="ticket-ref" id="ticketRef"></div>
+      <div class="btn-row" style="justify-content:center;margin-top:24px;">
+        <button class="btn btn-secondary" onclick="resetForm()">Submit Another</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+  var cricclubs_url = "https://core-prod-origin.cricclubs.com/core/";
+  var url_params    = "clubId=27594&x-api-key=Z!wocr8&x-consumer-key=Y6%26afRE";
+  // Replace with your Apps Script URL when ready
+  var script_url    = "https://script.google.com/macros/s/AKfycbx6-ZRDGjW1Si8u2rd_ep2wnwAN7YpaH-nm8SXAawoNiL2XuwR--RE4i0LXH301GC2M/exec";
+
+  var _purpose      = '';
+  var _seasonId     = null;
+  var _seasonName   = '';
+  var _teamId       = null;
+  var _teamName     = '';
+  var _allSeriesMap = {}; // id -> name
+
+  // ── Load seasons ────────────────────────────────────────────────
+  $.getJSON(cricclubs_url + 'series/getSeriesList?' + url_params, function(data) {
+    var sel = document.getElementById('fSeason');
+    sel.innerHTML = '<option value="" disabled selected>Select Season</option>';
+    // Show parent series only, most recent first (API returns oldest first)
+    var parents = [];
+    $.each(data.data.seriesList, function(_, s) {
+      _allSeriesMap[s.seriesID] = s.seriesName;
+      if (s.parentSeriesId == 0) parents.push(s);
+    });
+    parents.reverse();
+    $.each(parents, function(_, s) {
+      sel.innerHTML += '<option value="' + s.seriesID + '">' + escHtml(s.seriesName) + '</option>';
+    });
+  }).fail(function() {
+    document.getElementById('fSeason').innerHTML = '<option value="">Could not load seasons</option>';
+  });
+
+
+  var _seasonDivIds   = [];  // division seriesIds for selected season
+  var _seasonTeamList = [];  // [{id,name}] teams for selected season
+
+  function onSeasonChange() {
+    _seasonId   = document.getElementById('fSeason').value;
+    _seasonName = document.getElementById('fSeason').options[document.getElementById('fSeason').selectedIndex].text;
+    _teamId = null; _teamName = '';
+    _seasonTeamList = []; _seasonDivIds = [];
+
+    var teamSel = document.getElementById('fTeam');
+    teamSel.disabled = true;
+    teamSel.innerHTML = '<option value="" disabled selected>Loading teams…</option>';
+
+    // Get divisions
+    $.getJSON(cricclubs_url + 'series/getSeriesDetails?' + url_params + '&X-Auth-Token=&seriesId=' + _seasonId,
+      function(det) {
+        _seasonDivIds = [];
+        if (det.data.hasDivisions && det.data.divisions)
+          $.each(det.data.divisions, function(_, d) { _seasonDivIds.push(d.leagueId); });
+        else _seasonDivIds.push(parseInt(_seasonId));
+
+        var calls = _seasonDivIds.map(function(did) {
+          return $.getJSON(cricclubs_url + 'team/getTeamsList?' + url_params + '&seriesId=' + did,
+            function(td) {
+              $.each(td.data.teamsList, function(_, group) {
+                $.each(group.teams, function(_, t) {
+                  if (!_seasonTeamList.find(function(x){ return x.id == t.teamID; }))
+                    _seasonTeamList.push({ id: t.teamID, name: t.teamName });
+                });
+              });
+            });
+        });
+
+        $.when.apply($, calls).then(function() {
+          _seasonTeamList.sort(function(a,b){ return a.name.localeCompare(b.name); });
+          teamSel.innerHTML = '<option value="" disabled selected>Select your team</option>';
+          _seasonTeamList.forEach(function(t) {
+            teamSel.innerHTML += '<option value="' + t.id + '">' + escHtml(t.name) + '</option>';
+          });
+          teamSel.disabled = false;
+        });
+      }
+    );
+  }
+
+  function onTeamChange() {
+    _teamId   = document.getElementById('fTeam').value;
+    _teamName = document.getElementById('fTeam').options[document.getElementById('fTeam').selectedIndex].text;
+  }
+
+  function selectPurpose(el) {
+    document.querySelectorAll('.pbadge').forEach(function(b){ b.classList.remove('selected'); });
+    el.classList.add('selected');
+    _purpose = el.getAttribute('data-val');
+    document.getElementById('ePurpose').style.display = 'none';
+  }
+
+  // ── Page 1 → 2 ──────────────────────────────────────────────────
+  function goPage2() {
+    if (!validatePage1()) return;
+    buildPage2();
+    document.getElementById('page1').style.display = 'none';
+    document.getElementById('page2').style.display = 'block';
+    setStep(2);
+    window.scrollTo(0,0);
+  }
+
+  function goBack() {
+    document.getElementById('page2').style.display = 'none';
+    document.getElementById('page1').style.display = 'block';
+    setStep(1);
+    window.scrollTo(0,0);
+  }
+
+  function validatePage1() {
+    var ok = true;
+    var email = document.getElementById('fEmail').value.trim();
+    if (!email || !/\S+@\S+\.\S+/.test(email)) { showErr('fEmail','eEmail'); ok=false; } else clearErr('fEmail','eEmail');
+    if (!document.getElementById('fName').value.trim()) { showErr('fName','eName'); ok=false; } else clearErr('fName','eName');
+    if (!_seasonId) { showErr('fSeason','eSeason'); ok=false; } else clearErr('fSeason','eSeason');
+    if (!_teamId)   { showErr('fTeam','eTeam'); ok=false; }   else clearErr('fTeam','eTeam');
+    if (!_purpose)  { document.getElementById('ePurpose').style.display='block'; ok=false; }
+    return ok;
+  }
+
+  // ── Build page 2 based on purpose ───────────────────────────────
+  var _purposeMeta = {
+    'player-move': { icon:'👤', title:'Player Move / Addition / Remove', sub:'Manage your squad roster' },
+    'scorecard':   { icon:'📋', title:'Scorecard Update Request',         sub:'Report a match scorecard issue' },
+    'dispute':     { icon:'⚖️', title:'Issues & Disputes',                sub:'Raise a concern or dispute' },
+    'umpire':      { icon:'🦺', title:'Umpiring Complaint',               sub:'Report an umpiring issue' },
+    'ground':      { icon:'🏟️', title:'Ground Issues / Info',             sub:'Ground-related queries' },
+    'other':       { icon:'💬', title:'Other',                             sub:'Anything else' },
+    'scheduling':  { icon:'📅', title:'Scheduling Request',               sub:'Game or umpiring assignment request' },
+  };
+
+  function buildPage2() {
+    var meta = _purposeMeta[_purpose];
+    document.getElementById('p2Icon').textContent  = meta.icon;
+    document.getElementById('p2Title').textContent = meta.title;
+    document.getElementById('p2Sub').textContent   = meta.sub;
+
+    var body = document.getElementById('p2Body');
+    body.innerHTML = '';
+
+    if (_purpose === 'player-move')  buildPlayerMove(body);
+    else if (_purpose === 'scheduling') buildScheduling(body);
+    else if (_purpose === 'scorecard') buildScorecard(body);
+    else if (_purpose === 'umpire')    buildUmpire(body);
+    else                               buildFreeText(body);
+  }
+
+  // ── Player Move / Addition / Remove ─────────────────────────────
+  function buildPlayerMove(body) {
+    body.innerHTML = `
+      <div class="section-title">Request Type</div>
+      <div class="field">
+        <div class="radio-group" id="moveTypeGroup">
+          <label class="radio-opt" onclick="selectRadio(this,'moveType','move')">
+            <input type="radio" name="moveType" value="move"/>
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">🔄 Move player to another team</div>
+              <div class="radio-desc">Transfer an existing player to a different team this season</div></div>
+          </label>
+          <label class="radio-opt" onclick="selectRadio(this,'moveType','add')">
+            <input type="radio" name="moveType" value="add"/>
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">➕ Request new player addition</div>
+              <div class="radio-desc">Remind the committee to approve a pending registration request</div></div>
+          </label>
+          <label class="radio-opt" onclick="selectRadio(this,'moveType','remove')">
+            <input type="radio" name="moveType" value="remove"/>
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">❌ Remove player from squad</div>
+              <div class="radio-desc">Request to remove a player from your current team roster</div></div>
+          </label>
+        </div>
+        <div class="err-msg" id="eMoveType">Please select a request type.</div>
+      </div>
+
+      <hr class="divider"/>
+      <div class="section-title">Player Details</div>
+
+      <div class="field">
+        <label class="lbl" for="fPlayerName">Player Name <span class="req">*</span>
+          <span class="hint">or CricClubs Player ID</span></label>
+        <input type="text" id="fPlayerName" placeholder="e.g. Ravi Sharma or Player ID 123456"/>
+        <div class="err-msg" id="ePlayerName">Player name or ID is required.</div>
+      </div>
+
+      <!-- Move-specific: from/to team -->
+      <div id="moveFields" style="display:none">
+        <div class="field">
+          <label class="lbl" for="fFromTeam">Previous Team <span class="hint">(optional)</span></label>
+          <input type="text" id="fFromTeam" placeholder="Unknown" value="Unknown"/>
+        </div>
+        <div class="field">
+          <label class="lbl" for="fToTeam">Move To Team <span class="req">*</span></label>
+          <select id="fToTeam">
+            <option value="" disabled selected>Select destination team</option>
+          </select>
+          <div class="err-msg" id="eToTeam">Please select the destination team.</div>
+        </div>
+      </div>
+
+      <!-- Remove-specific: current team -->
+      <div id="removeFields" style="display:none">
+        <div class="field">
+          <label class="lbl" for="fRemoveTeam">Player's Current Team <span class="req">*</span></label>
+          <select id="fRemoveTeam">
+            <option value="" disabled selected>Select team</option>
+          </select>
+          <div class="err-msg" id="eRemoveTeam">Please select the player's current team.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="fMoveNotes">Additional Notes <span class="hint">(optional)</span></label>
+        <textarea id="fMoveNotes" placeholder="Any additional context…" style="min-height:80px;"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goBack()">← Back</button>
+        <button class="btn btn-submit" onclick="submitTicket()">Submit Ticket</button>
+      </div>`;
+
+    // Populate current season teams for "to" dropdown
+    var toSel = document.getElementById('fToTeam');
+    _seasonTeamList.forEach(function(t) {
+      toSel.innerHTML += '<option value="' + t.id + '">' + escHtml(t.name) + '</option>';
+    });
+
+    // Populate current season teams for "remove" dropdown
+    var removeSel = document.getElementById('fRemoveTeam');
+    _seasonTeamList.forEach(function(t) {
+      removeSel.innerHTML += '<option value="' + t.id + '">' + escHtml(t.name) + '</option>';
+    });
+  }
+
+  function selectRadio(el, name, val) {
+    document.querySelectorAll('[name="'+name+'"]').forEach(function(r) {
+      r.closest('.radio-opt').classList.remove('selected');
+    });
+    el.classList.add('selected');
+    el.querySelector('input[type=radio]').checked = true;
+    if (name === 'moveType') {
+      document.getElementById('moveFields').style.display   = val === 'move'   ? 'block' : 'none';
+      document.getElementById('removeFields').style.display = val === 'remove' ? 'block' : 'none';
+    }
+    if (name === 'schedType') {
+      document.getElementById('gameSlotFields').style.display    = val === 'game'   ? 'block' : 'none';
+      document.getElementById('umpireSchedFields').style.display = val === 'umpire' ? 'block' : 'none';
+      _selectedSlots = [];
+      document.querySelectorAll('.slot-opt').forEach(function(s) {
+        s.classList.remove('selected', 'slot-disabled');
+        s.style.pointerEvents = '';
+      });
+      var hint = document.getElementById('slotCountHint');
+      if (hint) hint.textContent = '0 of 2 selected';
+    }
+    var errEl = document.getElementById('e' + name.charAt(0).toUpperCase() + name.slice(1));
+    if (errEl) errEl.style.display = 'none';
+  }
+
+  // ── Scorecard Update ─────────────────────────────────────────────
+  function buildScorecard(body) {
+    body.innerHTML = `
+      <div class="section-title">Select Match</div>
+      <div class="field">
+        <label class="lbl" for="fSCMatch">Match <span class="req">*</span></label>
+        <div class="loading-row" id="scMatchLoading"><div class="spinner"></div> Loading matches for ${escHtml(_teamName)}…</div>
+        <select id="fSCMatch" style="display:none">
+          <option value="" disabled selected>Select match</option>
+        </select>
+        <div class="err-msg" id="eSCMatch">Please select a match.</div>
+      </div>
+      <hr class="divider"/>
+      <div class="section-title">Update Details</div>
+      <div class="field">
+        <label class="lbl" for="fSCLink">Scorecard Link <span class="hint">(auto-filled on match selection)</span></label>
+        <input type="text" id="fSCLink" readonly placeholder="Select a match above to populate the link…"
+          style="background:#f5f7fd;color:#666;cursor:default;"/>
+      </div>
+      <div class="field">
+        <label class="lbl" for="fSCDesc">Describe the update needed <span class="req">*</span></label>
+        <textarea id="fSCDesc" placeholder="Explain what needs to be corrected — player names, scores, wickets, overs, etc."></textarea>
+        <div class="err-msg" id="eSCDesc">Please describe the update needed.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goBack()">← Back</button>
+        <button class="btn btn-submit" onclick="submitTicket()">Submit Ticket</button>
+      </div>`;
+
+    // Load completed matches for this team across all divisions of the season
+    var matchSel = document.getElementById('fSCMatch');
+    var calls = _seasonDivIds.map(function(did) {
+      return $.getJSON(cricclubs_url + 'match/getMatches?' + url_params +
+        '&X-Auth-Token=&seriesId=' + did + '&teamId=' + _teamId + '&limit=500', function(data) {
+          $.each(data.data, function(_, m) {
+            if (m.matchStatus === 'Completed' || m.result) {
+              var label = escHtml(m.teamOneName) + ' vs ' + escHtml(m.teamTwoName) + ' — ' + formatMatchDate(m.matchDate);
+              matchSel.innerHTML += '<option value="' + m.matchId + '" data-label="' + label + '">' + label + '</option>';
+            }
+          });
+        });
+    });
+    $.when.apply($, calls).then(function() {
+      document.getElementById('scMatchLoading').style.display = 'none';
+      matchSel.style.display = 'block';
+      if (matchSel.options.length <= 1) {
+        matchSel.innerHTML = '<option value="" disabled selected>No completed matches found</option>';
+      }
+    });
+
+    // Auto-fill scorecard link when a match is selected
+    matchSel.addEventListener('change', function() {
+      var matchId = this.value;
+      var linkEl  = document.getElementById('fSCLink');
+      if (matchId && linkEl) {
+        linkEl.value = 'https://www.cricclubs.com/NACLBB/viewScorecard.do?matchId=' + matchId + '&clubId=27594';
+      } else if (linkEl) {
+        linkEl.value = '';
+      }
+    });
+  }
+
+  // ── Umpiring Complaint ────────────────────────────────────────────
+  function buildUmpire(body) {
+    body.innerHTML = `
+      <div class="section-title">Select Match</div>
+      <div class="field">
+        <label class="lbl" for="fUmpMatch">Match <span class="req">*</span>
+          <span class="hint">All completed matches this season</span></label>
+        <div class="loading-row" id="umpMatchLoading"><div class="spinner"></div> Loading matches…</div>
+        <select id="fUmpMatch" style="display:none">
+          <option value="" disabled selected>Select match</option>
+        </select>
+        <div class="err-msg" id="eUmpMatch">Please select a match.</div>
+      </div>
+      <hr class="divider"/>
+      <div class="section-title">Complaint Details</div>
+      <div class="field">
+        <label class="lbl" for="fUmpDesc">Describe your complaint <span class="req">*</span></label>
+        <textarea id="fUmpDesc" placeholder="Describe the umpiring issue in detail — what happened, when in the match, which decision(s) you are disputing…"></textarea>
+        <div class="err-msg" id="eUmpDesc">Please describe the complaint.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goBack()">← Back</button>
+        <button class="btn btn-submit" onclick="submitTicket()">Submit Ticket</button>
+      </div>`;
+
+    // All completed matches across all divisions (not filtered by team)
+    var matchSel = document.getElementById('fUmpMatch');
+    var calls = _seasonDivIds.map(function(did) {
+      return $.getJSON(cricclubs_url + 'match/getMatches?' + url_params +
+        '&X-Auth-Token=&seriesId=' + did + '&teamId=&limit=1000', function(data) {
+          $.each(data.data, function(_, m) {
+            if (m.matchStatus === 'Completed' || m.result) {
+              var label = escHtml(m.teamOneName) + ' vs ' + escHtml(m.teamTwoName) + ' — ' + formatMatchDate(m.matchDate);
+              matchSel.innerHTML += '<option value="' + m.matchId + '">' + label + '</option>';
+            }
+          });
+        });
+    });
+    $.when.apply($, calls).then(function() {
+      document.getElementById('umpMatchLoading').style.display = 'none';
+      matchSel.style.display = 'block';
+      if (matchSel.options.length <= 1)
+        matchSel.innerHTML = '<option value="" disabled selected>No completed matches found</option>';
+    });
+  }
+
+  // ── Scheduling Request ──────────────────────────────────────────
+  function buildScheduling(body) {
+    // Generate next 8 weekends from today
+    function getUpcomingWeekends(n) {
+      var weekends = [];
+      var d = new Date();
+      // Find next Saturday
+      var day = d.getDay(); // 0=Sun,6=Sat
+      var daysToSat = day <= 6 ? (6 - day) : 0;
+      if (daysToSat === 0 && day === 6) daysToSat = 0; // today is Saturday
+      else if (day === 0) daysToSat = 6; // today is Sunday, next Sat in 6 days
+      else daysToSat = 6 - day;
+      // If today is Saturday include this weekend, else start from next Saturday
+      var sat = new Date(d);
+      sat.setDate(d.getDate() + daysToSat);
+      sat.setHours(0,0,0,0);
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      for (var i = 0; i < n; i++) {
+        var sun = new Date(sat); sun.setDate(sat.getDate() + 1);
+        var label = 'Sat ' + sat.getDate() + ' ' + months[sat.getMonth()] +
+                    ' — Sun ' + sun.getDate() + ' ' + months[sun.getMonth()];
+        var val   = sat.toISOString().split('T')[0]; // YYYY-MM-DD of the Saturday
+        weekends.push({ label: label, val: val });
+        sat.setDate(sat.getDate() + 7);
+      }
+      return weekends;
+    }
+
+    var weekends = getUpcomingWeekends(8);
+    var weekendOpts = weekends.map(function(w) {
+      return '<option value="' + w.val + '">' + w.label + '</option>';
+    }).join('');
+
+    var slots = [
+      { val: 'sat-am',   label: 'Sat AM',   desc: 'Game starting time between 7:00 AM and 10:00 AM' },
+      { val: 'sat-noon', label: 'Sat Noon', desc: 'Game starting time between 11:00 AM and 2:00 PM' },
+      { val: 'sat-pm',   label: 'Sat PM',   desc: 'Game starting time post 2:00 PM' },
+      { val: 'sun-am',   label: 'Sun AM',   desc: 'Game starting time between 7:00 AM and 10:00 AM' },
+      { val: 'sun-noon', label: 'Sun Noon', desc: 'Game starting time between 11:00 AM and 2:00 PM' },
+      { val: 'sun-pm',   label: 'Sun PM',   desc: 'Game starting time post 2:00 PM' },
+    ];
+    var slotCheckboxes = slots.map(function(s) {
+      return '<div class="slot-opt" id="slot-' + s.val + '" onclick="toggleSlot(this,\'' + s.val + '\')">' +
+        '<div class="slot-check"></div>' +
+        '<div><div class="slot-label">' + s.label + '</div>' +
+        '<div class="slot-desc">' + s.desc + '</div></div>' +
+        '</div>';
+    }).join('');
+
+    body.innerHTML = `
+      <div class="section-title">Request Type</div>
+      <div class="field">
+        <div class="radio-group" id="schedTypeGroup">
+          <label class="radio-opt" onclick="selectRadio(this,'schedType','game')">
+            <input type="radio" name="schedType" value="game"/>
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">🏏 Game Scheduling</div>
+              <div class="radio-desc">Request to avoid specific slots for your upcoming game</div></div>
+          </label>
+          <label class="radio-opt" onclick="selectRadio(this,'schedType','umpire')">
+            <input type="radio" name="schedType" value="umpire"/>
+            <div class="radio-dot"></div>
+            <div><div class="radio-label">🦺 Umpiring Assignment</div>
+              <div class="radio-desc">Request an umpiring assignment for a specific weekend</div></div>
+          </label>
+        </div>
+        <div class="err-msg" id="eSchedType">Please select a request type.</div>
+      </div>
+
+      <hr class="divider"/>
+
+      <div class="field">
+        <label class="lbl" for="fSchedWeekend">Weekend <span class="req">*</span></label>
+        <select id="fSchedWeekend">
+          <option value="" disabled selected>Select weekend</option>
+          ${weekendOpts}
+        </select>
+        <div class="err-msg" id="eSchedWeekend">Please select a weekend.</div>
+      </div>
+
+      <!-- Game-specific: slot avoidance -->
+      <div id="gameSlotFields" style="display:none">
+        <hr class="divider"/>
+        <div class="section-title">Slots to Avoid</div>
+        <div class="field">
+          <label class="lbl">Slots to Avoid <span class="req">*</span>
+            <span class="hint" id="slotCountHint">0 of 2 selected</span></label>
+          <div style="font-size:13px;font-weight:700;color:var(--red);background:#fff5f5;border:1px solid #fcc;border-radius:6px;padding:10px 12px;margin-bottom:10px;line-height:1.5;">⚠️ Select up to <strong>2 slots you want to AVOID</strong> — these are slots you <strong>do NOT want to play in</strong>. We will do our best to schedule your game outside these slots.</div>
+          <div class="err-msg" id="eSlots" style="margin-bottom:8px;">Please select at least 1 slot to avoid.</div>
+          <div class="slot-grid" id="slotGrid">
+            ${slotCheckboxes}
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:4px;">
+          <label class="ack-opt" id="ackLabel">
+            <input type="checkbox" id="fAck" onchange="toggleAck(this)"/>
+            <div class="ack-check" id="ackCheck"></div>
+            <div class="ack-text">I understand that NACL will make its best effort to honor this scheduling request, but it is <strong>not guaranteed</strong>.</div>
+          </label>
+          <div class="err-msg" id="eAck">You must acknowledge this before submitting.</div>
+        </div>
+      </div>
+
+      <!-- Umpire-specific: notes -->
+      <div id="umpireSchedFields" style="display:none">
+        <hr class="divider"/>
+        <div class="field">
+          <label class="lbl" for="fUmpSchedNotes">Additional Info <span class="hint">(optional)</span></label>
+          <textarea id="fUmpSchedNotes" style="min-height:100px;" placeholder="Any additional details about your umpiring assignment request…"></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goBack()">← Back</button>
+        <button class="btn btn-submit" onclick="submitTicket()">Submit Ticket</button>
+      </div>`;
+  }
+
+  var _selectedSlots = [];
+
+  function toggleSlot(el, val) {
+    if (el.classList.contains('selected')) {
+      // Deselect — always allowed
+      el.classList.remove('selected');
+      _selectedSlots = _selectedSlots.filter(function(s){ return s !== val; });
+    } else {
+      // Block if already at max 2
+      if (_selectedSlots.length >= 2) return;
+      el.classList.add('selected');
+      _selectedSlots.push(val);
+    }
+    var hint = document.getElementById('slotCountHint');
+    if (hint) hint.textContent = _selectedSlots.length + ' of 2 selected';
+    // Grey out unselected slots at max; re-enable when below max
+    document.querySelectorAll('.slot-opt').forEach(function(s) {
+      if (!s.classList.contains('selected')) {
+        if (_selectedSlots.length >= 2) {
+          s.classList.add('slot-disabled');
+          s.style.pointerEvents = 'none';
+        } else {
+          s.classList.remove('slot-disabled');
+          s.style.pointerEvents = '';
+        }
+      }
+    });
+    var errEl = document.getElementById('eSlots');
+    if (errEl && _selectedSlots.length > 0) errEl.style.display = 'none';
+  }
+
+  function toggleAck(chk) {
+    document.getElementById('ackCheck').classList.toggle('checked', chk.checked);
+    if (chk.checked) document.getElementById('eAck').style.display = 'none';
+  }
+
+  // Show/hide game vs umpire fields when schedType radio changes
+  var _origSelectRadio = null; // we'll wrap selectRadio below
+
+  // ── Free text (disputes / ground / other) ────────────────────────
+  function buildFreeText(body) {
+    var placeholders = {
+      'dispute': 'Describe the issue or dispute in detail. Include match details, dates, players involved, and what outcome you are requesting…',
+      'ground':  'Describe the ground issue or provide information request. Include the ground name, date of concern, and specific details…',
+      'other':   'Describe your request or question in detail…',
+    };
+    body.innerHTML = `
+      <div class="field">
+        <label class="lbl" for="fFreeText">Description <span class="req">*</span></label>
+        <textarea id="fFreeText" style="min-height:160px;" placeholder="${placeholders[_purpose] || ''}"></textarea>
+        <div class="err-msg" id="eFreeText">Please provide a description.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goBack()">← Back</button>
+        <button class="btn btn-submit" onclick="submitTicket()">Submit Ticket</button>
+      </div>`;
+  }
+
+  // ── Submit ───────────────────────────────────────────────────────
+  function submitTicket() {
+    var payload = collectPayload();
+    if (!payload) return;
+
+    var submitBtn = document.querySelector('#p2Body .btn-submit');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span>Submitting…';
+
+    // Build query string for Apps Script
+    var params = {
+      action:      'insert',
+      ticketRef:   payload.ticketRef,
+      timestamp:   new Date().toISOString(),
+      email:       document.getElementById('fEmail').value.trim(),
+      name:        document.getElementById('fName').value.trim(),
+      season:      _seasonName,
+      team:        _teamName,
+      purpose:     _purposeMeta[_purpose].title,
+    };
+    Object.assign(params, payload.extra);
+
+    var qs = Object.keys(params).map(function(k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+
+    $.ajax({
+      crossDomain: true,
+      url: script_url + '?' + qs,
+      dataType: 'json',
+      type: 'GET',
+      success: function() { showSuccess(payload.ticketRef); },
+      error: function()   { showSuccess(payload.ticketRef); } // Apps Script often returns CORS error even on success
+    });
+  }
+
+  function collectPayload() {
+    var ref = 'NACL-' + Date.now().toString(36).toUpperCase();
+
+    if (_purpose === 'player-move') {
+      var moveType = document.querySelector('input[name="moveType"]:checked');
+      if (!moveType) { document.getElementById('eMoveType').style.display='block'; return null; }
+      var playerName = document.getElementById('fPlayerName').value.trim();
+      if (!playerName) { showErr('fPlayerName','ePlayerName'); return null; } else clearErr('fPlayerName','ePlayerName');
+      var extra = { requestType: moveType.value, playerName: playerName };
+      if (moveType.value === 'move') {
+        var toTeam = document.getElementById('fToTeam').value;
+        if (!toTeam) { showErr('fToTeam','eToTeam'); return null; } else clearErr('fToTeam','eToTeam');
+        extra.fromTeam = document.getElementById('fFromTeam').value.trim() || 'Unknown';
+        extra.toTeam   = document.getElementById('fToTeam').options[document.getElementById('fToTeam').selectedIndex].text;
+      }
+      if (moveType.value === 'remove') {
+        var removeTeam = document.getElementById('fRemoveTeam').value;
+        if (!removeTeam) { showErr('fRemoveTeam','eRemoveTeam'); return null; } else clearErr('fRemoveTeam','eRemoveTeam');
+        extra.removeFromTeam = document.getElementById('fRemoveTeam').options[document.getElementById('fRemoveTeam').selectedIndex].text;
+      }
+      extra.notes = document.getElementById('fMoveNotes').value.trim();
+      return { ticketRef: ref, extra: extra };
+    }
+
+    if (_purpose === 'scorecard') {
+      var matchEl = document.getElementById('fSCMatch');
+      if (!matchEl || !matchEl.value) { showErr('fSCMatch','eSCMatch'); return null; } else clearErr('fSCMatch','eSCMatch');
+      var desc = document.getElementById('fSCDesc').value.trim();
+      if (!desc) { showErr('fSCDesc','eSCDesc'); return null; } else clearErr('fSCDesc','eSCDesc');
+      var scLink = document.getElementById('fSCLink');
+      return { ticketRef: ref, extra: {
+        matchId:       matchEl.value,
+        matchLabel:    matchEl.options[matchEl.selectedIndex].text,
+        scorecardLink: scLink ? scLink.value : '',
+        description:   desc
+      }};
+    }
+
+    if (_purpose === 'umpire') {
+      var matchEl = document.getElementById('fUmpMatch');
+      if (!matchEl || !matchEl.value) { showErr('fUmpMatch','eUmpMatch'); return null; } else clearErr('fUmpMatch','eUmpMatch');
+      var desc = document.getElementById('fUmpDesc').value.trim();
+      if (!desc) { showErr('fUmpDesc','eUmpDesc'); return null; } else clearErr('fUmpDesc','eUmpDesc');
+      return { ticketRef: ref, extra: {
+        matchId:    matchEl.value,
+        matchLabel: matchEl.options[matchEl.selectedIndex].text,
+        description: desc
+      }};
+    }
+
+    if (_purpose === 'scheduling') {
+      var schedType = document.querySelector('input[name="schedType"]:checked');
+      if (!schedType) { document.getElementById('eSchedType').style.display='block'; return null; }
+      var weekend = document.getElementById('fSchedWeekend').value;
+      if (!weekend) { showErr('fSchedWeekend','eSchedWeekend'); return null; } else clearErr('fSchedWeekend','eSchedWeekend');
+      var weekendLabel = document.getElementById('fSchedWeekend').options[document.getElementById('fSchedWeekend').selectedIndex].text;
+      if (schedType.value === 'game') {
+        if (_selectedSlots.length === 0) { document.getElementById('eSlots').style.display='block'; return null; }
+        if (!document.getElementById('fAck').checked) { document.getElementById('eAck').style.display='block'; return null; }
+        return { ticketRef: ref, extra: {
+          requestType:  'Game Scheduling',
+          weekend:       weekendLabel,
+          slotsToAvoid:  _selectedSlots.join(', ')
+        }};
+      } else {
+        var notes = document.getElementById('fUmpSchedNotes').value.trim();
+        return { ticketRef: ref, extra: {
+          requestType: 'Umpiring Assignment',
+          weekend:      weekendLabel,
+          notes:        notes
+        }};
+      }
+    }
+
+    // Free text
+    var desc = document.getElementById('fFreeText').value.trim();
+    if (!desc) { showErr('fFreeText','eFreeText'); return null; } else clearErr('fFreeText','eFreeText');
+    return { ticketRef: ref, extra: { description: desc } };
+  }
+
+  function showSuccess(ref) {
+    document.getElementById('page2').style.display = 'none';
+    document.getElementById('successScreen').style.display = 'block';
+    document.getElementById('ticketRef').textContent = 'Ticket ID: ' + ref;
+    setStep(3);
+    window.scrollTo(0,0);
+  }
+
+  function resetForm() {
+    _purpose = ''; _seasonId = null; _teamId = null; _teamName = '';
+    document.getElementById('successScreen').style.display = 'none';
+    document.getElementById('page1').style.display = 'block';
+    document.getElementById('fEmail').value = '';
+    document.getElementById('fName').value  = '';
+    document.getElementById('fSeason').value = '';
+    document.getElementById('fTeam').innerHTML = '<option value="" disabled selected>Select a season first…</option>';
+    document.getElementById('fTeam').disabled = true;
+    document.querySelectorAll('.pbadge').forEach(function(b){ b.classList.remove('selected'); });
+    setStep(1);
+    window.scrollTo(0,0);
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────
+  function formatMatchDate(d) {
+    if (!d) return '';
+    var parts = d.split('/');
+    if (parts.length === 3) {
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[parseInt(parts[0])-1] + ' ' + parseInt(parts[1]) + ', ' + parts[2];
+    }
+    return d;
+  }
+
+  function setStep(n) {
+    for (var i = 1; i <= 3; i++) {
+      var s = document.getElementById('stp'+i);
+      s.classList.remove('active','done');
+      if (i < n)       s.classList.add('done');
+      else if (i === n) s.classList.add('active');
+      if (i < 3) {
+        var l = document.getElementById('line'+i);
+        l.classList.toggle('done', i < n);
+      }
+    }
+  }
+
+  function showErr(inputId, errId) {
+    var el = document.getElementById(inputId);
+    if (el) el.classList.add('err');
+    var er = document.getElementById(errId);
+    if (er) er.style.display = 'block';
+  }
+  function clearErr(inputId, errId) {
+    var el = document.getElementById(inputId);
+    if (el) el.classList.remove('err');
+    var er = document.getElementById(errId);
+    if (er) er.style.display = 'none';
+  }
+  function escHtml(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
