@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
         <link href="https://fonts.googleapis.com/css?family=Roboto Condensed" rel="stylesheet" />
         <style>
             .styled-table {
@@ -47,45 +46,19 @@
                 border-bottom: 2px solid #012169;
             }
 
-            #summaryTable tr:first-child{
+            #summaryTable tr:first-child,
+            #summaryTable tr:nth-child(2),
+            #t12SummaryTable tr:first-child,
+            #t12SummaryTable tr:nth-child(2),
+            #boxSummaryTable tr:first-child,
+            #boxSummaryTable tr:nth-child(2) {
                 text-align: center;
                 background-color: #da291c;
             }
 
-            #summaryTable tr:nth-child(2){
-                text-align: center;
-                background-color: #da291c;
-            }
-
-            #summaryTable td:nth-child(1){
-                background-color: #da291c;
-            }
-
-            #t12SummaryTable tr:first-child{
-                text-align: center;
-                background-color: #da291c;
-            }
-
-            #t12SummaryTable tr:nth-child(2){
-                text-align: center;
-                background-color: #da291c;
-            }
-
-            #t12SummaryTable td:nth-child(1){
-                background-color: #da291c;
-            }
-
-            #boxSummaryTable tr:first-child{
-                text-align: center;
-                background-color: #da291c;
-            }
-
-            #boxSummaryTable tr:nth-child(2){
-                text-align: center;
-                background-color: #da291c;
-            }
-
-            #boxSummaryTable td:nth-child(1){
+            #summaryTable td:nth-child(1),
+            #t12SummaryTable td:nth-child(1),
+            #boxSummaryTable td:nth-child(1) {
                 background-color: #da291c;
             }
             
@@ -174,6 +147,31 @@
               align-items:center;
               flex-direction: row;
             }
+            .logo-txt-container img {
+              border-radius: 50%;
+              object-fit: cover;
+            }
+            .sm-edit-btn {
+              background: none;
+              border: none;
+              cursor: pointer;
+              font-size: 14px;
+              opacity: 0.5;
+              padding: 2px 4px;
+              vertical-align: middle;
+              line-height: 1;
+            }
+            .sm-edit-btn:hover { opacity: 1; }
+            .sm-add-row-btn {
+              background: none;
+              border: none;
+              cursor: pointer;
+              font-size: 18px;
+              color: #888;
+              padding: 4px 8px;
+              line-height: 1;
+            }
+            .sm-add-row-btn:hover { color: #012169; }
 
             .overlay{
                 display: none;
@@ -194,6 +192,56 @@
                 display: block;
             }
 
+
+            /* Rankings editor list items */
+            #reTeamList li {
+                display: flex;
+                align-items: center;
+                padding: 7px 10px;
+                border-bottom: 1px solid #eee;
+                background: #fff;
+                cursor: grab;
+                font-size: 14px;
+                color: #012169;
+                user-select: none;
+            }
+            #reTeamList li:last-child { border-bottom: none; }
+            #reTeamList li.drag-over { border-top: 2px solid #da291c; }
+            #reTeamList li .re-rank {
+                width: 42px;
+                flex-shrink: 0;
+            }
+            #reTeamList li .re-rank-input {
+                width: 36px;
+                text-align: center;
+                font-weight: bold;
+                color: #da291c;
+                font-size: 13px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 2px 0;
+                background: #fff8f8;
+            }
+            #reTeamList li .re-rank-input:focus {
+                outline: none;
+                border-color: #da291c;
+                background: #fff;
+            }
+            #reTeamList li .re-name { flex: 1; }
+            #reTeamList li .re-del {
+                background: none;
+                border: none;
+                color: #aaa;
+                font-size: 16px;
+                cursor: pointer;
+                padding: 0 4px;
+            }
+            #reTeamList li .re-del:hover { color: #da291c; }
+            #reTeamList li .re-handle {
+                color: #bbb;
+                margin-right: 8px;
+                font-size: 16px;
+            }
         </style>
     </head>
     <body>
@@ -203,10 +251,63 @@
                 <select id="selStatType" style="display: none;"></select>&nbsp;&nbsp;&nbsp;&nbsp;
                 <select id="selTeam" style="display: none;"></select>&nbsp;&nbsp;&nbsp;&nbsp;
                 <input type="button" style="display: none;" value="Submit" id="submit" class="btn" />
+                &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="&#x270F;&#xFE0F; Edit Rankings" id="btnEditRankings" class="subBtn" style="margin-left:10px;display:none;" />
             </div>
             <div id="statsTableBody"></div>
         </div>
         <div class="overlay"></div>
+
+    <!-- Rankings Editor Modal -->
+    <div id="rankingsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;overflow-y:auto;">
+      <div style="background:#fff;max-width:600px;margin:40px auto;border-radius:10px;overflow:hidden;font-family:'Roboto Condensed',sans-serif;">
+        <div style="background:#da291c;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#fff;font-size:18px;font-weight:bold;">&#x270F;&#xFE0F; Rankings: <span id="reModalSeriesName"></span></span>
+          <button onclick="closeRankingsEditor()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
+        </div>
+        <div style="padding:20px;">
+          <!-- reSeries hidden input — holds the active series name for JS -->
+          <input type="hidden" id="reSeries" value="" />
+
+          <!-- Team list -->
+          <div id="reTeamListWrap">
+            <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;">
+              <input id="reNewTeam" type="text" placeholder="Add team name..." style="flex:1;height:32px;border:2px solid #012169;border-radius:6px;font-size:14px;padding:0 8px;" onkeydown="if(event.key==='Enter')addTeamToEditor()" />
+              <button class="subBtn" onclick="addTeamToEditor()">+ Add</button>
+            </div>
+            <div style="font-size:12px;color:#888;margin-bottom:6px;">Drag rows to reorder &nbsp;&#x2195;</div>
+            <ul id="reTeamList" style="list-style:none;padding:0;margin:0;max-height:340px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;"></ul>
+            <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <button class="btn" onclick="saveRankingsToStorage()">&#x1F4BE; Save to Browser</button>
+              <button class="subBtn" id="btnSaveToFile" onclick="saveToFile()">&#x1F4C2; Save to File</button>
+              <button class="btn" onclick="deleteCurrentSeries()" style="background:#888;">&#x1F5D1; Delete Series</button>
+            </div>
+            <div id="reFileStatus" style="margin-top:10px;font-size:12px;color:#555;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Editor Modal -->
+    <div id="summaryModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;overflow-y:auto;">
+      <div style="background:#fff;max-width:700px;margin:30px auto;border-radius:10px;overflow:hidden;font-family:'Roboto Condensed',sans-serif;">
+        <div style="background:#012169;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#fff;font-size:17px;font-weight:bold;" id="smTitle">Add Row</span>
+          <button onclick="closeSummaryEditor()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
+        </div>
+        <div style="padding:18px;">
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px;font-weight:bold;color:#012169;">SEASON</label>
+            <select id="smSeason" style="width:100%;margin-top:3px;height:32px;border:2px solid #012169;border-radius:6px;font-size:13px;padding:0 8px;box-sizing:border-box;"></select>
+          </div>
+          <div id="smDivsContainer"></div>
+          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <button class="btn" onclick="addSummaryRowToTable()">&#x2795; Add to Table</button>
+            <button class="subBtn" onclick="saveSummaryToFile()">&#x1F4C2; Save to File</button>
+          </div>
+          <div id="smFileStatus" style="margin-top:8px;font-size:12px;color:#555;"></div>
+        </div>
+      </div>
+    </div>
     </body>
 
     <script>
@@ -228,6 +329,21 @@
         //var matchDates = ['02/11/2023','02/12/2023'];
         var matchDates = [];
         var seriesCalls = [];
+        var _allTeamsMap = null;  // set after ready, used by rankings editor
+        var _seriesNameToId = {}; // seriesName -> seriesId lookup
+        var _childToParent  = {}; // childSeriesName -> parentSeriesName
+        var _parentSeriesMap = {}; // parentSeriesName -> [childSeriesName, ...]
+        var _teamLogoMap = {};    // teamName (uppercase) -> full logo URL
+        var _smEditData  = null;   // populated when editing an existing row
+        var _smEditTeamsRow  = null;
+        var _smEditGroundRow = null;
+        // Helper: append a text cell to a row and return the td
+        function addCell(row, html) {
+            var td = row.insertCell();
+            td.innerHTML = html;
+            return td;
+        }
+
         $(document).ready(function () {
             var allMatchesMap = {};// Object<series, List<match>>
             const allPlayersMap = new Map();//Map<series, Map<team_name, Map<player_id, player_name>>>
@@ -239,6 +355,23 @@
             $("#statsTableBody").html("");
             var seriesURL = cricclubs_url+"series/getSeriesList?"+url_params;
             seriesCalls.push($.getJSON(seriesURL, function (data) {
+                // Pass 1: build full id->name map (includes parents)
+                var _allSeriesById = {};
+                $.each(data.data.seriesList, function (index, series) {
+                    _allSeriesById[series.seriesID] = series.seriesName;
+                });
+                // Pass 2: build parent->children map (independent of allSeriesMap order)
+                $.each(data.data.seriesList, function (index, series) {
+                    if (series.parentSeriesId && series.parentSeriesId !== 0 && _allSeriesById[series.parentSeriesId]) {
+                        var parentName = _allSeriesById[series.parentSeriesId];
+                        _childToParent[series.seriesName] = parentName;
+                        _parentSeriesMap[parentName] = _parentSeriesMap[parentName] || [];
+                        if (!_parentSeriesMap[parentName].includes(series.seriesName))
+                            _parentSeriesMap[parentName].push(series.seriesName);
+                    }
+                });
+                // Pass 3: keep only leaf (child) series in allSeriesMap
+                console.log("[Summary] _parentSeriesMap:", JSON.stringify(_parentSeriesMap));
                 $.each(data.data.seriesList, function (index, series) {
                     allSeriesMap.set(series.seriesID, series.seriesName);
                     if(allSeriesMap.has(series.parentSeriesId)) {
@@ -252,6 +385,7 @@
                 console.log(allSeriesMap.size);
                 allSeriesMap.forEach(function(seriesName, seriesId) {
                     console.log(seriesId);
+                    _seriesNameToId[seriesName] = seriesId;
                     $("#selSeries").append('<option value="' + seriesName + '">' + seriesName + "</option>");
                     allPlayersMap.set(seriesName, new Map());
                     allTeamsMap.set(seriesName, new Map());
@@ -275,6 +409,12 @@
                         $.each(data.data.teamsList, function (index, teamsList) {
                             $.each(teamsList.teams, function (index, team) {
                                 allPlayersMap.get(seriesName).set(team.teamName, new Map());
+                                // Try all known field names; build full URL if only UUID returned
+                                var rawLogo = team.logo_file_path || '';
+                                var logo = rawLogo
+                                    ? 'https://media.cricclubs.com' + rawLogo
+                                    : '';
+                                if (logo) _teamLogoMap[team.teamName.toUpperCase()] = logo;
                                 var playersURL = cricclubs_url+"team/getTeamPlayers?"+url_params+"&teamId=" + team.teamID;
                                 $.getJSON(playersURL, function (data) {
                                     $.each(data.data.teamPlayers, function (index, player) {
@@ -286,28 +426,24 @@
                     });
                 });
             });
-            $("#selStatType").html("");
-            $("#selStatType").append('<option value="">Select Stat</option>');
-            $("#selStatType").append('<option value="ts">Team Scores</option>');
-            $("#selStatType").append('<option value="ts">Batting Figures</option>');
-            $("#selStatType").append('<option value="bf">Bowling Figures</option>');
-            $("#selStatType").append('<option value="ps">Partnerships</option>');
-            $("#selStatType").append('<option value="tstats">Team Stats</option>');
-            $("#selStatType").append('<option value="ranks">Rankings</option>');
-            $("#selStatType").append('<option value="seriesSummary">Summary</option>');
-            $("#selStatType").show();
+            function populateStatTypeSelect() {
+                $("#selStatType").html(
+                    '<option value="">Select Stat</option>' +
+                    '<option value="ts">Team Scores</option>' +
+                    '<option value="batf">Batting Figures</option>' +
+                    '<option value="bf">Bowling Figures</option>' +
+                    '<option value="ps">Partnerships</option>' +
+                    '<option value="tstats">Team Stats</option>' +
+                    '<option value="ranks">Rankings</option>' +
+                    '<option value="seriesSummary">Summary</option>'
+                );
+                $("#selStatType").show();
+            }
+            _allTeamsMap = allTeamsMap;
+            populateStatTypeSelect();
 
             $('#selSeries').on('change', function() {
-                $("#selStatType").html("");
-                $("#selStatType").append('<option value="">Select Stat</option>');
-                $("#selStatType").append('<option value="ts">Team Scores</option>');
-                $("#selStatType").append('<option value="ts">Batting Figures</option>');
-                $("#selStatType").append('<option value="bf">Bowling Figures</option>');
-                $("#selStatType").append('<option value="ps">Partnerships</option>');
-                $("#selStatType").append('<option value="tstats">Team Stats</option>');
-                $("#selStatType").append('<option value="ranks">Rankings</option>');
-                $("#selStatType").append('<option value="seriesSummary">Summary</option>');
-                $("#selStatType").show();
+                populateStatTypeSelect();
                 $("#selTeam").html("");
                 $("#selTeam").hide();
             });
@@ -325,9 +461,15 @@
                         }
                     }
                     $("#selTeam").show();
+                    $("#btnEditRankings").hide();
                 }
                 else {
                     $("#selTeam").hide();
+                    if (this.value == "ranks") {
+                        $("#btnEditRankings").show();
+                    } else {
+                        $("#btnEditRankings").hide();
+                    }
                 }
             });
 
@@ -642,138 +784,16 @@
 
                     var rankTH = document.createElement('th');
                     rankTH.onclick = function(){
-                        sortTable(selectedSeries,4,"ranksTable","number");
+                        sortTable(selectedSeries,1,"ranksTable","number");
                     };
                     rankTH.appendChild(document.createTextNode("Rank ↕"));
                     tr.appendChild(rankTH);
 
-                    var summer2021TH = document.createElement('th');
-                    summer2021TH.appendChild(document.createTextNode("Summer 2021"));
-                    tr.appendChild(summer2021TH);
-
-                    var Fall2021TH = document.createElement('th');
-                    Fall2021TH.appendChild(document.createTextNode("Fall 2021"));
-                    tr.appendChild(Fall2021TH);
-
-                    var winter202122TH = document.createElement('th');
-                    winter202122TH.appendChild(document.createTextNode("Winter 2021-22"));
-                    tr.appendChild(winter202122TH);
-
-                    var Spring2022TH = document.createElement('th');
-                    Spring2022TH.appendChild(document.createTextNode("Spring 2022"));
-                    tr.appendChild(Spring2022TH);
-
-                    var summer2022TH = document.createElement('th');
-                    summer2022TH.appendChild(document.createTextNode("Summer 2022"));
-                    tr.appendChild(summer2022TH);
-
-                    var winter202223TH = document.createElement('th');
-                    winter202223TH.appendChild(document.createTextNode("Winter 2022-23"));
-                    tr.appendChild(winter202223TH);
-
-                    var Spring2023TH = document.createElement('th');
-                    Spring2023TH.appendChild(document.createTextNode("Spring 2023"));
-                    tr.appendChild(Spring2023TH);
-
-                    var IndCup2023TH = document.createElement('th');
-                    IndCup2023TH.appendChild(document.createTextNode("Independence Cup 2023"));
-                    tr.appendChild(IndCup2023TH);
-
-                    var summer2023ATH = document.createElement('th');
-                    summer2023ATH.appendChild(document.createTextNode("Summer 2023 - A"));
-                    tr.appendChild(summer2023ATH);
-
-                    var summer2023BTH = document.createElement('th');
-                    summer2023BTH.appendChild(document.createTextNode("Summer 2023 - B"));
-                    tr.appendChild(summer2023BTH);
-
-                    var vetCup2023TH = document.createElement('th');
-                    vetCup2023TH.appendChild(document.createTextNode("Veterans Cup 2023"));
-                    tr.appendChild(vetCup2023TH);
-
-                    var winter202324ATH = document.createElement('th');
-                    winter202324ATH.appendChild(document.createTextNode("Winter 2023-24 - A"));
-                    tr.appendChild(winter202324ATH);
-
-                    var winter202324BTH = document.createElement('th');
-                    winter202324BTH.appendChild(document.createTextNode("Winter 2023-24 - B"));
-                    tr.appendChild(winter202324BTH);
-
-                    var spring2024ATH = document.createElement('th');
-                    spring2024ATH.appendChild(document.createTextNode("Spring 2024 - A"));
-                    tr.appendChild(spring2024ATH);
-
-                    var spring2024BTH = document.createElement('th');
-                    spring2024BTH.appendChild(document.createTextNode("Spring 2024 - B"));
-                    tr.appendChild(spring2024BTH);
-
-                    var spring2024CTH = document.createElement('th');
-                    spring2024CTH.appendChild(document.createTextNode("Spring 2024 - C"));
-                    tr.appendChild(spring2024CTH);
-
-                    var IndCup2024TH = document.createElement('th');
-                    IndCup2024TH.appendChild(document.createTextNode("Independence Cup 2024"));
-                    tr.appendChild(IndCup2024TH);
-
-                    var summer2024ATH = document.createElement('th');
-                    summer2024ATH.appendChild(document.createTextNode("Summer 2024 - A"));
-                    tr.appendChild(summer2024ATH);
-
-                    var summer2024BTH = document.createElement('th');
-                    summer2024BTH.appendChild(document.createTextNode("Summer 2024 - B"));
-                    tr.appendChild(summer2024BTH);
-
-                    var summer2024CTH = document.createElement('th');
-                    summer2024CTH.appendChild(document.createTextNode("Summer 2024 - C"));
-                    tr.appendChild(summer2024CTH);
-
-                    var winter202425ATH = document.createElement('th');
-                    winter202425ATH.appendChild(document.createTextNode("Winter 2024-25 - A"));
-                    tr.appendChild(winter202425ATH);
-
-                    var winter202425BTH = document.createElement('th');
-                    winter202425BTH.appendChild(document.createTextNode("Winter 2024-25 - B"));
-                    tr.appendChild(winter202425BTH);
-
-                    var winter202425CTH = document.createElement('th');
-                    winter202425CTH.appendChild(document.createTextNode("Winter 2024-25 - C"));
-                    tr.appendChild(winter202425CTH);
-
-                    var PreCup2025TH = document.createElement('th');
-                    PreCup2025TH.appendChild(document.createTextNode("Presidents Cup 2025"));
-                    tr.appendChild(PreCup2025TH);
-
-                    var spring2025ATH = document.createElement('th');
-                    spring2025ATH.appendChild(document.createTextNode("Spring 2025 - A"));
-                    tr.appendChild(spring2025ATH);
-
-                    var spring2025BTH = document.createElement('th');
-                    spring2025BTH.appendChild(document.createTextNode("Spring 2025 - B"));
-                    tr.appendChild(spring2025BTH);
-
-                    var spring2025CTH = document.createElement('th');
-                    spring2025CTH.appendChild(document.createTextNode("Spring 2025 - C"));
-                    tr.appendChild(spring2025CTH);
-
-                    var IndCup2025TH = document.createElement('th');
-                    IndCup2025TH.appendChild(document.createTextNode("Independence Cup 2025"));
-                    tr.appendChild(IndCup2025TH);
-
-                    var summer2025ATH = document.createElement('th');
-                    summer2025ATH.appendChild(document.createTextNode("Summer 2025 - A"));
-                    tr.appendChild(summer2025ATH);
-
-                    var summer2025BTH = document.createElement('th');
-                    summer2025BTH.appendChild(document.createTextNode("Summer 2025 - B"));
-                    tr.appendChild(summer2025BTH);
-
-                    var summer2025CTH = document.createElement('th');
-                    summer2025CTH.appendChild(document.createTextNode("Summer 2025 - C"));
-                    tr.appendChild(summer2025CTH);
-
-                    var DiwCup2025TH = document.createElement('th');
-                    DiwCup2025TH.appendChild(document.createTextNode("Diwali Cup 2025"));
-                    tr.appendChild(DiwCup2025TH);
+                    Object.keys(RANK_ARRAYS).forEach(function(seriesName) {
+                        var th = document.createElement('th');
+                        th.appendChild(document.createTextNode(seriesName));
+                        tr.appendChild(th);
+                    });
 
                     tbl.appendChild(tr);
                 }
@@ -1174,6 +1194,34 @@
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
 
+                    var teamsRow = tbl.insertRow(2);
+                    var groundRow = tbl.insertRow(2);
+                    seriesCell = groundRow.insertCell(0);
+                    seriesCell.innerHTML= "WINTER 2025-26";
+                    seriesCell.rowSpan = 2;
+                    AChampionCell = teamsRow.insertCell(0);
+                    AChampionCell.innerHTML= '<div class="logo-txt-container"><img src=\"https://media.cricclubs.com/documentsRep/teamLogos/03d70f0d-3fd0-4ff2-ac9f-0ff1d83cd9d7.jpg\" border=\"0\" width=\"30\" height=\"30\">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">SEAMERS<br><b style=\"color:#ffff00\">64/7(14.5)</b></h3></div>';
+                    AChampionCell.style.backgroundColor="#012169";
+                    teamsRow.insertCell(1).innerHTML= '<div class="logo-txt-container"><img src=\"https://media.cricclubs.com/documentsRep/teamLogos/aaa0d396-6f9d-4d0c-a20b-6209e001fdc0.jpg\" border=\"0\" width=\"30\" height=\"30\">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">MONEY HEIST<br><b style=\"color:#ffff00\">63/9(15.0)</b></h3></div>';
+                    teamsRow.insertCell(2).innerHTML= '<div class="logo-txt-container"><img src=\"https://media.cricclubs.com/documentsRep/teamLogos/dd77ce6b-0346-4054-b580-faa377da8a83.jpg\" border=\"0\" width=\"30\" height=\"30\">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">VIKINGS<br><b style=\"color:#ffff00\">68(11.1)</b></h3></div>';
+                    teamsRow.cells[2].style.backgroundColor="#012169";
+                    teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src=\"https://media.cricclubs.com/documentsRep/teamLogos/214cbeb6-7694-416e-aa6b-19b1f1639c64.jpg\" border=\"0\" width=\"30\" height=\"30\">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">2POINT0<br><b style=\"color:#ffff00\">66(14.5)</b></h3></div>';
+                    teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src=\"https://media.cricclubs.com/documentsRep/teamLogos/7a95f3ab-14be-4503-a011-c293693b60d0.jpg\" border=\"0\" width=\"30\" height=\"30\">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">THUNDERS<br><b style=\"color:#ffff00\">62/3(14.2)</b></h3></div>';
+                    teamsRow.cells[4].style.backgroundColor="#012169";
+                    teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src=\"https://media.cricclubs.com/documentsRep/teamLogos/5d99a752-4441-47ed-bf11-3552717f6210.jpg\" border=\"0\" width=\"30\" height=\"30\">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">FC SPARTANS<br><b style=\"color:#ffff00\">57/6(15.0)</b></h3></div>';
+                    groundACell = groundRow.insertCell(1);
+                    groundACell.innerHTML= "21-Feb-2026, Loren Eden, Hayward";
+                    groundACell.style.textAlign = "center";
+                    groundACell.colSpan = 2;
+                    groundBCell = groundRow.insertCell(2);
+                    groundBCell.innerHTML= "21-Feb-2026, Loren Eden, Hayward";
+                    groundBCell.style.textAlign = "center";
+                    groundBCell.colSpan = 2;
+                    groundCCell = groundRow.insertCell(3);
+                    groundCCell.innerHTML= "21-Feb-2026, MLK, Hayward";
+                    groundCCell.style.textAlign = "center";
+                    groundCCell.colSpan = 2;
+
                     var t12tbl = document.createElement("table");
                     t12tbl.setAttribute("class", "styled-table");
                     t12tbl.setAttribute("style","table-layout:fixed");
@@ -1313,56 +1361,32 @@
                                 var matchId = match.matchId;
                                 var dr = tbl.insertRow();
 
-                                var sno = document.createElement("Label");
-                                sno.innerHTML = snoCount;
-                                dr.insertCell().appendChild(sno);
                                 snoCount += 1;
-
-                                var series = document.createElement("Label");
-                                series.innerHTML = seriesName;
-                                dr.insertCell().appendChild(series);
-                                
-                                var matchDate = document.createElement("Label");
-                                matchDate.innerHTML = match.matchDate;
-                                dr.insertCell().appendChild(matchDate);
-
-                                var matchType = document.createElement("Label");
-                                matchType.innerHTML = getMatchType(match.matchType);
-                                dr.insertCell().appendChild(matchType);
+                                addCell(dr, snoCount - 1);
+                                addCell(dr, seriesName);
+                                addCell(dr, match.matchDate);
+                                addCell(dr, getMatchType(match.matchType));
 
                                 var ballsPerOver = getBallsPerOver(seriesName);
-                                var teamScore = document.createElement("Label");
-                                teamScore.innerHTML = match.t1total+"/"+match.t1wickets+" ("+Math.floor(match.t1balls / ballsPerOver)+"."+(match.t1balls % ballsPerOver)+")";
-                                dr.insertCell().appendChild(teamScore);
+                                addCell(dr, match.t1total+"/"+match.t1wickets+" ("+Math.floor(match.t1balls / ballsPerOver)+"."+(match.t1balls % ballsPerOver)+")");
+                                addCell(dr, match.teamOneName);
+                                addCell(dr, match.teamTwoName);
+                                addCell(dr, match.t2total+"/"+match.t2wickets+" ("+getOvers(seriesName,match.t2balls)+")");
 
-                                var teamName = document.createElement("Label");
-                                teamName.innerHTML = match.teamOneName;
-                                dr.insertCell().appendChild(teamName);
-
-                                var oppTeamName = document.createElement("Label");
-                                oppTeamName.innerHTML = match.teamTwoName;
-                                dr.insertCell().appendChild(oppTeamName);
-
-                                var oppScore = document.createElement("Label");
-                                oppScore.innerHTML = match.t2total+"/"+match.t2wickets+" ("+getOvers(seriesName,match.t2balls)+")";
-                                dr.insertCell().appendChild(oppScore);
-
-                                var winMargin = document.createElement("Label");
+                                var resParts = match.result.split(' ');
+                                var wmText;
                                 if(match.result.includes("Forfeited") || match.result.includes("Abandoned") || match.result.includes("Super Over"))
-                                    winMargin.innerHTML = "0 Run(s)";
+                                    wmText = "0 Run(s)";
                                 else if(match.result.includes("(D/L)"))
-                                    winMargin.innerHTML = match.result.split(' ')[match.result.split(' ').length-3] + " " + match.result.split(' ')[match.result.split(' ').length-2] + " "+match.result.split(' ')[match.result.split(' ').length-1];
+                                    wmText = resParts[resParts.length-3] + " " + resParts[resParts.length-2] + " " + resParts[resParts.length-1];
                                 else
-                                    winMargin.innerHTML = match.result.split(' ')[match.result.split(' ').length-2] + " "+match.result.split(' ')[match.result.split(' ').length-1];
-                                dr.insertCell().appendChild(winMargin);
+                                    wmText = resParts[resParts.length-2] + " " + resParts[resParts.length-1];
+                                addCell(dr, wmText);
 
-                                var rrDiff = document.createElement("Label");
-                                rrDiff.innerHTML = calculateRRDiff(seriesName,match.t1total, match.t2total, match.t1balls, match.t2balls, match.t1wickets, match.t2wickets);
-                                dr.insertCell().appendChild(rrDiff);
+                                addCell(dr, calculateRRDiff(seriesName,match.t1total, match.t2total, match.t1balls, match.t2balls, match.t1wickets, match.t2wickets));
 
                                 var result = document.createElement("a");
-                                var linkText = document.createTextNode(match.result);
-                                result.appendChild(linkText);
+                                result.textContent = match.result;
                                 result.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?"+url_params+"&matchId="+matchId;
                                 result.title = match.result;
                                 result.style.color = "#dddddd";
@@ -1375,94 +1399,24 @@
                                 var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
                                     $.getJSON(matchUrl, function (data) {
-                                        var bowlerTeamName = data.data.innings2.teamName;
-                                        var oppTeamName = data.data.innings1.teamName;
-                                        $.each(data.data.innings1.bowling, function (idx, playerStat) {
-                                            if(playerStat.wickets >= minBowlerStatWkts) {
-                                                var dr = tbl.insertRow();
-
-                                                var sno = document.createElement("Label");
-                                                sno.innerHTML = snoCount;
-                                                dr.insertCell().appendChild(sno);
-                                                snoCount += 1;
-
-                                                var series = document.createElement("Label");
-                                                series.innerHTML = seriesName;
-                                                dr.insertCell().appendChild(series);
-                                                
-                                                var matchDate = document.createElement("Label");
-                                                matchDate.innerHTML = match.matchDate;
-                                                dr.insertCell().appendChild(matchDate);
-
-                                                var matchType = document.createElement("Label");
-                                                matchType.innerHTML = getMatchType(match.matchType);
-                                                dr.insertCell().appendChild(matchType);
-
-                                                var bowlingFigures = document.createElement("Label");
-                                                bowlingFigures.innerHTML = getOvers(seriesName,playerStat.balls) + " - " + playerStat.maidens + " - " + playerStat.runs + " - " + playerStat.wickets;
-                                                dr.insertCell().appendChild(bowlingFigures);
-
-                                                var economy = document.createElement("Label");
-                                                economy.innerHTML = getEconomy(seriesName,playerStat.balls,playerStat.runs);
-                                                dr.insertCell().appendChild(economy);
-
-                                                var bowlerName = document.createElement("Label");
-                                                bowlerName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
-                                                dr.insertCell().appendChild(bowlerName);
-
-                                                var bowlerTeam = document.createElement("Label");
-                                                bowlerTeam.innerHTML = bowlerTeamName;
-                                                dr.insertCell().appendChild(bowlerTeam);
-
-                                                var oppTeam = document.createElement("Label");
-                                                oppTeam.innerHTML = oppTeamName;
-                                                dr.insertCell().appendChild(oppTeam);
-                                            }
-                                        });
-                                        bowlerTeamName = data.data.innings1.teamName;
-                                        oppTeamName = data.data.innings2.teamName;
-                                        $.each(data.data.innings2.bowling, function (idx, playerStat) {
-                                            if(playerStat.wickets >= minBowlerStatWkts) {
-                                                var dr = tbl.insertRow();
-
-                                                var sno = document.createElement("Label");
-                                                sno.innerHTML = snoCount;
-                                                dr.insertCell().appendChild(sno);
-                                                snoCount += 1;
-
-                                                var series = document.createElement("Label");
-                                                series.innerHTML = seriesName;
-                                                dr.insertCell().appendChild(series);
-                                                
-                                                var matchDate = document.createElement("Label");
-                                                matchDate.innerHTML = match.matchDate;
-                                                dr.insertCell().appendChild(matchDate);
-
-                                                var matchType = document.createElement("Label");
-                                                matchType.innerHTML = getMatchType(match.matchType);
-                                                dr.insertCell().appendChild(matchType);
-
-                                                var bowlingFigures = document.createElement("Label");
-                                                bowlingFigures.innerHTML = getOvers(seriesName,playerStat.balls) + " - " + playerStat.maidens + " - " + playerStat.runs + " - " + playerStat.wickets;
-                                                dr.insertCell().appendChild(bowlingFigures);
-
-                                                var economy = document.createElement("Label");
-                                                economy.innerHTML = getEconomy(seriesName,playerStat.balls,playerStat.runs);
-                                                dr.insertCell().appendChild(economy);
-
-                                                var bowlerName = document.createElement("Label");
-                                                bowlerName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
-                                                dr.insertCell().appendChild(bowlerName);
-
-                                                var bowlerTeam = document.createElement("Label");
-                                                bowlerTeam.innerHTML = bowlerTeamName;
-                                                dr.insertCell().appendChild(bowlerTeam);
-
-                                                var oppTeam = document.createElement("Label");
-                                                oppTeam.innerHTML = oppTeamName;
-                                                dr.insertCell().appendChild(oppTeam);
-                                            }
-                                        });
+                                        function addBowlingRows(innings, bowlerTeam, oppTeam) {
+                                            $.each(innings.bowling, function (idx, playerStat) {
+                                                if(playerStat.wickets >= minBowlerStatWkts) {
+                                                    var dr = tbl.insertRow();
+                                                    addCell(dr, ++snoCount - 1);
+                                                    addCell(dr, seriesName);
+                                                    addCell(dr, match.matchDate);
+                                                    addCell(dr, getMatchType(match.matchType));
+                                                    addCell(dr, getOvers(seriesName,playerStat.balls) + " - " + playerStat.maidens + " - " + playerStat.runs + " - " + playerStat.wickets);
+                                                    addCell(dr, getEconomy(seriesName,playerStat.balls,playerStat.runs));
+                                                    addCell(dr, playerStat.firstName+"  "+playerStat.lastName);
+                                                    addCell(dr, bowlerTeam);
+                                                    addCell(dr, oppTeam);
+                                                }
+                                            });
+                                        }
+                                        addBowlingRows(data.data.innings1, data.data.innings2.teamName, data.data.innings1.teamName);
+                                        addBowlingRows(data.data.innings2, data.data.innings1.teamName, data.data.innings2.teamName);
                                     })
                                 );
                             }); 
@@ -1473,104 +1427,25 @@
                                 var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
                                     $.getJSON(matchUrl, function (data) {
-                                        var batterTeamName = data.data.innings1.teamName;
-                                        var oppTeamName = data.data.innings2.teamName;
-                                        var inn1TeamTotal = data.data.innings1.total;
-                                        var inn2TeamTotal = data.data.innings2.total;
-                                        $.each(data.data.innings1.batting, function (idx, playerStat) {
-                                            if(playerStat.runsScored > minBatsmanStatScore) {
-                                                var dr = tbl.insertRow();
-
-                                                var sno = document.createElement("Label");
-                                                sno.innerHTML = snoCount;
-                                                dr.insertCell().appendChild(sno);
-                                                snoCount += 1;
-
-                                                var series = document.createElement("Label");
-                                                series.innerHTML = seriesName;
-                                                dr.insertCell().appendChild(series);
-                                                
-                                                var matchDate = document.createElement("Label");
-                                                matchDate.innerHTML = match.matchDate;
-                                                dr.insertCell().appendChild(matchDate);
-
-                                                var matchType = document.createElement("Label");
-                                                matchType.innerHTML = getMatchType(match.matchType);
-                                                dr.insertCell().appendChild(matchType);
-
-                                                var battingFigures = document.createElement("Label");
-                                                battingFigures.innerHTML = playerStat.runsScored +"("+playerStat.ballsFaced+"),  4s:"+playerStat.fours+",  6s:"+playerStat.sixers;
-                                                dr.insertCell().appendChild(battingFigures);
-
-                                                var percentInTotal = document.createElement("Label");
-                                                percentInTotal.innerHTML = ((playerStat.runsScored / inn1TeamTotal)*100).toFixed(2);
-                                                dr.insertCell().appendChild(percentInTotal);
-
-                                                var batterName = document.createElement("Label");
-                                                batterName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
-                                                dr.insertCell().appendChild(batterName);
-
-                                                var teamTotal = document.createElement("Label");
-                                                teamTotal.innerHTML = inn1TeamTotal;
-                                                dr.insertCell().appendChild(teamTotal);
-
-                                                var batterTeam = document.createElement("Label");
-                                                batterTeam.innerHTML = batterTeamName;
-                                                dr.insertCell().appendChild(batterTeam);
-
-                                                var oppTeam = document.createElement("Label");
-                                                oppTeam.innerHTML = oppTeamName;
-                                                dr.insertCell().appendChild(oppTeam);
-                                            }
-                                        });
-                                        batterTeamName = data.data.innings2.teamName;
-                                        oppTeamName = data.data.innings1.teamName;
-                                        $.each(data.data.innings2.batting, function (idx, playerStat) {
-                                            if(playerStat.runsScored > minBatsmanStatScore) {
-                                                var dr = tbl.insertRow();
-
-                                                var sno = document.createElement("Label");
-                                                sno.innerHTML = snoCount;
-                                                dr.insertCell().appendChild(sno);
-                                                snoCount += 1;
-
-                                                var series = document.createElement("Label");
-                                                series.innerHTML = seriesName;
-                                                dr.insertCell().appendChild(series);
-                                                
-                                                var matchDate = document.createElement("Label");
-                                                matchDate.innerHTML = match.matchDate;
-                                                dr.insertCell().appendChild(matchDate);
-
-                                                var matchType = document.createElement("Label");
-                                                matchType.innerHTML = getMatchType(match.matchType);
-                                                dr.insertCell().appendChild(matchType);
-
-                                                var battingFigures = document.createElement("Label");
-                                                battingFigures.innerHTML = playerStat.runsScored +"("+playerStat.ballsFaced+"),  4s:"+playerStat.fours+",  6s:"+playerStat.sixers;
-                                                dr.insertCell().appendChild(battingFigures);
-
-                                                var percentInTotal = document.createElement("Label");
-                                                percentInTotal.innerHTML = ((playerStat.runsScored / inn2TeamTotal)*100).toFixed(2);
-                                                dr.insertCell().appendChild(percentInTotal);
-
-                                                var batterName = document.createElement("Label");
-                                                batterName.innerHTML = playerStat.firstName+"  "+playerStat.lastName;
-                                                dr.insertCell().appendChild(batterName);
-
-                                                var teamTotal = document.createElement("Label");
-                                                teamTotal.innerHTML = inn2TeamTotal;
-                                                dr.insertCell().appendChild(teamTotal);
-
-                                                var batterTeam = document.createElement("Label");
-                                                batterTeam.innerHTML = batterTeamName;
-                                                dr.insertCell().appendChild(batterTeam);
-
-                                                var oppTeam = document.createElement("Label");
-                                                oppTeam.innerHTML = oppTeamName;
-                                                dr.insertCell().appendChild(oppTeam);
-                                            }
-                                        });
+                                        function addBattingRows(innings, oppTeam, teamTotal) {
+                                            $.each(innings.batting, function (idx, playerStat) {
+                                                if(playerStat.runsScored > minBatsmanStatScore) {
+                                                    var dr = tbl.insertRow();
+                                                    addCell(dr, ++snoCount - 1);
+                                                    addCell(dr, seriesName);
+                                                    addCell(dr, match.matchDate);
+                                                    addCell(dr, getMatchType(match.matchType));
+                                                    addCell(dr, playerStat.runsScored+"("+playerStat.ballsFaced+"),  4s:"+playerStat.fours+",  6s:"+playerStat.sixers);
+                                                    addCell(dr, ((playerStat.runsScored / teamTotal)*100).toFixed(2));
+                                                    addCell(dr, playerStat.firstName+"  "+playerStat.lastName);
+                                                    addCell(dr, teamTotal);
+                                                    addCell(dr, innings.teamName);
+                                                    addCell(dr, oppTeam);
+                                                }
+                                            });
+                                        }
+                                        addBattingRows(data.data.innings1, data.data.innings2.teamName, data.data.innings1.total);
+                                        addBattingRows(data.data.innings2, data.data.innings1.teamName, data.data.innings2.total);
                                     })
                                 );
                             }); 
@@ -1598,51 +1473,19 @@
                                                     var wicket = wktPos.split('-')[1];
 
                                                     var dr = tbl.insertRow();
-
-                                                    var sno = document.createElement("Label");
-                                                    sno.innerHTML = snoCount;
-                                                    dr.insertCell().appendChild(sno);
-                                                    snoCount += 1;
-
-                                                    var series = document.createElement("Label");
-                                                    series.innerHTML = seriesName;
-                                                    dr.insertCell().appendChild(series);
-                                                    
-                                                    var matchDate = document.createElement("Label");
-                                                    matchDate.innerHTML = match.matchDate;
-                                                    dr.insertCell().appendChild(matchDate);
-
-                                                    var matchType = document.createElement("Label");
-                                                    matchType.innerHTML = getMatchType(match.matchType);
-                                                    dr.insertCell().appendChild(matchType);
-
-                                                    var wkt = document.createElement("Label");
-                                                    wkt.innerHTML = wicket;
-                                                    dr.insertCell().appendChild(wkt);
-
-                                                    var psRuns = document.createElement("Label");
-                                                    psRuns.innerHTML = value.partnershipTotalRuns+"("+value.partnershipTotalBalls+")";
-                                                    dr.insertCell().appendChild(psRuns);
-
-                                                    var teamRuns = document.createElement("Label");
-                                                    teamRuns.innerHTML = totalTeamRuns+"("+totalTeamOvers+")";
-                                                    dr.insertCell().appendChild(teamRuns);
-
-                                                    var partners = document.createElement("Label");
-                                                    partners.innerHTML = allPlayersMap.get(seriesName).get(teamName).get(value.outPlayerId)+" - "+value.outPlayerScore+"("+value.outPlayerBalls+"), "+allPlayersMap.get(seriesName).get(teamName).get(value.otherPlayerId)+" - "+value.otherPlayerScore+"("+value.otherPlayerBalls+")";
-                                                    dr.insertCell().appendChild(partners);
-
-                                                    var batTeam = document.createElement("Label");
-                                                    batTeam.innerHTML = teamName;
-                                                    dr.insertCell().appendChild(batTeam);
-
-                                                    var oppTeam = document.createElement("Label");
-                                                    oppTeam.innerHTML = oppTeamName;
-                                                    dr.insertCell().appendChild(oppTeam);
+                                                    addCell(dr, ++snoCount - 1);
+                                                    addCell(dr, seriesName);
+                                                    addCell(dr, match.matchDate);
+                                                    addCell(dr, getMatchType(match.matchType));
+                                                    addCell(dr, wicket);
+                                                    addCell(dr, value.partnershipTotalRuns+"("+value.partnershipTotalBalls+")");
+                                                    addCell(dr, totalTeamRuns+"("+totalTeamOvers+")");
+                                                    addCell(dr, allPlayersMap.get(seriesName).get(teamName).get(value.outPlayerId)+" - "+value.outPlayerScore+"("+value.outPlayerBalls+"), "+allPlayersMap.get(seriesName).get(teamName).get(value.otherPlayerId)+" - "+value.otherPlayerScore+"("+value.otherPlayerBalls+")");
+                                                    addCell(dr, teamName);
+                                                    addCell(dr, oppTeamName);
 
                                                     var scorecard = document.createElement("a");
-                                                    var linkText = document.createTextNode(match.result);
-                                                    scorecard.appendChild(linkText);
+                                                    scorecard.textContent = match.result;
                                                     scorecard.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?"+url_params+"&matchId="+matchId;
                                                     scorecard.title = match.result;
                                                     scorecard.style.color = "#dddddd";
@@ -1729,77 +1572,29 @@
                                     var matchId = match.matchId;
                                     var dr = teamMatchestbl.insertRow();
 
-                                    var series = document.createElement("Label");
-                                    series.innerHTML = seriesName;
-                                    dr.insertCell().appendChild(series);
-                                    
-                                    var matchDate = document.createElement("Label");
-                                    matchDate.innerHTML = match.matchDate;
-                                    dr.insertCell().appendChild(matchDate);
+                                    addCell(dr, seriesName);
+                                    addCell(dr, match.matchDate);
+                                    addCell(dr, getMatchType(match.matchType));
 
-                                    var matchType = document.createElement("Label");
-                                    matchType.innerHTML = getMatchType(match.matchType);
-                                    dr.insertCell().appendChild(matchType);
-
-                                    if(match.teamOneName === selectedTeam) {
-                                        var teamScore = document.createElement("Label");
-                                        teamScore.innerHTML = match.t1total+"/"+match.t1wickets+" ("+getOvers(seriesName,match.t1balls)+")";
-                                        dr.insertCell().appendChild(teamScore);
-
-                                        var oppScore = document.createElement("Label");
-                                        oppScore.innerHTML = match.t2total+"/"+match.t2wickets+" ("+getOvers(seriesName,match.t2balls)+")";
-                                        dr.insertCell().appendChild(oppScore);
-
-                                        var oppTeamName = document.createElement("Label");
-                                        oppTeamName.innerHTML = match.teamTwoName;
-                                        dr.insertCell().appendChild(oppTeamName);
-                                    }
-                                    else {
-                                        var teamScore = document.createElement("Label");
-                                        teamScore.innerHTML = match.t2total+"/"+match.t2wickets+" ("+getOvers(seriesName,match.t2balls)+")";
-                                        dr.insertCell().appendChild(teamScore);
-
-                                        var oppScore = document.createElement("Label");
-                                        oppScore.innerHTML = match.t1total+"/"+match.t1wickets+" ("+getOvers(seriesName,match.t1balls)+")";
-                                        dr.insertCell().appendChild(oppScore);
-
-                                        var oppTeamName = document.createElement("Label");
-                                        oppTeamName.innerHTML = match.teamOneName;
-                                        dr.insertCell().appendChild(oppTeamName);
-                                    }
+                                    var isTeamOne = (match.teamOneName === selectedTeam);
+                                    addCell(dr, (isTeamOne ? match.t1total+"/"+match.t1wickets+" ("+getOvers(seriesName,match.t1balls)+")" : match.t2total+"/"+match.t2wickets+" ("+getOvers(seriesName,match.t2balls)+")"));
+                                    addCell(dr, (isTeamOne ? match.t2total+"/"+match.t2wickets+" ("+getOvers(seriesName,match.t2balls)+")" : match.t1total+"/"+match.t1wickets+" ("+getOvers(seriesName,match.t1balls)+")"));
+                                    addCell(dr, isTeamOne ? match.teamTwoName : match.teamOneName);
 
                                     var result = document.createElement("a");
-                                    var linkText = document.createTextNode(getPOVResult(match.result, selectedTeam));
-                                    result.appendChild(linkText);
+                                    result.textContent = getPOVResult(match.result, selectedTeam);
                                     result.href = "https://cricclubs.com/nacltennisballcricket/viewScorecard.do?"+url_params+"&matchId="+matchId;
                                     result.title = getPOVResult(match.result, selectedTeam);
                                     result.style.color = "#dddddd";
                                     dr.insertCell().appendChild(result);
                                 });
 
-                                var totalPlayed = document.createElement("Label");
-                                totalPlayed.innerHTML = total;
-                                dr.insertCell().appendChild(totalPlayed);
-
-                                var wonPlayed = document.createElement("Label");
-                                wonPlayed.innerHTML = won;
-                                dr.insertCell().appendChild(wonPlayed);
-
-                                var lostPlayed = document.createElement("Label");
-                                lostPlayed.innerHTML = lost;
-                                dr.insertCell().appendChild(lostPlayed);
-
-                                var tiedPlayed = document.createElement("Label");
-                                tiedPlayed.innerHTML = tied;
-                                dr.insertCell().appendChild(tiedPlayed);
-
-                                var abandonedPlayed = document.createElement("Label");
-                                abandonedPlayed.innerHTML = abandoned;
-                                dr.insertCell().appendChild(abandonedPlayed);
-
-                                var rank = document.createElement("Label");
-                                rank.innerHTML = getTeamRank(seriesName, selectedTeam);
-                                dr.insertCell().appendChild(rank);
+                                addCell(dr, total);
+                                addCell(dr, won);
+                                addCell(dr, lost);
+                                addCell(dr, tied);
+                                addCell(dr, abandoned);
+                                addCell(dr, getTeamRank(seriesName, selectedTeam));
 
                                 body.appendChild(teamMatchestbl);
                             }
@@ -1808,142 +1603,12 @@
                 }
                 if(selectedStatType === "Rankings") {
                     var maxTeamCount = getMaxTeamCount(allTeamsMap);
+                    var rankSeriesList = Object.keys(RANK_ARRAYS);
 
                     for (let i = 0; i < maxTeamCount; i++) {
                         var dr = tbl.insertRow();
-
-                        var rank = document.createElement("Label");
-                        rank.innerHTML = i + 1;
-                        dr.insertCell().appendChild(rank);
-
-                        var summer21TeamName = document.createElement("Label");
-                        summer21TeamName.innerHTML = getithRankedTeam("Summer 2021", i);
-                        dr.insertCell().appendChild(summer21TeamName);
-
-                        var fall21TeamName = document.createElement("Label");
-                        fall21TeamName.innerHTML = getithRankedTeam("Fall 2021", i);
-                        dr.insertCell().appendChild(fall21TeamName);
-
-                        var winter2122TeamName = document.createElement("Label");
-                        winter2122TeamName.innerHTML = getithRankedTeam("Winter 2021-22", i);
-                        dr.insertCell().appendChild(winter2122TeamName);
-
-                        var spring22TeamName = document.createElement("Label");
-                        spring22TeamName.innerHTML = getithRankedTeam("Spring 2022", i);
-                        dr.insertCell().appendChild(spring22TeamName);
-
-                        var summer22TeamName = document.createElement("Label");
-                        summer22TeamName.innerHTML = getithRankedTeam("Summer 2022", i);
-                        dr.insertCell().appendChild(summer22TeamName);
-
-                        var winter2223TeamName = document.createElement("Label");
-                        winter2223TeamName.innerHTML = getithRankedTeam("Winter 2022-23", i);
-                        dr.insertCell().appendChild(winter2223TeamName);
-
-                        var spring23TeamName = document.createElement("Label");
-                        spring23TeamName.innerHTML = getithRankedTeam("Spring 2023", i);
-                        dr.insertCell().appendChild(spring23TeamName);
-
-                        var indCup23TeamName = document.createElement("Label");
-                        indCup23TeamName.innerHTML = getithRankedTeam("Independence Cup 2023", i);
-                        dr.insertCell().appendChild(indCup23TeamName);
-
-                        var summer23ATeamName = document.createElement("Label");
-                        summer23ATeamName.innerHTML = getithRankedTeam("Summer 2023 - A", i);
-                        dr.insertCell().appendChild(summer23ATeamName);
-
-                        var summer23BTeamName = document.createElement("Label");
-                        summer23BTeamName.innerHTML = getithRankedTeam("Summer 2023 - B", i);
-                        dr.insertCell().appendChild(summer23BTeamName);
-
-                        var veterans23TeamName = document.createElement("Label");
-                        veterans23TeamName.innerHTML = getithRankedTeam("Veterans Cup 2023", i);
-                        dr.insertCell().appendChild(veterans23TeamName);
-
-                        var winter2324ATeamName = document.createElement("Label");
-                        winter2324ATeamName.innerHTML = getithRankedTeam("Winter 2023-24 - A", i);
-                        dr.insertCell().appendChild(winter2324ATeamName);
-
-                        var winter2324BTeamName = document.createElement("Label");
-                        winter2324BTeamName.innerHTML = getithRankedTeam("Winter 2023-24 - B", i);
-                        dr.insertCell().appendChild(winter2324BTeamName);
-
-                        var spring24ATeamName = document.createElement("Label");
-                        spring24ATeamName.innerHTML = getithRankedTeam("Spring 2024 - A", i);
-                        dr.insertCell().appendChild(spring24ATeamName);
-
-                        var spring24BTeamName = document.createElement("Label");
-                        spring24BTeamName.innerHTML = getithRankedTeam("Spring 2024 - B", i);
-                        dr.insertCell().appendChild(spring24BTeamName);
-
-                        var spring24CTeamName = document.createElement("Label");
-                        spring24CTeamName.innerHTML = getithRankedTeam("Spring 2024 - C", i);
-                        dr.insertCell().appendChild(spring24CTeamName);
-
-                        var indCup24TeamName = document.createElement("Label");
-                        indCup24TeamName.innerHTML = getithRankedTeam("Independence Cup 2024", i);
-                        dr.insertCell().appendChild(indCup24TeamName);
-
-                        var summer24ATeamName = document.createElement("Label");
-                        summer24ATeamName.innerHTML = getithRankedTeam("Summer 2024 - A", i);
-                        dr.insertCell().appendChild(summer24ATeamName);
-
-                        var summer24BTeamName = document.createElement("Label");
-                        summer24BTeamName.innerHTML = getithRankedTeam("Summer 2024 - B", i);
-                        dr.insertCell().appendChild(summer24BTeamName);
-
-                        var summer24CTeamName = document.createElement("Label");
-                        summer24CTeamName.innerHTML = getithRankedTeam("Summer 2024 - C", i);
-                        dr.insertCell().appendChild(summer24CTeamName);
-
-                        var winter2425ATeamName = document.createElement("Label");
-                        winter2425ATeamName.innerHTML = getithRankedTeam("Winter 2024-25 - A", i);
-                        dr.insertCell().appendChild(winter2425ATeamName);
-
-                        var winter2425BTeamName = document.createElement("Label");
-                        winter2425BTeamName.innerHTML = getithRankedTeam("Winter 2024-25 - B", i);
-                        dr.insertCell().appendChild(winter2425BTeamName);
-
-                        var winter2425CTeamName = document.createElement("Label");
-                        winter2425CTeamName.innerHTML = getithRankedTeam("Winter 2024-25 - C", i);
-                        dr.insertCell().appendChild(winter2425CTeamName);
-
-                        var preCup25TeamName = document.createElement("Label");
-                        preCup25TeamName.innerHTML = getithRankedTeam("Presidents Cup 2025", i);
-                        dr.insertCell().appendChild(preCup25TeamName);
-
-                        var spring25ATeamName = document.createElement("Label");
-                        spring25ATeamName.innerHTML = getithRankedTeam("Spring 2025 - A", i);
-                        dr.insertCell().appendChild(spring25ATeamName);
-
-                        var spring25BTeamName = document.createElement("Label");
-                        spring25BTeamName.innerHTML = getithRankedTeam("Spring 2025 - B", i);
-                        dr.insertCell().appendChild(spring25BTeamName);
-
-                        var spring25CTeamName = document.createElement("Label");
-                        spring25CTeamName.innerHTML = getithRankedTeam("Spring 2025 - C", i);
-                        dr.insertCell().appendChild(spring25CTeamName);
-
-                        var indCup25TeamName = document.createElement("Label");
-                        indCup25TeamName.innerHTML = getithRankedTeam("Independence Cup 2025", i);
-                        dr.insertCell().appendChild(indCup25TeamName);
-
-                        var summer25ATeamName = document.createElement("Label");
-                        summer25ATeamName.innerHTML = getithRankedTeam("Summer 2025 - A", i);
-                        dr.insertCell().appendChild(summer25ATeamName);
-
-                        var summer25BTeamName = document.createElement("Label");
-                        summer25BTeamName.innerHTML = getithRankedTeam("Summer 2025 - B", i);
-                        dr.insertCell().appendChild(summer25BTeamName);
-
-                        var summer25CTeamName = document.createElement("Label");
-                        summer25CTeamName.innerHTML = getithRankedTeam("Summer 2025 - C", i);
-                        dr.insertCell().appendChild(summer25CTeamName);
-
-                        var diwCup25TeamName = document.createElement("Label");
-                        diwCup25TeamName.innerHTML = getithRankedTeam("Diwali Cup 2025", i);
-                        dr.insertCell().appendChild(diwCup25TeamName);
-
+                        addCell(dr, i + 1);
+                        rankSeriesList.forEach(function(s) { addCell(dr, getithRankedTeam(s, i)); });
                     }
                 }
                 $.when.apply($,calls).then(function() {
@@ -1952,6 +1617,10 @@
                 body.insertBefore(tbl, body.firstChild);
                 body.insertBefore(t12tbl, body.firstChild);
                 body.insertBefore(btbl, body.firstChild);
+                // Inject edit buttons + in-table + row for each summary table
+                [["360", tbl], ["T12", t12tbl], ["Box", btbl]].forEach(function(pair) {
+                    injectSummaryControls(pair[1], pair[0]);
+                });
             });
         });
         
@@ -2026,14 +1695,16 @@
 
         function compareBF(series, a, b) {
             var ballsPerOver = getBallsPerOver(series);
-            var aWickets = parseInt(a.split("-")[3], 10);
-            var bWickets = parseInt(b.split("-")[3], 10);
-            var aRuns = parseInt(a.split("-")[2], 10);
-            var bRuns = parseInt(b.split("-")[2], 10);
-            var aOvers = a.split("-")[0];
-            var bOvers = b.split("-")[0];
-            var aBalls = parseInt(aOvers.split(".")[0],10)*ballsPerOver + parseInt(aOvers.split(".")[1],10);
-            var bBalls = parseInt(bOvers.split(".")[0],10)*ballsPerOver + parseInt(bOvers.split(".")[1],10);
+            var aParts = a.split("-");
+            var bParts = b.split("-");
+            var aWickets = parseInt(aParts[3], 10);
+            var bWickets = parseInt(bParts[3], 10);
+            var aRuns = parseInt(aParts[2], 10);
+            var bRuns = parseInt(bParts[2], 10);
+            var aOverParts = aParts[0].split(".");
+            var bOverParts = bParts[0].split(".");
+            var aBalls = parseInt(aOverParts[0],10)*ballsPerOver + parseInt(aOverParts[1],10);
+            var bBalls = parseInt(bOverParts[0],10)*ballsPerOver + parseInt(bOverParts[1],10);
 
             return (aWickets > bWickets) ? 1 : (aWickets < bWickets) ? -1 : (aRuns < bRuns) ? 1 : (aRuns > bRuns) ? -1 : (aBalls < bBalls) ? 1 : (aBalls > bBalls) ? -1 : 0;
         }
@@ -2067,63 +1738,45 @@
             return Math.abs(parseFloat(t1RR) - parseFloat(t2RR)).toFixed(2);
         }
 
+        const sortState = new Map(); // key: "tableId-colnum"
+
         function sortTable(series,colnum,tableId,columnType) {
-            //showLoading();
           var table = document.getElementById(tableId);
-          // get all the rows in this table:
           let rows = Array.from(table.querySelectorAll(`tr`));
-
-          // but ignore the heading row:
           rows = rows.slice(1);
-
-          // set up the queryselector for getting the indicated
-          // column from a row, so we can compare using its value:
           let qs = `td:nth-child(${colnum})`;
 
-          // and then just... sort the rows:
+          var stateKey = tableId + '-' + colnum;
+          var asc = sortState.get(stateKey) || false;
+
             rows.sort( (r1,r2) => {
-            // get each row's relevant column
                 let t1 = r1.querySelector(qs);
                 let t2 = r2.querySelector(qs);
 
-                // and then effect sorting by comparing their content:
                 switch (columnType) {
                     case 'score':
                         return compareValues(parseInt(t1.textContent.split("/")[0], 10),parseInt(t2.textContent.split("/")[0], 10));
-                        break;
                     case 'date':
                         return compareValues(new Date(t1.textContent).getTime(),new Date(t2.textContent).getTime());
-                        break;
                     case 'text':
                         return compareValues(t1.textContent,t2.textContent);
-                        break;
                     case 'bowlingFigure':
                         return compareBF(series,t1.textContent,t2.textContent);
-                        break;  
                     case 'partnership':
                         return comparePS(t1.textContent,t2.textContent);
-                        break;
                     case 'winMargin':
                         return compareValues(parseInt(t1.textContent.split(" ")[0], 10),parseInt(t2.textContent.split(" ")[0], 10));
-                        break;
                     case 'number':
                         return compareValues(parseInt(t1.textContent, 10),parseInt(t2.textContent, 10));
-                        break;
                     case 'float':
-                        return compareValues(parseFloat(t1.textContent, 10),parseFloat(t2.textContent, 10));
-                        break;
+                        return compareValues(parseFloat(t1.textContent),parseFloat(t2.textContent));
                 }
-            
             });
 
-            this.asc = !this.asc
-            if (!this.asc){
-                rows = rows.reverse()
-            }
+            sortState.set(stateKey, !asc);
+            if (!asc) rows = rows.reverse();
 
-          // and then the magic part that makes the sorting appear on-page:
             rows.forEach(row => table.appendChild(row));
-            //removeLoading();
         }
 
         function getOvers(series,balls) {
@@ -2144,96 +1797,848 @@
             return (runs/(overs_pre_dec + overs_post_dec)).toFixed(2);
         }
 
+        const MATCH_TYPE_LABELS = {
+            'f': 'Final', 's': 'Semi Final', 'q': 'Quarter Final',
+            'ql': 'Qualifier', 'e': 'Eliminator', 'l': 'League',
+            'p': 'Practice', '3p': '3rd Place', 'sl': 'Super League'
+        };
+
         function getMatchType(type) {
-            switch (type) {
-                case 'f':
-                    return "Final";
-                case 's':
-                    return "Semi Final";
-                case 'q':
-                    return "Quarter Final";
-                case 'ql':
-                    return "Qualifier";
-                case 'e':
-                    return "Eliminator";
-                case 'l':
-                    return "League";
-                case 'p':
-                    return "Practice";
-                case '3p':
-                    return "3rd Place";
-                case 'sl':
-                    return "Super League";   
+            return MATCH_TYPE_LABELS[type] || type;
+        }
+
+                                        const RANK_ARRAYS = {
+            "Winter 2021-22": ["Seamers","Mighty Warriors","Dragons","Blazing Broncos","Ghadeer CC","CSK Yorkers","Royal Kings","Green Rebels","Skippers","Dream Killers","Chargers","Gully Boys","Fire Friends","Knight Walkers (CA)","Titans","Bullets","MINIONS","Smoking Sadhoos","Fairfield Hawks","Peaky Blinders","Unstoppable","Alviso Warriors","Squid Gamerz","Fairfield Falcons","Thunder Wolves XI","P@nthers","Khalsa Warriors","Josh"],
+            "Spring 2022": ["Seamers","CSK Yorkers","Ghadeer CC","Mighty Warriors","Bay Indians","Singh Cricket Club","Dragons","Unstoppable","Blazing Broncos","Fairfield Hawks ","Vaders","Rising Stars","Fire Friends","Knight Walkers (CA)","Smoking Sadhoos","Bullets","Raynor Royals","Lords XI","MCC","Sunrisers","P@nthers","Royal Kings","Chargers","Titans","MINIONS","Alviso Warriors","Daredevils","Skywalkers","Squid Gamerz","Fairfield Falcons"],
+            "Fall 2021": ["Seamers","Bullets","Ghadeer CC","Mighty Warriors","CSK Yorkers","On A Serious Note","Dragons","2point0 ","Unstoppable","Drunken Hammers","Knight Walkers (CA)","FriendzXI","Royal Kings","Smoking Sadhoos","MINIONS","Bay Area Kings","BAYAREAFX1","Chargers","Vaders","P@nthers","Alviso Warriors","ChampsXI","Raynor Royals","CCC Champs","Phoenix Fremont X1","Deccan Chargers","Alameda Lions","The Silly Sloggers XI"],
+            "Summer 2021": ["Bullets","Royal Kings","Skippers 2.0","Seamers","Royal Strikerz","Unstoppable","CSK Yorkers","Smoking Sadhoos","Green Rebels","MINIONS","Shockers","Dixon 11","Alviso Warriors","Ghadeer CC","SWAT","Raptors","Ravens XI","Unshackled11","Dragons","Wolves XI","Vaders","Challengers 11","Avengers","Falcons"],
+            "Summer 2022": ["CSK Yorkers","Mighty Warriors","Seamers","Dream Killers","Singh Cricket Club","Knight Walkers","Fairfield Hawks","Dragons","Ghadeer CC","Royal Kings","Drunken Hammers","Raynor Royals","Astros+","Fire Friends","Rising Stars","Vaders","Tailenders","Unstoppable","Bleed Blue","MCC","Titans","Chargers","SilverSwords","MINIONS","Yodhas","Daredevils","Team Tsunami","Smoking Sadhoos","Avengers","Valley Lions","Alviso Warriors ","P@nthers","Skywalkers","Crickings","Blossom Blasters","Bay Boys"],
+            "Winter 2022-23": ["Seamers / Dream Killers","-","CSK Yorkers","Singh Cricket Club","Astros+","Fire Friends","Thunderbolts","Blazing Broncos","MCC","Ghadeer CC","Dark Knights","Baazigar of Bay","Tailenders","Chargers","Knight Walkers (CA)","Rising Stars","Unstoppable","Dragons","Bay Boys","Titans","Skywalkers","Smoking Sadhoos","Cric Blasters","Weekend Cricketers","Royal Kings / 2point0","-","MINIONS","Fairfield Hawks","Raynor Royals","Juggernaut","Calivasis","Yodhas","Now Warriors","Alviso Warriors","Champions","HITMEN XI","Bleed Blue","Money Heist","CricKings","Thunder Wolves XI","Bulls","P@nthers XI","Mavericks","Avengers","YAM CC-14","Blossom Blasters","Silverswords","Breaking Bats"],
+            "Spring 2023": ["Astros+","Money Heist","Dark Knights","Mighty Warriors","Thunderbolts","Seamers","Dream Killers","JerseyXI","Krazy Hitters","Singh Cricket Club","Rising Stars","Ghadeer CC","Smoking Sadhoos","Fire Friends","Dragons","CSK Yorkers","Lords","2point0","P@nthers XI","Alviso Warriors","Knight Walkers (CA)","Unstoppable","Breaking Bats","Baazigar of Bay","Mavericks","MINIONS","Royal Kings","MCC","Champions","Gully Cricketers","Yodhas","Tailenders","Chargers","Now Warriors","Bleed Blue","Daredevils","Fireballs","Skywalkers","Titans","HITMEN XI","CricKings","Vaders","YAM CC-14","Thunder Wolves XI"],
+            "Independence Cup 2023": ["Ghadeer CC","Smoking Sadhoos","Bay Boys","Lords","2point0","Chargers","Avengers","Gully Boys","Gully Cricketers","Rising Stars","Art Villa","Champions","Yodhas","YAM CC-14","Blue Warriors","Calivaasis","UC11","Now Warriors","HITMEN XI"],
+            "Summer 2023 - A": ["Lords","CSK Yorkers","Seamers","Singh Cricket Club","Dream Killers","Ghadeer CC","Money Heist","Mighty Warriors","Dark Knights","Smoking Sadhoos","Astros+","Fire Friends","2point0","Thunderbolts","JerseyXI","Dragons","Knight Walkers (CA)","Baazigar of Bay","Unstoppable","P@nthers XI","Alviso Warriors","Rising Stars"],
+            "Summer 2023 - B": ["Royal Kings","Bleed Blue","Kings XI","Royal Knights","Daredevils","Chargers","Breaking Bats","Champions","Tailenders","Titans","YAM CC-14","Mavericks","Raynor Royals","MINIONS","Veer Jawan","Extraas","Avengers","Skippers","MCC","Gully Cricketers","Thunder Wolves XI","CricKings"],
+            "Veterans Cup 2023": ["Challengers CC","Astros+","Thunderbolts","Deccan United CC","HTM","Fire Friends","YAM CC-14","Gully Boys","Gully Cricketers","Veer Jawan","Koolagents","Now Warriors","CricKings","Thunder Wolves XI","Miya Bhaiz","Khalsa Warriors"],
+            "Winter 2023-24 - A": ["Mighty Warriors","CSK Yorkers","Dream Killers","JerseyXI","Royal Knights","Astros+","Singh Cricket Club","Royal Kings","2point0","Money Heist","Knight Walkers (CA)","Ghadeer CC","Dragons","Bleed Blue","Fire Friends","Lords","Thunderbolts","Kings X1","Seamers","Dark Knights","P@nthers XI","Smoking Sadhoos"],
+            "Winter 2023-24 - B": ["Deccan United CC","Bravehearts","Challengers CC","Rising Stars","Daredevils","Titans","Skippers","Baazigar of Bay","Unstoppable","CricKings","Champions","Breaking Bats","Extraas","Barely XI","Alviso Warriors","Tailenders","Raynor Royals","Veer Jawan","YAM CC-14","Mavericks","Bay Tigers","MINIONS"],
+            "Spring 2024 - A": ["Mighty Warriors","2point0","CSK Yorkers","Challengers CC","Astros+","Singh Cricket Club","Bravehearts","Money Heist","Royal Knights","JerseyXI","Dream Killers","Royal Kings","Dragons","Knight Walkers (CA)","Fire Friends","Deccan United CC"],
+            "Spring 2024 - B": ["Seamers","Rising Stars","Kings XI","Daredevils","Lords","Unstoppable","Chargers","Baazigar of Bay","Breaking Bats","Smoking Sadhoos","Champions","Titans","Skippers","P@nthers XI","Bleed Blue","CricKings"],
+            "Spring 2024 - C": ["Tailenders","UC11","Mavericks","Alviso Warriors","Centurions","YAM CC-14","Bay Tigers","WCC Gladiators","Nexus XI","Bay Boys","MINIONS","Sunny","Barely XI","IndianChamps","Raynor Royals","Avengers"],
+            "Independence Cup 2024": ["Knight Walkers (CA)","Smoking Sadhoos","Dream Killers","Singh Warriors","Vikings","Punjab Warriors","Fire Friends","Breaking Bats","Bay Boys","Super Saiyans","IndianChamps","The Snow Lions","Barely XI","RCB","Super Giants","Sunny"],
+            "Summer 2024 - A": ["Challengers CC","Singh Cricket Club","Money Heist","Dream Killers","Seamers","Mighty Warriors","Kings X1","Royal Knights","Astros+","Royal Kings","CSK Yorkers","Knight Walkers (CA)","2point0","Rising Stars","JerseyXI","Dragons"],
+            "Summer 2024 - B": ["Skippers","Ghadeer Lions","Titans","Lords","Deccan United CC","NextGen Tailenders","Daredevils","UC11","Champions","Chargers","Smoking Sadhoos","Unstoppable","Baazigar of Bay","Breaking Bats","Fire Friends","Mavericks"],
+            "Summer 2024 - C": ["Vikings","Singh Warriors","Stanford","Bay Tigers","MINIONS","Super Giants","Bleed Blue","Bay Boys","CricKings","Avengers","Alviso Warriors","Sunny","Super Saiyans","Nexus XI","YAM CC-14","Barely XI","Centurions","IndianChamps","WCC Gladiators","Raynor Royals"],
+            "Winter 2024-25 - A": ["Mighty Warriors","Money Heist","Seamers","Astros+","Skippers","Singh Cricket Club","Challengers CC","Dream Killers","Knight Walkers (CA)","Royal Kings","Ghadeer Lions","CSK Yorkers","Kings X1","2point0","Rising Stars","Royal Knights"],
+            "Winter 2024-25 - B": ["Lords","Daredevils","Unstoppable","Titans","NextGen Tailenders","Vikings","Champions","Smoking Sadhoos","Deccan United CC","Dragons","Stanford","UC11","Breaking Bats","Baazigar of Bay","JerseyXI","Singh Warriors"],
+            "Winter 2024-25 - C": ["Fire Friends","Avengers","Bay Tigers","Bleed Blue","Bahubalis","Bay Boys","Alviso Warriors","Mavericks","Thunders","YAM CC-14","Sabertooths","IndianChamps","Centurions","MINIONS","Super Giants","Super Sayns","Smash Blasters","Sunny Devils","Delta Force","P@Nthers XI"],
+            "Presidents Cup 2025": ["JD Army","Singh Cricket Club","Deccan United CC","Royal Knights","FC SPARTANS","Vulcans","Sunny Devils","Super Sayns","Delta Force","Chargers","Knight Walkers (CA)","Blazers Legends"],
+            "Spring 2025 - A": ["Money Heist","Astros+","Seamers","Lords","CSK Yorkers","Mighty Warriors","Rebels","Titans","Skippers","Ghadeer Lions","Singh Cricket Club","2point0","Royal Kings","Daredevils","Kings X1","Knight Walkers (CA)"],
+            "Spring 2025 - B": ["Unstoppable","Royal Knights","Vikings","Breaking Bats","Fire Friends","Dragons","Deccan United CC","Smoking Sadhoos","BAY TIGERS","Baazigar of Bay","Rising Stars","Champions","Stanford","NextGen Tailenders","UC11","Avengers"],
+            "Spring 2025 - C": ["Orange Army","Sabertooths","Gladiators","Bleed Blue","Super Giants","Cali Lions","Vulcans","Bay Boys","Escuela Boys","Mavericks","Thunderhawks","Super Saiyans","Thunders","Alviso Warriors","Sunny Devils","FC SPARTANS","CricKings","IndianChamps","Bahubalis","JerseyXI","MINIONS","Delta Force","Centurions","Smash Blasters"],
+            "Independence Cup 2025": ["JD Army","Super Saiyans","NextGen Tailenders","Fire Stars","Singh Cricket Club","Chargers","Smash Blasters","Escuela Boys","Rayalaseema Royals","Stanford"],
+            "Summer 2025 - A": ["Mighty Warriors","Royal Knights","Money Heist","Titans","Seamers","Lords","Rebels","Singh Cricket Club","Ghadeer Lions","Skippers","Astros+","Unstoppable","CSK Yorkers","Royal Kings","2point0","Daredevils"],
+            "Summer 2025 - B": ["Orange Army","Kings X1","NextGen Tailenders","Rising Stars","Fire Friends","Sabertooths","BAY TIGERS","Bleed Blue","Vikings","Knight Walkers (CA)","Dragons","Gladiators","Smoking Sadhoos","Breaking Bats","Baazigar of Bay","Champions"],
+            "Summer 2025 - C": ["Escuela Boys","JerseyXI","UC11","Vulcans","Alviso Warriors","Super Saiyans","Super Giants","Cali Lions","MINIONS","CricKings","Thunderhawks","Thunders","Chargers","Sunny Devils","Deccan Chargers","FC SPARTANS","Smash Blasters","Bay Boys","Bahubalis","Centurions","Blue Warriors","Mavericks","Rayalaseema Royals","Bay Warriors","IndianChamps","Delta Force","Pittsburg Rangers"],
+            "Diwali Cup 2025": ["All Stars","Singh Warriors","Sher E Punjab","Super Squad","Singh Cricket Club","Bahubalis","Chargers","Blue Warriors","Thunders","VK 18","Smoking Sadhoos","Centurions"],
+            "Winter 2025-26 - A": ["Seamers","Money Heist","CSK Yorkers","Lords","Unstoppable","Skippers","Singh Cricket Club","Astros+","Royal Knights","Mighty Warriors","NextGen Tailenders","Rising Stars","Orange Army","Kings X1","Ghadeer Lions","Titans"],
+            "Winter 2025-26 - B": ["Vikings","2point0","Innovation Strikers","Fire Friends","Bleed Blue","Sabertooths","UC11","Vulcans","Dragons","Knight Walkers (CA)","Alviso Warriors","Escuela Boys","BAY TIGERS","Gladiators","Smoking Sadhoos","Royal Kings"],
+            "Winter 2025-26 - C": ["Thunders","FC SPARTANS","Chargers","Rising Spartans","Baazigar of Bay","Invincibles California","Singh Warriors","Champions","Smash Blasters","Deccan Chargers","Blue Warriors","CricKings","Super Saiyans","Avengers","Breaking Bats","IndianChamps","Cali Lions","Super Giants","VK 18","Sunny Devils","Sunrisers","Bahubalis","Bay Warriors","Centurions","Mavericks","Delta Force","Thunderhawks"]
+        };
+
+        function getRankArray(series) {
+            return RANK_ARRAYS[series] || [];
+        }
+
+
+        // ── Dynamic latest-season summary row ─────────────────────────────────
+        function appendLatestSeasonSummaryRow(tbl) {
+            // Find the latest parent season that has children in allSeriesMap
+            var parentNames = Object.keys(_parentSeriesMap);
+            console.log("[Summary] parentNames:", parentNames);
+            if (parentNames.length === 0) { console.warn("[Summary] _parentSeriesMap is empty — parent/child not detected"); return; }
+
+            // Latest = last parent that appears in the list (API returns chronological order)
+            var latestParent = parentNames[parentNames.length - 1];
+            var children     = _parentSeriesMap[latestParent]; // e.g. ["Winter 2025-26 - A", "Winter 2025-26 - B", "Winter 2025-26 - C"]
+
+            // Skip if this parent season is already hardcoded in the table
+            // (check by seeing if the season label text already exists as a cell)
+            var existingCells = tbl.querySelectorAll('td');
+            for (var i = 0; i < existingCells.length; i++) {
+                if (existingCells[i].textContent.trim().toUpperCase() === latestParent.toUpperCase()) return;
+            }
+
+            // Placeholder rows — will be populated once API calls complete
+            var teamsRow  = tbl.insertRow(2);
+            var groundRow = tbl.insertRow(2);
+
+            var labelCell = groundRow.insertCell(0);
+            labelCell.innerHTML = latestParent.toUpperCase();
+            labelCell.rowSpan = 2;
+
+            // Insert placeholder cells for up to 3 divisions (A/B/C)
+            var divCount = Math.min(children.length, 3);
+            for (var d = 0; d < 3; d++) {
+                var tc = teamsRow.insertCell(d * 2);
+                tc.innerHTML = '<div style="color:#888;font-size:12px;padding:8px;">Loading…</div>';
+                var ru = teamsRow.insertCell(d * 2 + 1);
+                ru.innerHTML = '<div style="color:#888;font-size:12px;padding:8px;">Loading…</div>';
+                var gc = groundRow.insertCell(d + 1);
+                gc.innerHTML = '-';
+                gc.style.textAlign = 'center';
+                gc.colSpan = 2;
+            }
+
+            // For each child division, find its Final match and fetch the scorecard
+            children.slice(0, 3).forEach(function(childName, divIdx) {
+                var seriesId = _seriesNameToId[childName];
+                if (!seriesId) {
+                    setDivisionCells(teamsRow, groundRow, divIdx, null, null, childName);
+                    return;
+                }
+                var matchesUrl = cricclubs_url + 'match/getMatches?' + url_params +
+                    '&X-Auth-Token=&seriesId=' + seriesId + '&teamId=&limit=10000';
+                (function(sName, dIdx, tRow, gRow) {
+                    $.getJSON(matchesUrl, function(data) {
+                        // Find the Final match
+                        var finalMatch = null;
+                        $.each(data.data, function(_, m) {
+                            if (m.matchType === 'f') { finalMatch = m; return false; }
+                        });
+                        if (!finalMatch) {
+                            setDivisionCells(tRow, gRow, dIdx, null, null, sName);
+                            return;
+                        }
+                        // Fetch scorecard for ground name
+                        $.getJSON(cricclubs_url + 'scoreCard/getScoreCard?' + url_params + '&matchId=' + finalMatch.matchId,
+                            function(sc) {
+                                var ground = (sc.data.matchInfo && sc.data.matchInfo.ground) ? sc.data.matchInfo.ground : '';
+                                setDivisionCells(tRow, gRow, dIdx, finalMatch, ground, sName);
+                            }
+                        ).fail(function() {
+                            setDivisionCells(tRow, gRow, dIdx, finalMatch, '', sName);
+                        });
+                    }).fail(function() {
+                        setDivisionCells(tRow, gRow, dIdx, null, null, sName);
+                    });
+                }(childName, divIdx, teamsRow, groundRow));
+            });
+        }
+
+        function setDivisionCells(teamsRow, groundRow, divIdx, match, ground, seriesName) {
+            var champIdx   = divIdx * 2;
+            var runnerIdx  = divIdx * 2 + 1;
+            var groundIdx  = divIdx + 1; // groundRow: col 0 = label, col 1/2/3 = divs
+
+            if (!match) {
+                teamsRow.cells[champIdx].innerHTML  = '<div style="color:#888;font-size:12px;padding:8px;">Final not played yet</div>';
+                teamsRow.cells[runnerIdx].innerHTML = '-';
+                groundRow.cells[groundIdx].innerHTML = '-';
+                return;
+            }
+
+            // Determine champion and runner-up from match result
+            var champ  = match.teamOneName;
+            var runner = match.teamTwoName;
+            var champScore  = formatScore(match.t1total, match.t1wickets, match.t1balls, seriesName);
+            var runnerScore = formatScore(match.t2total, match.t2wickets, match.t2balls, seriesName);
+
+            if (match.result && match.result.includes(match.teamTwoName + ' won')) {
+                champ  = match.teamTwoName;  runner = match.teamOneName;
+                champScore  = formatScore(match.t2total, match.t2wickets, match.t2balls, seriesName);
+                runnerScore = formatScore(match.t1total, match.t1wickets, match.t1balls, seriesName);
+            }
+
+            teamsRow.cells[champIdx].innerHTML =
+                '<div class="logo-txt-container"><h3 style="text-align:center;">' +
+                champ.toUpperCase() + '<br><b style="color:#ffff00">' + champScore + '</b></h3></div>';
+            teamsRow.cells[champIdx].style.backgroundColor = '#012169';
+
+            teamsRow.cells[runnerIdx].innerHTML =
+                '<div class="logo-txt-container"><h3 style="text-align:center;">' +
+                runner.toUpperCase() + '<br><b style="color:#ffff00">' + runnerScore + '</b></h3></div>';
+
+            var groundText = (match.matchDate || '') + (ground ? ', ' + ground : '');
+            groundRow.cells[groundIdx].innerHTML = groundText || '-';
+        }
+
+        function formatScore(total, wickets, balls, seriesName) {
+            var bpo = getBallsPerOver(seriesName || '');
+            var overs = Math.floor(balls / bpo) + '.' + (balls % bpo);
+            return total + (wickets < 10 ? '/' + wickets : '') + '(' + overs + ')';
+        }
+
+
+        // ═══════════════════════════════════════════════════════
+        //  SUMMARY EDITOR
+        // ═══════════════════════════════════════════════════════
+        var _smTableType = '360';
+        var _smGrounds = [
+            'Loren Eden, Hayward', 'MLK, Hayward', 'Kathryn Hughes, Santa Clara',
+            'Sierramont, San Jose', 'Murphy Park, Milpitas', 'Anthony 1, Hayward',
+            'Anthony 2, Hayward', 'Central Park, Fremont', 'Delaine Eastin, Union City'
+        ];
+
+        function smGroundOptions() {
+            return '<option value="">-- Select Ground --</option>' +
+                _smGrounds.map(function(g){ return '<option value="'+g+'">'+g+'</option>'; }).join('') +
+                '<option value="__custom__">Other (type below)…</option>';
+        }
+
+        function divisionBlock(id, label, showVenue) {
+            var venueHtml = showVenue ? (
+                '<div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;">' +
+                '<div>' +
+                  '<label style="font-size:11px;color:#666;">DATE</label>' +
+                  '<input type="date" id="'+id+'Date" style="width:100%;height:28px;border:1px solid #ccc;border-radius:4px;font-size:12px;padding:0 4px;box-sizing:border-box;margin-top:2px;">' +
+                '</div>' +
+                '<div>' +
+                  '<label style="font-size:11px;color:#666;">GROUND</label>' +
+                  '<select id="'+id+'Ground" onchange="smGroundChange(\''+id+'\')" style="width:100%;height:28px;border:1px solid #ccc;border-radius:4px;font-size:12px;box-sizing:border-box;margin-top:2px;">'+smGroundOptions()+'</select>' +
+                  '<input type="text" id="'+id+'GroundCustom" placeholder="Type ground name…" style="display:none;width:100%;height:28px;border:1px solid #ccc;border-radius:4px;font-size:12px;padding:0 4px;box-sizing:border-box;margin-top:4px;">' +
+                '</div>' +
+                '</div>'
+            ) : '';
+
+            return '<div style="border:1px solid #ddd;border-radius:7px;padding:12px;margin-bottom:10px;">' +
+                '<div style="font-weight:bold;color:#da291c;font-size:12px;margin-bottom:8px;text-transform:uppercase;">'+label+'</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">' +
+                  '<div>' +
+                    '<label style="font-size:11px;color:#666;">CHAMPION</label>' +
+                    '<select id="'+id+'Champ" style="width:100%;height:28px;border:1px solid #ccc;border-radius:4px;font-size:12px;box-sizing:border-box;margin-top:2px;"><option value="">Loading…</option></select>' +
+                  '</div>' +
+                  '<div>' +
+                    '<label style="font-size:11px;color:#666;">CHAMPION SCORE</label>' +
+                    '<input type="text" id="'+id+'ChampScore" placeholder="e.g. 138/7(20)" style="width:100%;height:28px;border:1px solid #ccc;border-radius:4px;font-size:12px;padding:0 4px;box-sizing:border-box;margin-top:2px;">' +
+                  '</div>' +
+                  '<div>' +
+                    '<label style="font-size:11px;color:#666;">RUNNER-UP</label>' +
+                    '<select id="'+id+'Runner" style="width:100%;height:28px;border:1px solid #ccc;border-radius:4px;font-size:12px;box-sizing:border-box;margin-top:2px;"><option value="">Loading…</option></select>' +
+                  '</div>' +
+                  '<div>' +
+                    '<label style="font-size:11px;color:#666;">RUNNER-UP SCORE</label>' +
+                    '<input type="text" id="'+id+'RunnerScore" placeholder="e.g. 134(20)" style="width:100%;height:28px;border:1px solid #ccc;border-radius:4px;font-size:12px;padding:0 4px;box-sizing:border-box;margin-top:2px;">' +
+                  '</div>' +
+                '</div>' +
+                venueHtml +
+            '</div>';
+        }
+
+        function smGroundChange(id) {
+            var sel = document.getElementById(id+'Ground');
+            var custom = document.getElementById(id+'GroundCustom');
+            custom.style.display = sel.value === '__custom__' ? 'block' : 'none';
+        }
+
+        function smGetVenue(id) {
+            var sel = document.getElementById(id+'Ground');
+            if (!sel) return '';
+            var ground = sel.value === '__custom__'
+                ? (document.getElementById(id+'GroundCustom').value.trim())
+                : sel.value;
+            var dateEl = document.getElementById(id+'Date');
+            if (!dateEl || !dateEl.value) return ground;
+            // Format date dd-Mon-yyyy
+            var d = new Date(dateEl.value + 'T00:00:00');
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var formatted = String(d.getDate()).padStart(2,'0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
+            return ground ? formatted + ', ' + ground : formatted;
+        }
+
+        function smGetTeam(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function openSummaryEditor(type, editData) {
+            _smTableType = type;
+            _smEditData  = editData || null;
+            document.getElementById('smTitle').textContent =
+                (editData ? 'Edit Row — ' : 'Add Row — ') + type + ' Series';
+            document.getElementById('smFileStatus').innerHTML = '';
+
+            // Populate season dropdown from parent series map
+            var seasonSel = document.getElementById('smSeason');
+            var parents = Object.keys(_parentSeriesMap);
+            if (parents.length > 0) {
+                seasonSel.innerHTML = parents.map(function(p) {
+                    return '<option value="' + p + '">' + p + '</option>';
+                }).join('');
+                // Default to latest season
+                seasonSel.value = editData ? editData.season : parents[parents.length - 1];
+            } else {
+                seasonSel.innerHTML = '<option value="">No seasons loaded</option>';
+            }
+
+            var container = document.getElementById('smDivsContainer');
+            if (type === '360') {
+                container.innerHTML =
+                    divisionBlock('smA', 'Division A', true) +
+                    divisionBlock('smB', 'Division B', true) +
+                    divisionBlock('smC', 'Division C', true);
+                smLoadTeamsForAll([
+                    { prefix: 'smA' }, { prefix: 'smB' }, { prefix: 'smC' }
+                ], type, editData);
+            } else if (type === 'T12') {
+                container.innerHTML = divisionBlock('smS', 'Final', true);
+                smLoadTeamsForAll([{ prefix: 'smS' }], type, editData);
+            } else {
+                container.innerHTML = divisionBlock('smS', 'Final', false);
+                smLoadTeamsForAll([{ prefix: 'smS' }], type, editData);
+            }
+
+            // Re-fetch when season changes
+            seasonSel.onchange = function() {
+                if (type === '360')      smFetchDivisionTeams([{prefix:'smA'},{prefix:'smB'},{prefix:'smC'}], [' - A',' - B',' - C'], type, null);
+                else                     smFetchDivisionTeams([{prefix:'smS'}], [''], type, null);
+            };
+
+            document.getElementById('summaryModal').style.display = 'block';
+        }
+
+        // Detect child series matching the entered season label and load teams
+        function smLoadTeamsForAll(divConfigs, type, editData) {
+            var suffixes = type === '360' ? [' - A', ' - B', ' - C'] : [''];
+            smFetchDivisionTeams(divConfigs, suffixes, type, editData);
+        }
+
+        function smFetchDivisionTeams(divConfigs, suffixes, type, editData) {
+            var season = document.getElementById('smSeason').value.trim().toUpperCase();
+
+            // Disable Add button; re-enable only after ALL divisions have resolved (success or fail)
+            var addBtn = document.querySelector('#summaryModal .btn');
+            var pending = divConfigs.length;
+            function smDivLoaded() {
+                if (--pending <= 0 && addBtn) {
+                    addBtn.disabled = false;
+                    addBtn.textContent = '\u2795 Add to Table';
+                }
+            }
+            if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Loading\u2026'; }
+
+            divConfigs.forEach(function(cfg, i) {
+                (function(prefix, suffix, idx, ed) {
+                    var targetName = season + suffix;
+                    var seriesId = null;
+                    Object.keys(_seriesNameToId).forEach(function(name) {
+                        if (name.toUpperCase() === targetName) seriesId = _seriesNameToId[name];
+                    });
+
+                    var champSel  = document.getElementById(prefix + 'Champ');
+                    var runnerSel = document.getElementById(prefix + 'Runner');
+
+                    if (!seriesId) {
+                        var noData = '<option value="">— no series found —</option>';
+                        if (champSel)  champSel.innerHTML  = noData;
+                        if (runnerSel) runnerSel.innerHTML = noData;
+                        smDivLoaded(); // ← must count this division as done
+                        return;
+                    }
+
+                    if (champSel)  champSel.innerHTML  = '<option value="">Loading\u2026</option>';
+                    if (runnerSel) runnerSel.innerHTML = '<option value="">Loading\u2026</option>';
+
+                    // Step 1: load teams, then chain final-match fetch inside success callback
+                    // so selects are guaranteed populated before we try to auto-select values
+                    $.getJSON(cricclubs_url + 'team/getTeamsList?' + url_params + '&seriesId=' + seriesId,
+                        function(data) {
+                            var teams = [];
+                            $.each(data.data.teamsList, function(_, group) {
+                                $.each(group.teams, function(_, team) {
+                                    teams.push(team.teamName);
+                                    var rawLogo = team.logo_file_path || '';
+                                    var logo = rawLogo ? 'https://media.cricclubs.com' + rawLogo : '';
+                                    if (logo) _teamLogoMap[team.teamName.toUpperCase()] = logo;
+                                });
+                            });
+                            teams.sort();
+                            var opts = '<option value="">-- Select --</option>' +
+                                teams.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
+                            if (champSel)  champSel.innerHTML  = opts;
+                            if (runnerSel) runnerSel.innerHTML = opts;
+
+                            // Restore edit values now that options exist
+                            if (ed && ed.divs && ed.divs[idx]) {
+                                var edDiv = ed.divs[idx];
+                                if (champSel)  champSel.value = edDiv.champ  || '';
+                                if (runnerSel) runnerSel.value = edDiv.runner || '';
+                                smSetInput(prefix + 'ChampScore',  edDiv.champScore);
+                                smSetInput(prefix + 'RunnerScore', edDiv.runnerScore);
+                                if (edDiv.date)   { var dateEl = document.getElementById(prefix+'Date'); if (dateEl) dateEl.value = edDiv.date; }
+                                if (edDiv.ground) smSetGround(prefix, edDiv.ground);
+                                smDivLoaded(); // editing path done
+                                return;
+                            }
+
+                            // Step 2 (chained): find Final match and auto-fill — runs AFTER selects are ready
+                            $.getJSON(cricclubs_url + 'match/getMatches?' + url_params +
+                                    '&X-Auth-Token=&seriesId=' + seriesId + '&teamId=&limit=10000',
+                                function(data) {
+                                    var finalMatch = null;
+                                    $.each(data.data, function(_, m) {
+                                        if (m.matchType === 'f') { finalMatch = m; return false; }
+                                    });
+                                    smDivLoaded(); // matches call done — button can unlock
+                                    if (!finalMatch) return;
+
+                                    var champ  = finalMatch.teamOneName;
+                                    var runner = finalMatch.teamTwoName;
+                                    var bpo    = getBallsPerOver(targetName);
+                                    var champScore  = smFormatScore(finalMatch.t1total, finalMatch.t1wickets, finalMatch.t1balls, bpo);
+                                    var runnerScore = smFormatScore(finalMatch.t2total, finalMatch.t2wickets, finalMatch.t2balls, bpo);
+                                    if (finalMatch.result && finalMatch.result.includes(finalMatch.teamTwoName + ' won')) {
+                                        champ = finalMatch.teamTwoName; runner = finalMatch.teamOneName;
+                                        champScore  = smFormatScore(finalMatch.t2total, finalMatch.t2wickets, finalMatch.t2balls, bpo);
+                                        runnerScore = smFormatScore(finalMatch.t1total, finalMatch.t1wickets, finalMatch.t1balls, bpo);
+                                    }
+
+                                    if (champSel)  champSel.value  = champ;
+                                    if (runnerSel) runnerSel.value = runner;
+                                    smSetInput(prefix + 'ChampScore',  champScore);
+                                    smSetInput(prefix + 'RunnerScore', runnerScore);
+
+                                    if (finalMatch.matchDate) {
+                                        var dateEl = document.getElementById(prefix + 'Date');
+                                        if (dateEl) {
+                                            var parts = finalMatch.matchDate.split('/');
+                                            if (parts.length === 3)
+                                                dateEl.value = parts[2] + '-' + parts[0].padStart(2,'0') + '-' + parts[1].padStart(2,'0');
+                                        }
+                                    }
+
+                                    // Step 3: get ground from scoreCard (fire-and-forget, doesn't block button)
+                                    $.getJSON(cricclubs_url + 'scoreCard/getScoreCard?' + url_params + '&matchId=' + finalMatch.matchId,
+                                        function(sc) {
+                                            var g = sc.data && sc.data.matchInfo && sc.data.matchInfo.ground;
+                                            if (g) smSetGround(prefix, g);
+                                        }
+                                    );
+                                }
+                            ).fail(function() { smDivLoaded(); }); // getMatches fail
+                        }
+                    ).fail(function() {
+                        var err = '<option value="">Failed to load</option>';
+                        if (champSel)  champSel.innerHTML  = err;
+                        if (runnerSel) runnerSel.innerHTML = err;
+                        smDivLoaded(); // getTeamsList fail
+                    });
+                }(cfg.prefix, suffixes[i] || '', i, editData));
+            });
+        }
+
+        function smFormatScore(total, wickets, balls, bpo) {
+            if (!balls && !total) return '';
+            var overs = Math.floor(balls / bpo) + '.' + (balls % bpo);
+            return total + (wickets < 10 ? '/' + wickets : '') + '(' + overs + ')';
+        }
+
+        function smSetSelectWhenReady(id, value, retries) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            // Try to find and select the matching option
+            for (var i = 0; i < el.options.length; i++) {
+                if (el.options[i].value === value) { el.value = value; return; }
+            }
+            // Not loaded yet — retry
+            if (retries > 0) {
+                setTimeout(function() { smSetSelectWhenReady(id, value, retries - 1); }, 300);
             }
         }
 
-        function getRankArray(series) {
-            switch (series) {
-                case 'Winter 2021-22':
-                    return ["Seamers","Mighty Warriors","Dragons","Blazing Broncos","Ghadeer CC","CSK Yorkers","Royal Kings","Green Rebels","Skippers","Dream Killers","Chargers","Gully Boys","Fire Friends","Knight Walkers (CA)","Titans","Bullets","MINIONS","Smoking Sadhoos","Fairfield Hawks","Peaky Blinders","Unstoppable","Alviso Warriors","Squid Gamerz","Fairfield Falcons","Thunder Wolves XI","P@nthers","Khalsa Warriors","Josh"];
-                case 'Spring 2022':
-                    return ["Seamers","CSK Yorkers","Ghadeer CC","Mighty Warriors","Bay Indians","Singh Cricket Club","Dragons","Unstoppable","Blazing Broncos","Fairfield Hawks ","Vaders","Rising Stars","Fire Friends","Knight Walkers (CA)","Smoking Sadhoos","Bullets","Raynor Royals","Lords XI","MCC","Sunrisers","P@nthers","Royal Kings","Chargers","Titans","MINIONS","Alviso Warriors","Daredevils","Skywalkers","Squid Gamerz","Fairfield Falcons"];
-                case 'Fall 2021':
-                    return ["Seamers","Bullets","Ghadeer CC","Mighty Warriors","CSK Yorkers","On A Serious Note","Dragons","2point0 ","Unstoppable","Drunken Hammers","Knight Walkers (CA)","FriendzXI","Royal Kings","Smoking Sadhoos","MINIONS","Bay Area Kings","BAYAREAFX1","Chargers","Vaders","P@nthers","Alviso Warriors","ChampsXI","Raynor Royals","CCC Champs","Phoenix Fremont X1","Deccan Chargers","Alameda Lions","The Silly Sloggers XI"];
-                case 'Summer 2021':
-                    return ["Bullets","Royal Kings","Skippers 2.0","Seamers","Royal Strikerz","Unstoppable","CSK Yorkers","Smoking Sadhoos","Green Rebels","MINIONS","Shockers","Dixon 11","Alviso Warriors","Ghadeer CC","SWAT","Raptors","Ravens XI","Unshackled11","Dragons","Wolves XI","Vaders","Challengers 11","Avengers","Falcons"];
-                case 'Summer 2022':
-                    return ["CSK Yorkers","Mighty Warriors","Seamers","Dream Killers","Singh Cricket Club","Knight Walkers","Fairfield Hawks","Dragons","Ghadeer CC","Royal Kings","Drunken Hammers","Raynor Royals","Astros+","Fire Friends","Rising Stars","Vaders","Tailenders","Unstoppable","Bleed Blue","MCC","Titans","Chargers","SilverSwords","MINIONS","Yodhas","Daredevils","Team Tsunami","Smoking Sadhoos","Avengers","Valley Lions","Alviso Warriors ","P@nthers","Skywalkers","Crickings","Blossom Blasters","Bay Boys"];
-                case 'Winter 2022-23':
-                    return ["Seamers / Dream Killers","-","CSK Yorkers","Singh Cricket Club","Astros+","Fire Friends","Thunderbolts","Blazing Broncos","MCC","Ghadeer CC","Dark Knights","Baazigar of Bay","Tailenders","Chargers","Knight Walkers (CA)","Rising Stars","Unstoppable","Dragons","Bay Boys","Titans","Skywalkers","Smoking Sadhoos","Cric Blasters","Weekend Cricketers","Royal Kings / 2point0","-","MINIONS","Fairfield Hawks","Raynor Royals","Juggernaut","Calivasis","Yodhas","Now Warriors","Alviso Warriors","Champions","HITMEN XI","Bleed Blue","Money Heist","CricKings","Thunder Wolves XI","Bulls","P@nthers XI","Mavericks","Avengers","YAM CC-14","Blossom Blasters","Silverswords","Breaking Bats"];
-                case 'Spring 2023':
-                    return ["Astros+","Money Heist","Dark Knights","Mighty Warriors","Thunderbolts","Seamers","Dream Killers","JerseyXI","Krazy Hitters","Singh Cricket Club","Rising Stars","Ghadeer CC","Smoking Sadhoos","Fire Friends","Dragons","CSK Yorkers","Lords","2point0","P@nthers XI","Alviso Warriors","Knight Walkers (CA)","Unstoppable","Breaking Bats","Baazigar of Bay","Mavericks","MINIONS","Royal Kings","MCC","Champions","Gully Cricketers","Yodhas","Tailenders","Chargers","Now Warriors","Bleed Blue","Daredevils","Fireballs","Skywalkers","Titans","HITMEN XI","CricKings","Vaders","YAM CC-14","Thunder Wolves XI"];
-                case 'Independence Cup 2023':
-                    return ["Ghadeer CC","Smoking Sadhoos","Bay Boys","Lords","2point0","Chargers","Avengers","Gully Boys","Gully Cricketers","Rising Stars","Art Villa","Champions","Yodhas","YAM CC-14","Blue Warriors","Calivaasis","UC11","Now Warriors","HITMEN XI"];
-                case 'Summer 2023 - A':
-                    return ["Lords","CSK Yorkers","Seamers","Singh Cricket Club","Dream Killers","Ghadeer CC","Money Heist","Mighty Warriors","Dark Knights","Smoking Sadhoos","Astros+","Fire Friends","2point0","Thunderbolts","JerseyXI","Dragons","Knight Walkers (CA)","Baazigar of Bay","Unstoppable","P@nthers XI","Alviso Warriors","Rising Stars"];
-                case 'Summer 2023 - B':
-                    return ["Royal Kings","Bleed Blue","Kings XI","Royal Knights","Daredevils","Chargers","Breaking Bats","Champions","Tailenders","Titans","YAM CC-14","Mavericks","Raynor Royals","MINIONS","Veer Jawan","Extraas","Avengers","Skippers","MCC","Gully Cricketers","Thunder Wolves XI","CricKings"];
-                case 'Veterans Cup 2023':
-                    return ["Challengers CC","Astros+","Thunderbolts","Deccan United CC","HTM","Fire Friends","YAM CC-14","Gully Boys","Gully Cricketers","Veer Jawan","Koolagents","Now Warriors","CricKings","Thunder Wolves XI","Miya Bhaiz","Khalsa Warriors"];
-                case 'Winter 2023-24 - A':
-                    return ["Mighty Warriors","CSK Yorkers","Dream Killers","JerseyXI","Royal Knights","Astros+","Singh Cricket Club","Royal Kings","2point0","Money Heist","Knight Walkers (CA)","Ghadeer CC","Dragons","Bleed Blue","Fire Friends","Lords","Thunderbolts","Kings X1","Seamers","Dark Knights","P@nthers XI","Smoking Sadhoos"];
-                case 'Winter 2023-24 - B':
-                    return ["Deccan United CC","Bravehearts","Challengers CC","Rising Stars","Daredevils","Titans","Skippers","Baazigar of Bay","Unstoppable","CricKings","Champions","Breaking Bats","Extraas","Barely XI","Alviso Warriors","Tailenders","Raynor Royals","Veer Jawan","YAM CC-14","Mavericks","Bay Tigers","MINIONS"];
-                case 'Spring 2024 - A':
-                    return ["Mighty Warriors","2point0","CSK Yorkers","Challengers CC","Astros+","Singh Cricket Club","Bravehearts","Money Heist","Royal Knights","JerseyXI","Dream Killers","Royal Kings","Dragons","Knight Walkers (CA)","Fire Friends","Deccan United CC"];
-                case 'Spring 2024 - B':
-                    return ["Seamers","Rising Stars","Kings XI","Daredevils","Lords","Unstoppable","Chargers","Baazigar of Bay","Breaking Bats","Smoking Sadhoos","Champions","Titans","Skippers","P@nthers XI","Bleed Blue","CricKings"];
-                case 'Spring 2024 - C':
-                    return ["Tailenders","UC11","Mavericks","Alviso Warriors","Centurions","YAM CC-14","Bay Tigers","WCC Gladiators","Nexus XI","Bay Boys","MINIONS","Sunny","Barely XI","IndianChamps","Raynor Royals","Avengers"];
-                case 'Independence Cup 2024':
-                    return ["Knight Walkers (CA)","Smoking Sadhoos","Dream Killers","Singh Warriors","Vikings","Punjab Warriors","Fire Friends","Breaking Bats","Bay Boys","Super Saiyans","IndianChamps","The Snow Lions","Barely XI","RCB","Super Giants","Sunny"];
-                case 'Summer 2024 - A':
-                    return ["Challengers CC","Singh Cricket Club","Money Heist","Dream Killers","Seamers","Mighty Warriors","Kings X1","Royal Knights","Astros+","Royal Kings","CSK Yorkers","Knight Walkers (CA)","2point0","Rising Stars","JerseyXI","Dragons"];
-                case 'Summer 2024 - B':
-                    return ["Skippers","Ghadeer Lions","Titans","Lords","Deccan United CC","NextGen Tailenders","Daredevils","UC11","Champions","Chargers","Smoking Sadhoos","Unstoppable","Baazigar of Bay","Breaking Bats","Fire Friends","Mavericks"];
-                case 'Summer 2024 - C':
-                    return ["Vikings","Singh Warriors","Stanford","Bay Tigers","MINIONS","Super Giants","Bleed Blue","Bay Boys","CricKings","Avengers","Alviso Warriors","Sunny","Super Saiyans","Nexus XI","YAM CC-14","Barely XI","Centurions","IndianChamps","WCC Gladiators","Raynor Royals"];
-                case 'Winter 2024-25 - A':
-                    return ["Mighty Warriors","Money Heist","Seamers","Astros+","Skippers","Singh Cricket Club","Challengers CC","Dream Killers","Knight Walkers (CA)","Royal Kings","Ghadeer Lions","CSK Yorkers","Kings X1","2point0","Rising Stars","Royal Knights"];
-                case 'Winter 2024-25 - B':
-                    return ["Lords","Daredevils","Unstoppable","Titans","NextGen Tailenders","Vikings","Champions","Smoking Sadhoos","Deccan United CC","Dragons","Stanford","UC11","Breaking Bats","Baazigar of Bay","JerseyXI","Singh Warriors"];
-                case 'Winter 2024-25 - C':
-                    return ["Fire Friends","Avengers","Bay Tigers","Bleed Blue","Bahubalis","Bay Boys","Alviso Warriors","Mavericks","Thunders","YAM CC-14","Sabertooths","IndianChamps","Centurions","MINIONS","Super Giants","Super Sayns","Smash Blasters","Sunny Devils","Delta Force","P@Nthers XI"];
-                case 'Presidents Cup 2025':
-                    return ["JD Army","Singh Cricket Club","Deccan United CC","Royal Knights","FC SPARTANS","Vulcans","Sunny Devils","Super Sayns","Delta Force","Chargers","Knight Walkers (CA)","Blazers Legends"];
-                case 'Spring 2025 - A':
-                    return ["Money Heist","Astros+","Seamers","Lords","CSK Yorkers","Mighty Warriors","Rebels","Titans","Skippers","Ghadeer Lions","Singh Cricket Club","2point0","Royal Kings","Daredevils","Kings X1","Knight Walkers (CA)"];
-                case 'Spring 2025 - B':
-                    return ["Unstoppable","Royal Knights","Vikings","Breaking Bats","Fire Friends","Dragons","Deccan United CC","Smoking Sadhoos","BAY TIGERS","Baazigar of Bay","Rising Stars","Champions","Stanford","NextGen Tailenders","UC11","Avengers"];
-                case 'Spring 2025 - C':
-                    return ["Orange Army","Sabertooths","Gladiators","Bleed Blue","Super Giants","Cali Lions","Vulcans","Bay Boys","Escuela Boys","Mavericks","Thunderhawks","Super Saiyans","Thunders","Alviso Warriors","Sunny Devils","FC SPARTANS","CricKings","IndianChamps","Bahubalis","JerseyXI","MINIONS","Delta Force","Centurions","Smash Blasters"];
-                case 'Independence Cup 2025':
-                    return ["JD Army","Super Saiyans","NextGen Tailenders","Fire Stars","Singh Cricket Club","Chargers","Smash Blasters","Escuela Boys","Rayalaseema Royals","Stanford"];
-                case 'Summer 2025 - A':
-                    return ["Mighty Warriors","Royal Knights","Money Heist","Titans","Seamers","Lords","Rebels","Singh Cricket Club","Ghadeer Lions","Skippers","Astros+","Unstoppable","CSK Yorkers","Royal Kings","2point0","Daredevils"];
-                case 'Summer 2025 - B':
-                    return ["Orange Army","Kings X1","NextGen Tailenders","Rising Stars","Fire Friends","Sabertooths","BAY TIGERS","Bleed Blue","Vikings","Knight Walkers (CA)","Dragons","Gladiators","Smoking Sadhoos","Breaking Bats","Baazigar of Bay","Champions"];
-                case 'Summer 2025 - C':
-                    return ["Escuela Boys","JerseyXI","UC11","Vulcans","Alviso Warriors","Super Saiyans","Super Giants","Cali Lions","MINIONS","CricKings","Thunderhawks","Thunders","Chargers","Sunny Devils","Deccan Chargers","FC SPARTANS","Smash Blasters","Bay Boys","Bahubalis","Centurions","Blue Warriors","Mavericks","Rayalaseema Royals","Bay Warriors","IndianChamps","Delta Force","Pittsburg Rangers"];
-                case 'Diwali Cup 2025':
-                    return ["All Stars","Singh Warriors","Sher E Punjab","Super Squad","Singh Cricket Club","Bahubalis","Chargers","Blue Warriors","Thunders","VK 18","Smoking Sadhoos","Centurions"];
+        function smSetInput(id, value) {
+            var el = document.getElementById(id);
+            if (el && value) el.value = value;
+        }
+
+        function smSetGround(prefix, groundName) {
+            var sel = document.getElementById(prefix + 'Ground');
+            if (!sel) return;
+            // Check if it matches one of the preset options
+            for (var i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value.toLowerCase() === groundName.toLowerCase()) {
+                    sel.value = sel.options[i].value;
+                    return;
+                }
             }
+            // No match — add it dynamically and select it, or use custom
+            var customEl = document.getElementById(prefix + 'GroundCustom');
+            if (customEl) {
+                sel.value = '__custom__';
+                customEl.style.display = 'block';
+                customEl.value = groundName;
+                // Also add to the global list for future use
+                if (!_smGrounds.includes(groundName)) _smGrounds.push(groundName);
+            }
+        }
+
+        function closeSummaryEditor() {
+            document.getElementById('summaryModal').style.display = 'none';
+        }
+
+        function smVal(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function teamCellHTML(name, score) {
+            if (!name) return "'-'";
+            var logo = _teamLogoMap[name.toUpperCase()] || '';
+            var imgPart = logo ? '<img src=\\"' + logo + '\\" border=\\"0\\" width=\\"30\\" height=\\"30\\">&nbsp;&nbsp;&nbsp;&nbsp;' : '';
+            var inner = name.toUpperCase() + (score ? '<br><b style=\\"color:#ffff00\\">' + score + '</b>' : '');
+            return "'<div class=\"logo-txt-container\">" + imgPart + "<h3 style=\"text-align: center;\">" + inner + "</h3></div>'";
+        }
+
+        function teamCellDOM(name, score) {
+            if (!name) return '-';
+            var logo = _teamLogoMap[name.toUpperCase()] || '';
+            var imgTag = logo ? '<img src="' + logo + '" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;' : '';
+            return '<div class="logo-txt-container">' + imgTag +
+                '<h3 style="text-align:center;">' +
+                name.toUpperCase() + (score ? '<br><b style="color:#ffff00">' + score + '</b>' : '') +
+                '</h3></div>';
+        }
+
+        function addSummaryRowToTable() {
+            var season = smVal('smSeason');
+            if (!season) { alert('Please select a season.'); return; }
+            var tableId = _smTableType === '360' ? 'summaryTable' : (_smTableType === 'T12' ? 't12SummaryTable' : 'boxSummaryTable');
+            var tbl = document.getElementById(tableId);
+            if (!tbl) { alert('Table not found — select Summary stat first.'); return; }
+
+            var isEdit = !!(_smEditData && _smEditTeamsRow);
+
+            // Duplicate guard — check if a data row for this season already exists
+            if (!isEdit) {
+                var seasonUpper = season.toUpperCase();
+                for (var r = 2; r < tbl.rows.length - 1; r++) {
+                    // Season label appears in first cell of every row (or in groundRow's first cell)
+                    var cellText = tbl.rows[r].cells[0] && tbl.rows[r].cells[0].textContent.trim();
+                    if (cellText === seasonUpper) {
+                        if (!confirm('A row for "' + seasonUpper + '" already exists. Add another?')) return;
+                        break;
+                    }
+                }
+            }
+
+            function buildTeamsAndGround360() {
+                var teamsRow  = document.createElement('tr');
+                var groundRow = document.createElement('tr');
+                var sc = groundRow.insertCell(0); sc.innerHTML = season.toUpperCase(); sc.rowSpan = 2;
+                ['smA','smB','smC'].forEach(function(p, i) {
+                    var cc = teamsRow.insertCell(i*2);
+                    cc.innerHTML = teamCellDOM(smVal(p+'Champ'), smVal(p+'ChampScore'));
+                    if (smVal(p+'Champ')) cc.style.backgroundColor = '#012169';
+                    teamsRow.insertCell(i*2+1).innerHTML = teamCellDOM(smVal(p+'Runner'), smVal(p+'RunnerScore'));
+                    var gc = groundRow.insertCell(i+1);
+                    gc.innerHTML = smGetVenue(p); gc.style.textAlign='center'; gc.colSpan=2;
+                });
+                // Edit button cell
+                var editTd = teamsRow.insertCell(-1);
+                editTd.style.cssText = 'padding:0;text-align:center;vertical-align:middle;';
+                editTd.rowSpan = 2;
+                editTd.innerHTML = '<button class="sm-edit-btn" title="Edit row" onclick="smEditRow(this,\'360\')">&#x270F;&#xFE0F;</button>';
+                return [teamsRow, groundRow];
+            }
+
+            function buildTeamsAndGroundSingle(type) {
+                var p = 'smS';
+                if (type === 'T12') {
+                    var teamsRow  = document.createElement('tr');
+                    var groundRow = document.createElement('tr');
+                    var sc = groundRow.insertCell(0); sc.innerHTML = season.toUpperCase(); sc.rowSpan = 2;
+                    var cc = teamsRow.insertCell(0);
+                    cc.innerHTML = teamCellDOM(smVal(p+'Champ'), smVal(p+'ChampScore'));
+                    if (smVal(p+'Champ')) cc.style.backgroundColor = '#012169';
+                    teamsRow.insertCell(1).innerHTML = teamCellDOM(smVal(p+'Runner'), smVal(p+'RunnerScore'));
+                    var gc = groundRow.insertCell(1); gc.innerHTML = smGetVenue(p); gc.style.textAlign='center'; gc.colSpan=2;
+                    var editTd = teamsRow.insertCell(-1);
+                    editTd.style.cssText = 'padding:0;text-align:center;vertical-align:middle;';
+                    editTd.rowSpan = 2;
+                    editTd.innerHTML = '<button class="sm-edit-btn" title="Edit row" onclick="smEditRow(this,\'T12\')">&#x270F;&#xFE0F;</button>';
+                    return [teamsRow, groundRow];
+                } else {
+                    var row = document.createElement('tr');
+                    row.insertCell(0).innerHTML = season.toUpperCase();
+                    var cc = row.insertCell(1);
+                    cc.innerHTML = teamCellDOM(smVal(p+'Champ'), smVal(p+'ChampScore'));
+                    if (smVal(p+'Champ')) cc.style.backgroundColor = '#012169';
+                    row.insertCell(2).innerHTML = teamCellDOM(smVal(p+'Runner'), smVal(p+'RunnerScore'));
+                    var editTd = row.insertCell(-1);
+                    editTd.style.cssText = 'padding:0;text-align:center;vertical-align:middle;';
+                    editTd.innerHTML = '<button class="sm-edit-btn" title="Edit row" onclick="smEditRow(this,\'Box\')">&#x270F;&#xFE0F;</button>';
+                    return [row];
+                }
+            }
+
+            if (isEdit) {
+                // Replace existing rows in DOM
+                var newRows = _smTableType === '360' ? buildTeamsAndGround360() : buildTeamsAndGroundSingle(_smTableType);
+                _smEditTeamsRow.parentNode.replaceChild(newRows[0], _smEditTeamsRow);
+                if (newRows[1] && _smEditGroundRow) _smEditGroundRow.parentNode.replaceChild(newRows[1], _smEditGroundRow);
+                _smEditTeamsRow = _smEditGroundRow = null;
+            } else {
+                // Insert before the last row (the + Add Season row)
+                var insertBefore = tbl.rows[tbl.rows.length - 1];
+                var newRows = _smTableType === '360' ? buildTeamsAndGround360() : buildTeamsAndGroundSingle(_smTableType);
+                newRows.forEach(function(r) { tbl.tBodies[0].insertBefore(r, insertBefore); });
+            }
+
+            document.getElementById('smFileStatus').innerHTML = '&#x2705; Row ' + (isEdit ? 'updated' : 'added') + '. Click <b>Save to File</b> to persist.';
+            _smEditData = null;
+        }
+
+        function buildSummaryJsBlock(season, type) {
+            var s = season.toUpperCase();
+            var lines = [];
+            var tblVar = type === '360' ? 'tbl' : (type === 'T12' ? 't12tbl' : 'btbl');
+
+            if (type === '360') {
+                var divs = [
+                    {p:'smA'},{p:'smB'},{p:'smC'}
+                ].map(function(d){ return {
+                    champ: smVal(d.p+'Champ'), cs: smVal(d.p+'ChampScore'),
+                    runner: smVal(d.p+'Runner'), rs: smVal(d.p+'RunnerScore'),
+                    venue: smGetVenue(d.p)
+                }; });
+                lines.push("                    var teamsRow = "+tblVar+".insertRow(2);");
+                lines.push("                    var groundRow = "+tblVar+".insertRow(2);");
+                lines.push("                    seriesCell = groundRow.insertCell(0);");
+                lines.push("                    seriesCell.innerHTML= \""+s+"\";");
+                lines.push("                    seriesCell.rowSpan = 2;");
+                lines.push("                    AChampionCell = teamsRow.insertCell(0);");
+                lines.push("                    AChampionCell.innerHTML= "+teamCellHTML(divs[0].champ, divs[0].cs)+";");
+                if (divs[0].champ) lines.push("                    AChampionCell.style.backgroundColor=\"#012169\";");
+                lines.push("                    teamsRow.insertCell(1).innerHTML= "+teamCellHTML(divs[0].runner, divs[0].rs)+";");
+                lines.push("                    teamsRow.insertCell(2).innerHTML= "+teamCellHTML(divs[1].champ, divs[1].cs)+";");
+                if (divs[1].champ) lines.push("                    teamsRow.cells[2].style.backgroundColor=\"#012169\";");
+                lines.push("                    teamsRow.insertCell(3).innerHTML= "+teamCellHTML(divs[1].runner, divs[1].rs)+";");
+                lines.push("                    teamsRow.insertCell(4).innerHTML= "+teamCellHTML(divs[2].champ, divs[2].cs)+";");
+                if (divs[2].champ) lines.push("                    teamsRow.cells[4].style.backgroundColor=\"#012169\";");
+                lines.push("                    teamsRow.insertCell(5).innerHTML= "+teamCellHTML(divs[2].runner, divs[2].rs)+";");
+                lines.push("                    groundACell = groundRow.insertCell(1);");
+                lines.push("                    groundACell.innerHTML= \""+divs[0].venue.replace(/"/g,'\\"')+"\";");
+                lines.push("                    groundACell.style.textAlign = \"center\";");
+                lines.push("                    groundACell.colSpan = 2;");
+                lines.push("                    groundBCell = groundRow.insertCell(2);");
+                lines.push("                    groundBCell.innerHTML= \""+divs[1].venue.replace(/"/g,'\\"')+"\";");
+                lines.push("                    groundBCell.style.textAlign = \"center\";");
+                lines.push("                    groundBCell.colSpan = 2;");
+                lines.push("                    groundCCell = groundRow.insertCell(3);");
+                lines.push("                    groundCCell.innerHTML= \""+divs[2].venue.replace(/"/g,'\\"')+"\";");
+                lines.push("                    groundCCell.style.textAlign = \"center\";");
+                lines.push("                    groundCCell.colSpan = 2;");
+            } else if (type === 'T12') {
+                var champ=smVal('smSChamp'), cs=smVal('smSChampScore'), runner=smVal('smSRunner'), rs=smVal('smSRunnerScore'), venue=smGetVenue('smS');
+                lines.push("                    var teamsRow = "+tblVar+".insertRow(2);");
+                lines.push("                    var groundRow = "+tblVar+".insertRow(2);");
+                lines.push("                    seriesCell = groundRow.insertCell(0);");
+                lines.push("                    seriesCell.innerHTML= \""+s+"\";");
+                lines.push("                    seriesCell.rowSpan = 2;");
+                lines.push("                    AChampionCell = teamsRow.insertCell(0);");
+                lines.push("                    AChampionCell.innerHTML= "+teamCellHTML(champ, cs)+";");
+                if (champ) lines.push("                    AChampionCell.style.backgroundColor=\"#012169\";");
+                lines.push("                    teamsRow.insertCell(1).innerHTML= "+teamCellHTML(runner, rs)+";");
+                lines.push("                    groundACell = groundRow.insertCell(1);");
+                lines.push("                    groundACell.innerHTML= \""+venue.replace(/"/g,'\\"')+"\";");
+                lines.push("                    groundACell.style.textAlign = \"center\";");
+                lines.push("                    groundACell.colSpan = 2;");
+            } else {
+                var champ=smVal('smSChamp'), cs=smVal('smSChampScore'), runner=smVal('smSRunner'), rs=smVal('smSRunnerScore');
+                lines.push("                    var rowNew = "+tblVar+".insertRow(2);");
+                lines.push("                    rowNew.insertCell(0).innerHTML= \""+s+"\";");
+                lines.push("                    rowNew.insertCell(1).innerHTML= "+teamCellHTML(champ, cs)+";");
+                if (champ) lines.push("                    rowNew.cells[1].style.backgroundColor=\"#012169\";");
+                lines.push("                    rowNew.insertCell(2).innerHTML= "+teamCellHTML(runner, rs)+";");
+            }
+            return lines.join('\n');
+        }
+
+        async function saveSummaryToFile() {
+            var season = smVal('smSeason');
+            if (!season) { alert('Please enter a season label first.'); return; }
+            if (!('showOpenFilePicker' in window)) {
+                alert('File System Access API not supported. Please use Chrome or Edge.');
+                return;
+            }
+            try {
+                if (!_fileHandle) {
+                    var handles = await window.showOpenFilePicker({
+                        types: [{ description: 'HTML files', accept: { 'text/html': ['.html'] } }],
+                        multiple: false
+                    });
+                    _fileHandle = handles[0];
+                    saveHandleToIDB(_fileHandle);
+                }
+                var perm = await _fileHandle.queryPermission({ mode: 'readwrite' });
+                if (perm !== 'granted') perm = await _fileHandle.requestPermission({ mode: 'readwrite' });
+                if (perm !== 'granted') { alert('Write permission denied.'); return; }
+
+                var file    = await _fileHandle.getFile();
+                var current = await file.text();
+                var newBlock = buildSummaryJsBlock(season, _smTableType);
+
+                var anchor = _smTableType === '360'
+                    ? '                    var t12tbl = document.createElement("table");'
+                    : _smTableType === 'T12'
+                    ? '                    var btbl = document.createElement("table");'
+                    : '                    var mar2024Row = btbl.insertRow(2);';
+
+                if (!current.includes(anchor)) {
+                    alert('Could not find insertion point. Make sure this is the correct stats.html.');
+                    return;
+                }
+                var updated  = current.replace(anchor, newBlock + '\n\n' + anchor);
+                var writable = await _fileHandle.createWritable();
+                await writable.write(updated);
+                await writable.close();
+
+                document.getElementById('smFileStatus').innerHTML =
+                    '&#x2705; Saved to <b>' + _fileHandle.name + '</b> at ' + new Date().toLocaleTimeString() +
+                    ' &nbsp;<a href="#" onclick="unlinkFile();return false;" style="color:#da291c;">Unlink</a>';
+            } catch(err) {
+                if (err.name !== 'AbortError') { console.error(err); alert('Save failed: ' + err.message); }
+            }
+        }
+
+        document.getElementById('summaryModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSummaryEditor();
+        });
+
+        // ── Summary table: inject edit pencils + in-table + button ─────────────
+        function injectSummaryControls(tbl, type) {
+            var colSpan = type === '360' ? 7 : 4; // season col + data cols + 1 for edit col
+
+            // Add an EDIT column header to row 0 (the top header row)
+            var hdr = tbl.rows[0];
+            var editTH = document.createElement('th');
+            editTH.style.cssText = 'width:28px;padding:0;';
+            editTH.rowSpan = 2;
+            hdr.appendChild(editTH);
+
+            // For each data row-pair (season label spans 2 rows), add edit button
+            // Data rows start at index 2. For 360/T12 they come in pairs (teams + ground).
+            // For Box, each row is standalone.
+            var dataStart = 2;
+            var rowCount  = tbl.rows.length;
+
+            if (type === 'Box') {
+                for (var r = dataStart; r < rowCount; r++) {
+                    var row = tbl.rows[r];
+                    var td = row.insertCell(-1);
+                    td.style.cssText = 'padding:0;text-align:center;vertical-align:middle;';
+                    td.innerHTML = '<button class="sm-edit-btn" title="Edit row" onclick="smEditRow(this,\''+type+'\')">&#x270F;&#xFE0F;</button>';
+                }
+            } else {
+                // Rows come in pairs: teamsRow + groundRow
+                for (var r = dataStart; r < rowCount; r += 2) {
+                    var teamsRow  = tbl.rows[r];
+                    var groundRow = tbl.rows[r + 1];
+                    if (!teamsRow || !groundRow) break;
+                    var td = teamsRow.insertCell(-1);
+                    td.style.cssText = 'padding:0;text-align:center;vertical-align:middle;';
+                    td.rowSpan = 2;
+                    td.innerHTML = '<button class="sm-edit-btn" title="Edit row" onclick="smEditRow(this,\''+type+'\')">&#x270F;&#xFE0F;</button>';
+                }
+            }
+
+            // Add a "+ Add Row" row at the very bottom of the table
+            var addRow = tbl.insertRow(-1);
+            var addTd  = addRow.insertCell(0);
+            addTd.colSpan = colSpan;
+            addTd.style.cssText = 'text-align:center;padding:4px;border-top:1px dashed #ccc;';
+            addTd.innerHTML = '<button class="sm-add-row-btn" title="Add new season row" onclick="openSummaryEditor(\''+type+'\')">&#x2795; Add Season</button>';
+        }
+
+        // Read data out of a summary row-pair for pre-filling the edit form
+        function smEditRow(btn, type) {
+            var tbl = btn.closest('table');
+            var editTd = btn.closest('td');
+
+            // Find the teams row — it's the row containing the edit cell, or its sibling
+            var teamsRow, groundRow, seasonLabel;
+            if (type === 'Box') {
+                teamsRow  = btn.closest('tr');
+                groundRow = null;
+                seasonLabel = teamsRow.cells[0].textContent.trim();
+            } else {
+                // Edit cell has rowSpan=2; its parentRow is the teamsRow
+                teamsRow  = btn.closest('tr');
+                groundRow = teamsRow.nextElementSibling;
+                // Season label is in first cell of groundRow (rowSpan=2 means it appears in groundRow)
+                seasonLabel = groundRow ? groundRow.cells[0].textContent.trim() : '';
+            }
+
+            function extractTeamData(cell) {
+                if (!cell) return { champ: '', champScore: '', runner: '', runnerScore: '' };
+                var h3s = cell.querySelectorAll('h3');
+                // ... not reliable — instead read the select values that will be set
+                return null; // signal: read from DOM cells
+            }
+
+            // Build editData by reading cell innerHTML text
+            function cellText(cell) {
+                if (!cell) return '';
+                var h3 = cell.querySelector('h3');
+                if (!h3) return cell.textContent.trim();
+                var lines = h3.innerHTML.split('<br>');
+                return lines[0].replace(/<[^>]+>/g, '').trim();
+            }
+            function cellScore(cell) {
+                if (!cell) return '';
+                var b = cell.querySelector('b');
+                return b ? b.textContent.trim() : '';
+            }
+            function parseVenue(text) {
+                // "16-Feb-2025, Loren Eden, Hayward" -> { date: "YYYY-MM-DD", ground: "Loren Eden, Hayward" }
+                text = text.trim();
+                var m = text.match(/^(\d{2}-\w{3}-\d{4}),\s*(.+)$/);
+                if (m) {
+                    var months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+                    var parts = m[1].split('-');
+                    return { date: parts[2]+'-'+months[parts[1]]+'-'+parts[0].padStart(2,'0'), ground: m[2].trim() };
+                }
+                return { date: '', ground: text };
+            }
+
+            var editData = { season: seasonLabel, divs: [] };
+
+            if (type === '360') {
+                for (var d = 0; d < 3; d++) {
+                    var champCell  = teamsRow.cells[d * 2];
+                    var runnerCell = teamsRow.cells[d * 2 + 1];
+                    var groundCell = groundRow ? groundRow.cells[d + 1] : null;
+                    var v = groundCell ? parseVenue(groundCell.textContent.trim()) : { date:'', ground:'' };
+                    editData.divs.push({
+                        champ: cellText(champCell), champScore: cellScore(champCell),
+                        runner: cellText(runnerCell), runnerScore: cellScore(runnerCell),
+                        date: v.date, ground: v.ground
+                    });
+                }
+            } else if (type === 'T12') {
+                var champCell  = teamsRow.cells[0];
+                var runnerCell = teamsRow.cells[1];
+                var groundCell = groundRow ? groundRow.cells[1] : null;
+                var v = groundCell ? parseVenue(groundCell.textContent.trim()) : { date:'', ground:'' };
+                editData.divs.push({
+                    champ: cellText(champCell), champScore: cellScore(champCell),
+                    runner: cellText(runnerCell), runnerScore: cellScore(runnerCell),
+                    date: v.date, ground: v.ground
+                });
+            } else { // Box
+                var champCell  = teamsRow.cells[1];
+                var runnerCell = teamsRow.cells[2];
+                editData.divs.push({
+                    champ: cellText(champCell), champScore: cellScore(champCell),
+                    runner: cellText(runnerCell), runnerScore: cellScore(runnerCell),
+                    date: '', ground: ''
+                });
+            }
+
+            // Store reference to the rows so we can replace them on save
+            _smEditTeamsRow  = teamsRow;
+            _smEditGroundRow = groundRow;
+
+            openSummaryEditor(type, editData);
         }
 
         function getPOVResult(result, team) {
@@ -2247,5 +2652,326 @@
                 res = result;
             return res.charAt(0).toUpperCase() + res.slice(1);
         }
+
+        // ═══════════════════════════════════════════════════════
+        //  RANKINGS EDITOR
+        // ═══════════════════════════════════════════════════════
+
+        // On startup: merge any localStorage overrides into RANK_ARRAYS
+        (function loadStoredRankings() {
+            var stored = localStorage.getItem('rankArraysOverride');
+            if (stored) {
+                try {
+                    var overrides = JSON.parse(stored);
+                    Object.assign(RANK_ARRAYS, overrides);
+                } catch(e) { console.warn('Bad rankings in localStorage', e); }
+            }
+        })();
+
+        function openRankingsEditor(series) {
+            var modal = document.getElementById('rankingsModal');
+            document.getElementById('reSeries').value = series;
+            document.getElementById('reModalSeriesName').textContent = series;
+            modal.style.display = 'block';
+
+            // If we already have stored rankings for this series, load immediately
+            if (RANK_ARRAYS[series] && RANK_ARRAYS[series].length > 0) {
+                renderTeamList(RANK_ARRAYS[series]);
+                return;
+            }
+
+            // Otherwise fetch teams from API on demand using the child series ID
+            var seriesId = _seriesNameToId[series];
+            if (!seriesId) {
+                renderTeamList([]);
+                return;
+            }
+            renderTeamList([]); // show empty list while loading
+            document.getElementById('reTeamList').innerHTML =
+                '<li style="color:#888;padding:12px;justify-content:center;">Loading teams...</li>';
+
+            $.getJSON(cricclubs_url + 'team/getTeamsList?' + url_params + '&seriesId=' + seriesId,
+                function(data) {
+                    var teams = [];
+                    $.each(data.data.teamsList, function(_, group) {
+                        $.each(group.teams, function(_, team) {
+                            teams.push(team.teamName);
+                        });
+                    });
+                    teams.sort();
+                    renderTeamList(teams);
+                }
+            ).fail(function() {
+                document.getElementById('reTeamList').innerHTML =
+                    '<li style="color:#da291c;padding:12px;">Failed to load teams. Try again.</li>';
+            });
+        }
+
+        function closeRankingsEditor() {
+            document.getElementById('rankingsModal').style.display = 'none';
+        }
+
+
+
+        function renderTeamList(teams) {
+            var ul = document.getElementById('reTeamList');
+            ul.innerHTML = '';
+            teams.forEach(function(name, idx) {
+                ul.appendChild(makeTeamItem(name, idx + 1));
+            });
+            initDragAndDrop();
+        }
+
+        function makeTeamItem(name, rank) {
+            var li = document.createElement('li');
+            li.draggable = true;
+            li.dataset.name = name;
+            li.innerHTML =
+                '<span class="re-handle">&#x2630;</span>' +
+                '<span class="re-rank"><input type="number" class="re-rank-input" value="' + rank + '" min="1" title="Type position and press Enter"></span>' +
+                '<span class="re-name">' + escHtml(name) + '</span>' +
+                '<button class="re-del" title="Remove" onclick="removeTeamItem(this)">&#x2715;</button>';
+            // Move to typed position on Enter or blur
+            var inp = li.querySelector('.re-rank-input');
+            function applyRankInput() {
+                var ul    = document.getElementById('reTeamList');
+                var total = ul.children.length;
+                var pos   = Math.max(1, Math.min(parseInt(inp.value, 10) || 1, total));
+                inp.value = pos;
+                var items = Array.from(ul.children);
+                var cur   = items.indexOf(li);
+                if (cur === pos - 1) return; // already there
+                ul.removeChild(li);
+                var ref = ul.children[pos - 1] || null;
+                ul.insertBefore(li, ref);
+                refreshRanks();
+            }
+            inp.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); applyRankInput(); inp.blur(); }
+            });
+            inp.addEventListener('blur', applyRankInput);
+            // Prevent drag starting when clicking the input
+            inp.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+            return li;
+        }
+
+        function escHtml(s) {
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function removeTeamItem(btn) {
+            btn.closest('li').remove();
+            refreshRanks();
+        }
+
+        function addTeamToEditor() {
+            var inp  = document.getElementById('reNewTeam');
+            var name = inp.value.trim();
+            if (!name) return;
+            var ul   = document.getElementById('reTeamList');
+            var rank = ul.children.length + 1;
+            ul.appendChild(makeTeamItem(name, rank));
+            initDragAndDrop();
+            inp.value = '';
+            inp.focus();
+        }
+
+        function refreshRanks() {
+            var items = document.getElementById('reTeamList').querySelectorAll('li');
+            items.forEach(function(li, i) {
+                var inp = li.querySelector('.re-rank-input');
+                if (inp) inp.value = i + 1;
+            });
+        }
+
+        // ── Drag-and-drop reorder ──────────────────────────────
+        var dragSrc = null;
+        function initDragAndDrop() {
+            var items = document.getElementById('reTeamList').querySelectorAll('li');
+            items.forEach(function(li) {
+                li.addEventListener('dragstart', function(e) {
+                    dragSrc = li;
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                li.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    document.querySelectorAll('#reTeamList li').forEach(function(x){ x.classList.remove('drag-over'); });
+                    li.classList.add('drag-over');
+                });
+                li.addEventListener('dragleave', function() {
+                    li.classList.remove('drag-over');
+                });
+                li.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    li.classList.remove('drag-over');
+                    if (dragSrc && dragSrc !== li) {
+                        var ul = document.getElementById('reTeamList');
+                        var allItems = Array.from(ul.children);
+                        var srcIdx = allItems.indexOf(dragSrc);
+                        var tgtIdx = allItems.indexOf(li);
+                        if (srcIdx < tgtIdx) ul.insertBefore(dragSrc, li.nextSibling);
+                        else                  ul.insertBefore(dragSrc, li);
+                        refreshRanks();
+                    }
+                });
+                li.addEventListener('dragend', function() {
+                    document.querySelectorAll('#reTeamList li').forEach(function(x){ x.classList.remove('drag-over'); });
+                });
+            });
+        }
+
+        // ── Read current list order ────────────────────────────
+        function getCurrentTeams() {
+            return Array.from(document.querySelectorAll('#reTeamList li'))
+                        .map(function(li){ return li.dataset.name; });
+        }
+
+        // ── Save to localStorage ───────────────────────────────
+        function saveRankingsToStorage() {
+            var series = document.getElementById('reSeries').value;
+            if (!series) { alert('Select a series first.'); return; }
+            RANK_ARRAYS[series] = getCurrentTeams();
+            // persist full overrides object
+            var stored = {};
+            try { stored = JSON.parse(localStorage.getItem('rankArraysOverride') || '{}'); } catch(e){}
+            stored[series] = RANK_ARRAYS[series];
+            localStorage.setItem('rankArraysOverride', JSON.stringify(stored));
+            alert('✅ Saved! Rankings for "' + series + '" are now active in this browser.');
+        }
+
+        // ── Export full RANK_ARRAYS code ───────────────────────
+        // ── File System Access API ────────────────────────────
+        var _fileHandle = null;
+
+        // Restore persisted file handle from IndexedDB on page load
+        (function restoreFileHandle() {
+            var req = indexedDB.open('rankingsEditorDB', 1);
+            req.onupgradeneeded = function(e) {
+                e.target.result.createObjectStore('handles');
+            };
+            req.onsuccess = function(e) {
+                var db  = e.target.result;
+                var get = db.transaction('handles','readonly').objectStore('handles').get('statsFile');
+                get.onsuccess = function() {
+                    if (get.result) {
+                        _fileHandle = get.result;
+                        setFileStatus('&#x1F517; Linked: <b>' + _fileHandle.name + '</b> &nbsp;<a href="#" onclick="unlinkFile();return false;" style="color:#da291c;">Unlink</a>');
+                    } else {
+                        setFileStatus('&#x26A0;&#xFE0F; No file linked yet &mdash; click <b>Save to File</b> to pick stats.html once.');
+                    }
+                };
+            };
+        })();
+
+        function saveHandleToIDB(handle) {
+            var req = indexedDB.open('rankingsEditorDB', 1);
+            req.onupgradeneeded = function(e) { e.target.result.createObjectStore('handles'); };
+            req.onsuccess = function(e) {
+                e.target.result.transaction('handles','readwrite').objectStore('handles').put(handle, 'statsFile');
+            };
+        }
+
+        function unlinkFile() {
+            _fileHandle = null;
+            var req = indexedDB.open('rankingsEditorDB', 1);
+            req.onsuccess = function(e) {
+                e.target.result.transaction('handles','readwrite').objectStore('handles').delete('statsFile');
+            };
+            setFileStatus('&#x26A0;&#xFE0F; No file linked &mdash; click <b>Save to File</b> to pick stats.html.');
+        }
+
+        function setFileStatus(html) {
+            var el = document.getElementById('reFileStatus');
+            if (el) el.innerHTML = html;
+        }
+
+        function buildRankArraysCode() {
+            var series = document.getElementById('reSeries').value;
+            if (series) RANK_ARRAYS[series] = getCurrentTeams();
+            var lines = ['        const RANK_ARRAYS = {'];
+            var keys  = Object.keys(RANK_ARRAYS);
+            keys.forEach(function(key, i) {
+                var arr   = RANK_ARRAYS[key];
+                var teams = arr.map(function(t){ return JSON.stringify(t); }).join(',');
+                var comma = i < keys.length - 1 ? ',' : '';
+                lines.push('            ' + JSON.stringify(key) + ': [' + teams + ']' + comma);
+            });
+            lines.push('        };');
+            return lines.join('\n');
+        }
+
+        async function saveToFile() {
+            if (!('showOpenFilePicker' in window)) {
+                alert('File System Access API is not supported in this browser.\nPlease use Chrome or Edge.');
+                return;
+            }
+            try {
+                // First time: ask user to pick the file; subsequent calls reuse the stored handle
+                if (!_fileHandle) {
+                    var handles = await window.showOpenFilePicker({
+                        types: [{ description: 'HTML files', accept: { 'text/html': ['.html'] } }],
+                        multiple: false
+                    });
+                    _fileHandle = handles[0];
+                    saveHandleToIDB(_fileHandle);
+                    setFileStatus('&#x1F517; Linked: <b>' + _fileHandle.name + '</b> &nbsp;<a href="#" onclick="unlinkFile();return false;" style="color:#da291c;">Unlink</a>');
+                }
+
+                // Re-request permission if needed (e.g. after browser restart)
+                var perm = await _fileHandle.queryPermission({ mode: 'readwrite' });
+                if (perm !== 'granted') {
+                    perm = await _fileHandle.requestPermission({ mode: 'readwrite' });
+                }
+                if (perm !== 'granted') {
+                    alert('Write permission denied. Please allow access when prompted.');
+                    return;
+                }
+
+                // Read, patch, write
+                var file    = await _fileHandle.getFile();
+                var current = await file.text();
+                var newBlock = buildRankArraysCode();
+                var pattern  = /const RANK_ARRAYS\s*=\s*\{[\s\S]*?\};/;
+                if (!pattern.test(current)) {
+                    alert('Could not locate RANK_ARRAYS in the file.\nMake sure you selected the correct stats.html.');
+                    return;
+                }
+                var updated  = current.replace(pattern, newBlock);
+                var writable = await _fileHandle.createWritable();
+                await writable.write(updated);
+                await writable.close();
+
+                setFileStatus('&#x2705; Saved to <b>' + _fileHandle.name + '</b> at ' + new Date().toLocaleTimeString() + ' &nbsp;<a href="#" onclick="unlinkFile();return false;" style="color:#da291c;">Unlink</a>');
+            } catch(err) {
+                if (err.name !== 'AbortError') {
+                    console.error(err);
+                    alert('Save failed: ' + err.message);
+                }
+            }
+        }
+
+        function deleteCurrentSeries() {
+            var series = document.getElementById('reSeries').value;
+            if (!series) return;
+            if (!confirm('Delete rankings for "' + series + '"?')) return;
+            delete RANK_ARRAYS[series];
+            // remove from localStorage too
+            try {
+                var stored = JSON.parse(localStorage.getItem('rankArraysOverride') || '{}');
+                delete stored[series];
+                localStorage.setItem('rankArraysOverride', JSON.stringify(stored));
+            } catch(e){}
+            closeRankingsEditor();
+        }
+
+        document.getElementById('btnEditRankings').addEventListener('click', function() {
+            var series = $('#selSeries :selected').text();
+            openRankingsEditor(series);
+        });
+        // Close modal on backdrop click
+        document.getElementById('rankingsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeRankingsEditor();
+        });
     </script>
 </html>

@@ -338,7 +338,9 @@ public class Scheduler {
 
                 boolean validUmpire = false;
 
-                if (playingTeam1Div.equals("DivC") && playingTeam2Div.equals("DivC")) {
+                //if (playingTeam1Div.equals("DivC") && playingTeam2Div.equals("DivC")) {
+                //Making this change to handle Spring 2026 - 4 Divs of 2 groups each. Umpiring is assigned to a team from different group because of cross regiona matchups
+                if (playingTeam1Div.equals("DivZ") && playingTeam2Div.equals("DivZ")) {
                     // ✅ Umpiring allowed from:
                     //  - different group in DivC
                     //  - any group in DivA or DivB
