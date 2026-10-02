@@ -190,16 +190,10 @@
                                 if(series.parentSeriesId == 0) {// show only parent series
                                     $("#selSeries").append('<option value="' + seriesId + '">' + seriesName + "</option>");
                                 }
-                                $.getJSON(seriesDetailsURL+seriesId, function (data1) {
-                                    seriesToDivMap.set(seriesId,[]);
-                                    if(data1.data.hasDivisions) {
-                                        $.each(data1.data.divisions, function (index, divs) {
-                                            seriesToDivMap.get(seriesId).push(divs.leagueId);
-                                        });
-                                    }
-                                    else
-                                        seriesToDivMap.get(seriesId).push(seriesId);
-                                });
+                                // Division ids are fetched lazily on submit (see #inputDivSubmit handler).
+                                // Fetching getSeriesDetails for every series here caused an N+1 call storm on
+                                // each page load that grew with every new series and exhausted the shared API
+                                // key quota (SEC003 "API call limit exceeded" -> HTTP 406).
                             });
                         });
                     }
@@ -213,47 +207,59 @@
             var teamsCalls = [];
             selectedSeries = $('#selSeries :selected').val();
             selectedSeriesName = $('#selSeries :selected').text();
-            seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) => 
-                teamsCalls.push($.getJSON(teamsUrl+divId, function (data) {
-                    $.each(data.data.teamsList, function (index, value) {
-                        $.each(value.teams, function (index, value) {
-                            teamIdToDivIdMap.set(value.teamID,divId);
-                            teamIdToNameMap.set(value.teamID,value.teamName);
-                        });
+            // Lazily fetch division ids for the selected season only, then build the teams list.
+            $.getJSON(seriesDetailsURL+selectedSeries, function (data1) {
+                var selectedSeriesId = parseInt(selectedSeries);
+                seriesToDivMap.set(selectedSeriesId,[]);
+                if(data1.data.hasDivisions) {
+                    $.each(data1.data.divisions, function (index, divs) {
+                        seriesToDivMap.get(selectedSeriesId).push(divs.leagueId);
                     });
-                }))
-            );
-            $.when.apply($,teamsCalls).then(function() {
-                $("#selTeam").html("");
-                $("#selTeamLabel").hide();
-                $("#selTeam").hide();
-                $("#playerIdInput").html("");
-                $("#playerIdLabel").hide();
-                $("#playerIdInput").hide();
-                $("#playerNameInput").html("");
-                $("#playerNameLabel").hide();
-                $("#playerNameInput").hide();
-                $("#playerInfoDiv").show();
-                inputDivSelectedOption = $('#knownOptions :selected').val();
-                if ( inputDivSelectedOption == "playerTeam") {
-                    
+                }
+                else
+                    seriesToDivMap.get(selectedSeriesId).push(selectedSeriesId);
+                seriesToDivMap.get(selectedSeriesId).forEach((divId) =>
+                    teamsCalls.push($.getJSON(teamsUrl+divId, function (data) {
+                        $.each(data.data.teamsList, function (index, value) {
+                            $.each(value.teams, function (index, value) {
+                                teamIdToDivIdMap.set(value.teamID,divId);
+                                teamIdToNameMap.set(value.teamID,value.teamName);
+                            });
+                        });
+                    }))
+                );
+                $.when.apply($,teamsCalls).then(function() {
                     $("#selTeam").html("");
-                    $("#selTeam").append('<option value="">Select...</option>');
-                    $("#selTeamLabel").show();
-                    $("#selTeam").show();
-                    //console.log(teamIdToNameMap);
-                    teamIdToNameMap.forEach((value, key) => {
-                        $("#selTeam").append('<option value="' + key + '">' + value + "</option>");
-                    })
-                }
-                if ( inputDivSelectedOption == "playerId") {
-                    $("#playerIdLabel").show();
-                    $("#playerIdInput").show();
-                }
-                if ( inputDivSelectedOption == "playerName") {
-                    $("#playerNameLabel").show();
-                    $("#playerNameInput").show();
-                }
+                    $("#selTeamLabel").hide();
+                    $("#selTeam").hide();
+                    $("#playerIdInput").html("");
+                    $("#playerIdLabel").hide();
+                    $("#playerIdInput").hide();
+                    $("#playerNameInput").html("");
+                    $("#playerNameLabel").hide();
+                    $("#playerNameInput").hide();
+                    $("#playerInfoDiv").show();
+                    inputDivSelectedOption = $('#knownOptions :selected').val();
+                    if ( inputDivSelectedOption == "playerTeam") {
+
+                        $("#selTeam").html("");
+                        $("#selTeam").append('<option value="">Select...</option>');
+                        $("#selTeamLabel").show();
+                        $("#selTeam").show();
+                        //console.log(teamIdToNameMap);
+                        teamIdToNameMap.forEach((value, key) => {
+                            $("#selTeam").append('<option value="' + key + '">' + value + "</option>");
+                        })
+                    }
+                    if ( inputDivSelectedOption == "playerId") {
+                        $("#playerIdLabel").show();
+                        $("#playerIdInput").show();
+                    }
+                    if ( inputDivSelectedOption == "playerName") {
+                        $("#playerNameLabel").show();
+                        $("#playerNameInput").show();
+                    }
+                });
             });
         });
         $("#playerInfoDivSubmit").show();

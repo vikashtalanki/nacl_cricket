@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
         <link href="https://fonts.googleapis.com/css?family=Roboto Condensed" rel="stylesheet" />
         <style>
@@ -145,16 +144,10 @@
                     if(series.parentSeriesId == 0) {// show only parent series
                         $("#selSeries").append('<option value="' + seriesId + '">' + seriesName + "</option>");
                     }
-                    $.getJSON(seriesDetailsURL+seriesId, function (data1) {
-                        seriesToDivMap.set(seriesId,[]);
-                        if(data1.data.hasDivisions) {
-                            $.each(data1.data.divisions, function (index, divs) {
-                                seriesToDivMap.get(seriesId).push(divs.leagueId);
-                            });
-                        }
-                        else
-                            seriesToDivMap.get(seriesId).push(seriesId);
-                    });
+                    // Division ids are fetched lazily when a season is selected (see #selSeries change
+                    // handler below). Fetching getSeriesDetails for every series here caused an N+1 call
+                    // storm on each page load that grew with every new series and exhausted the shared
+                    // API key quota (SEC003 "API call limit exceeded" -> HTTP 406).
                 });
             });
             $("#bt").click(function () {
@@ -169,14 +162,28 @@
                     $("#sel").append('<option value="">Select Umpiring Team</option>');
                     $("#sel").show();
                     $("#umpireTables").html("");
+                    if (selectedSeries == "")
+                        return;
+                    var selectedSeriesId = parseInt(selectedSeries);
                     const url = cricclubs_url+"team/getTeamsList?"+url_params+"&seriesId=";
-                    seriesToDivMap.get(parseInt(selectedSeries)).forEach((divId) => $.getJSON(url+divId, function (data) {
-                        $.each(data.data.teamsList, function (index, value) {
-                            $.each(value.teams, function (index, value) {
-                                $("#sel").append('<option value="' + value.teamID + '">' + value.teamName + "</option>");
+                    // Lazily fetch division ids for the selected season only, then load its teams.
+                    $.getJSON(seriesDetailsURL+selectedSeries, function (data1) {
+                        seriesToDivMap.set(selectedSeriesId,[]);
+                        if(data1.data.hasDivisions) {
+                            $.each(data1.data.divisions, function (index, divs) {
+                                seriesToDivMap.get(selectedSeriesId).push(divs.leagueId);
                             });
-                        });
-                    }));
+                        }
+                        else
+                            seriesToDivMap.get(selectedSeriesId).push(selectedSeriesId);
+                        seriesToDivMap.get(selectedSeriesId).forEach((divId) => $.getJSON(url+divId, function (data) {
+                            $.each(data.data.teamsList, function (index, value) {
+                                $.each(value.teams, function (index, value) {
+                                    $("#sel").append('<option value="' + value.teamID + '">' + value.teamName + "</option>");
+                                });
+                            });
+                        }));
+                    });
                 });
             });
 
