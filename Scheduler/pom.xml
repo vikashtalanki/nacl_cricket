@@ -23,6 +23,11 @@
             <artifactId>google-api-client-jackson2</artifactId>
             <version>1.20.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+            <version>21</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
