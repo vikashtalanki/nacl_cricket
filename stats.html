@@ -344,6 +344,46 @@
             return td;
         }
 
+        // ── Lightweight client-side cache to stay under the cricclubs API call limit ──
+        // (daily 500 / weekly 5000 / monthly 15000, shared across all NACL forms). Near-static
+        // reads (series list, teams, team players) are cached in localStorage for a few hours.
+        // Completed-match scorecards never change, so callers cache those permanently by passing
+        // cacheForever=true. Live reads (getMatches) are never cached. An in-flight map also
+        // collapses duplicate concurrent requests for the same URL (e.g. the same scorecard
+        // requested by several stat views at once).
+        var CC_TTL = 6 * 60 * 60 * 1000; // 6 hours
+        var _ccInflight = {};
+        function ccTtl(url) {
+            if (/getSeriesList|getSeriesDetails|getTeamsList|getTeamPlayers/.test(url)) return CC_TTL;
+            return 0; // schedule, matches, scorecards (unless caller forces), submissions -> live
+        }
+        // ccGetJSON(url, cb, cacheForever): drop-in for $.getJSON(url, cb). Returns the same
+        // jqXHR/promise so .done()/.fail() chaining still works. Pass cacheForever=true to cache
+        // a response permanently regardless of URL (used for scorecards of completed matches,
+        // which never change).
+        function ccGetJSON(url, cb, cacheForever) {
+            cb = cb || function () {};
+            var ttl = cacheForever === true ? -1 : ccTtl(url);
+            var key = 'cc:' + url;
+            if (ttl !== 0) {
+                try {
+                    var hit = JSON.parse(localStorage.getItem(key));
+                    if (hit && (ttl < 0 || (Date.now() - hit.t) < ttl)) {
+                        cb(hit.d);
+                        return $.Deferred().resolve(hit.d).promise();
+                    }
+                } catch (e) {}
+            }
+            if (!_ccInflight[url]) {
+                _ccInflight[url] = $.getJSON(url).done(function (data) {
+                    if (ttl !== 0) {
+                        try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), d: data })); } catch (e) {}
+                    }
+                }).always(function () { delete _ccInflight[url]; });
+            }
+            return _ccInflight[url].done(cb);
+        }
+
         $(document).ready(function () {
             var allMatchesMap = {};// Object<series, List<match>>
             const allPlayersMap = new Map();//Map<series, Map<team_name, Map<player_id, player_name>>>
@@ -354,7 +394,7 @@
             $("#selSeries").show();
             $("#statsTableBody").html("");
             var seriesURL = cricclubs_url+"series/getSeriesList?"+url_params;
-            seriesCalls.push($.getJSON(seriesURL, function (data) {
+            seriesCalls.push(ccGetJSON(seriesURL, function (data) {
                 // Pass 1: build full id->name map (includes parents)
                 var _allSeriesById = {};
                 $.each(data.data.seriesList, function (index, series) {
@@ -405,7 +445,7 @@
                         });
                     });
                     var allTeamsPerSeriesUrl = cricclubs_url+"team/getTeamsList?"+url_params+"&seriesId="+seriesId;
-                    $.getJSON(allTeamsPerSeriesUrl, function (data) {
+                    ccGetJSON(allTeamsPerSeriesUrl, function (data) {
                         $.each(data.data.teamsList, function (index, teamsList) {
                             $.each(teamsList.teams, function (index, team) {
                                 allPlayersMap.get(seriesName).set(team.teamName, new Map());
@@ -416,7 +456,7 @@
                                     : '';
                                 if (logo) _teamLogoMap[team.teamName.toUpperCase()] = logo;
                                 var playersURL = cricclubs_url+"team/getTeamPlayers?"+url_params+"&teamId=" + team.teamID;
-                                $.getJSON(playersURL, function (data) {
+                                ccGetJSON(playersURL, function (data) {
                                     $.each(data.data.teamPlayers, function (index, player) {
                                         allPlayersMap.get(seriesName).get(team.teamName).set(player.playerID,player.firstName + " " + player.lastName);
                                     });
@@ -1398,7 +1438,7 @@
                                 var matchId = match.matchId;
                                 var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
-                                    $.getJSON(matchUrl, function (data) {
+                                    ccGetJSON(matchUrl, function (data) {
                                         function addBowlingRows(innings, bowlerTeam, oppTeam) {
                                             $.each(innings.bowling, function (idx, playerStat) {
                                                 if(playerStat.wickets >= minBowlerStatWkts) {
@@ -1417,7 +1457,7 @@
                                         }
                                         addBowlingRows(data.data.innings1, data.data.innings2.teamName, data.data.innings1.teamName);
                                         addBowlingRows(data.data.innings2, data.data.innings1.teamName, data.data.innings2.teamName);
-                                    })
+                                    }, !!match.result) // completed-match scorecard: cache permanently
                                 );
                             }); 
                         }
@@ -1426,7 +1466,7 @@
                                 var matchId = match.matchId;
                                 var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
-                                    $.getJSON(matchUrl, function (data) {
+                                    ccGetJSON(matchUrl, function (data) {
                                         function addBattingRows(innings, oppTeam, teamTotal) {
                                             $.each(innings.batting, function (idx, playerStat) {
                                                 if(playerStat.runsScored > minBatsmanStatScore) {
@@ -1446,7 +1486,7 @@
                                         }
                                         addBattingRows(data.data.innings1, data.data.innings2.teamName, data.data.innings1.total);
                                         addBattingRows(data.data.innings2, data.data.innings1.teamName, data.data.innings2.total);
-                                    })
+                                    }, !!match.result) // completed-match scorecard: cache permanently
                                 );
                             }); 
                         }
@@ -1455,7 +1495,7 @@
                                 var matchId = match.matchId;
                                 var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
-                                    $.getJSON(matchUrl, function(data) {
+                                    ccGetJSON(matchUrl, function(data) {
                                         var team1Name = data.data.matchInfo.teamOneName;
                                         var team2Name = data.data.matchInfo.teamTwoName;
                                         var team1TotalRuns = data.data.innings1.total;
@@ -1492,8 +1532,8 @@
                                                     dr.insertCell().appendChild(scorecard);
                                                 }
                                             });
-                                        }); 
-                                    })
+                                        });
+                                    }, !!match.result) // completed-match scorecard: cache permanently
                                 );
                             });
                         }
@@ -1910,11 +1950,11 @@
                             return;
                         }
                         // Fetch scorecard for ground name
-                        $.getJSON(cricclubs_url + 'scoreCard/getScoreCard?' + url_params + '&matchId=' + finalMatch.matchId,
+                        ccGetJSON(cricclubs_url + 'scoreCard/getScoreCard?' + url_params + '&matchId=' + finalMatch.matchId,
                             function(sc) {
                                 var ground = (sc.data.matchInfo && sc.data.matchInfo.ground) ? sc.data.matchInfo.ground : '';
                                 setDivisionCells(tRow, gRow, dIdx, finalMatch, ground, sName);
-                            }
+                            }, !!finalMatch.result // completed final scorecard: cache permanently
                         ).fail(function() {
                             setDivisionCells(tRow, gRow, dIdx, finalMatch, '', sName);
                         });
@@ -2140,7 +2180,7 @@
 
                     // Step 1: load teams, then chain final-match fetch inside success callback
                     // so selects are guaranteed populated before we try to auto-select values
-                    $.getJSON(cricclubs_url + 'team/getTeamsList?' + url_params + '&seriesId=' + seriesId,
+                    ccGetJSON(cricclubs_url + 'team/getTeamsList?' + url_params + '&seriesId=' + seriesId,
                         function(data) {
                             var teams = [];
                             $.each(data.data.teamsList, function(_, group) {
@@ -2207,11 +2247,11 @@
                                     }
 
                                     // Step 3: get ground from scoreCard (fire-and-forget, doesn't block button)
-                                    $.getJSON(cricclubs_url + 'scoreCard/getScoreCard?' + url_params + '&matchId=' + finalMatch.matchId,
+                                    ccGetJSON(cricclubs_url + 'scoreCard/getScoreCard?' + url_params + '&matchId=' + finalMatch.matchId,
                                         function(sc) {
                                             var g = sc.data && sc.data.matchInfo && sc.data.matchInfo.ground;
                                             if (g) smSetGround(prefix, g);
-                                        }
+                                        }, !!finalMatch.result // completed final scorecard: cache permanently
                                     );
                                 }
                             ).fail(function() { smDivLoaded(); }); // getMatches fail
@@ -2690,7 +2730,7 @@
             document.getElementById('reTeamList').innerHTML =
                 '<li style="color:#888;padding:12px;justify-content:center;">Loading teams...</li>';
 
-            $.getJSON(cricclubs_url + 'team/getTeamsList?' + url_params + '&seriesId=' + seriesId,
+            ccGetJSON(cricclubs_url + 'team/getTeamsList?' + url_params + '&seriesId=' + seriesId,
                 function(data) {
                     var teams = [];
                     $.each(data.data.teamsList, function(_, group) {

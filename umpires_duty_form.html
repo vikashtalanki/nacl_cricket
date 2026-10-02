@@ -132,12 +132,51 @@
         var selectedSeries = 0;
         var selectedSeriesName = "";
         const seriesToDivMap = new Map();//Map<series, List<divIds>>
+
+        // ── Lightweight client-side cache to stay under the cricclubs API call limit ──
+        // (daily 500 / weekly 5000 / monthly 15000, shared across all NACL forms). Near-static
+        // reads (series list/details, teams, team players) are cached in localStorage; completed
+        // scorecards never change so they're cached permanently. Live reads (schedule) are never
+        // cached. An in-flight map also collapses duplicate concurrent requests for the same URL.
+        var CC_TTL = 6 * 60 * 60 * 1000; // 6 hours
+        var _ccInflight = {};
+        function ccTtl(url) {
+            if (/getSeriesList|getSeriesDetails|getTeamsList|getTeamPlayers/.test(url)) return CC_TTL;
+            return 0; // schedule, matches, scorecards (unless caller forces), submissions -> live
+        }
+        // ccGetJSON(url, cb, cacheForever): drop-in for $.getJSON(url, cb). Returns the same
+        // jqXHR/promise so .done()/.fail() chaining still works. Pass cacheForever=true to cache
+        // a response permanently regardless of URL (used for scorecards of completed matches,
+        // which never change).
+        function ccGetJSON(url, cb, cacheForever) {
+            cb = cb || function () {};
+            var ttl = cacheForever === true ? -1 : ccTtl(url);
+            var key = 'cc:' + url;
+            if (ttl !== 0) {
+                try {
+                    var hit = JSON.parse(localStorage.getItem(key));
+                    if (hit && (ttl < 0 || (Date.now() - hit.t) < ttl)) {
+                        cb(hit.d);
+                        return $.Deferred().resolve(hit.d).promise();
+                    }
+                } catch (e) {}
+            }
+            if (!_ccInflight[url]) {
+                _ccInflight[url] = $.getJSON(url).done(function (data) {
+                    if (ttl !== 0) {
+                        try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), d: data })); } catch (e) {}
+                    }
+                }).always(function () { delete _ccInflight[url]; });
+            }
+            return _ccInflight[url].done(cb);
+        }
+
         $(document).ready(function () {
             $("#selSeries").html("");
             $("#selSeries").append('<option value="">Select Season</option>');
             var seriesListURL = cricclubs_url+"series/getSeriesList?"+url_params;
             var seriesDetailsURL = cricclubs_url+"series/getSeriesDetails?"+url_params+"&X-Auth-Token=&seriesId=";
-            $.getJSON(seriesListURL, function (data) {
+            ccGetJSON(seriesListURL, function (data) {
                 $.each(data.data.seriesList, function (index, series) {
                     var seriesId = series.seriesID;
                     var seriesName = series.seriesName
@@ -167,7 +206,7 @@
                     var selectedSeriesId = parseInt(selectedSeries);
                     const url = cricclubs_url+"team/getTeamsList?"+url_params+"&seriesId=";
                     // Lazily fetch division ids for the selected season only, then load its teams.
-                    $.getJSON(seriesDetailsURL+selectedSeries, function (data1) {
+                    ccGetJSON(seriesDetailsURL+selectedSeries, function (data1) {
                         seriesToDivMap.set(selectedSeriesId,[]);
                         if(data1.data.hasDivisions) {
                             $.each(data1.data.divisions, function (index, divs) {
@@ -176,7 +215,7 @@
                         }
                         else
                             seriesToDivMap.get(selectedSeriesId).push(selectedSeriesId);
-                        seriesToDivMap.get(selectedSeriesId).forEach((divId) => $.getJSON(url+divId, function (data) {
+                        seriesToDivMap.get(selectedSeriesId).forEach((divId) => ccGetJSON(url+divId, function (data) {
                             $.each(data.data.teamsList, function (index, value) {
                                 $.each(value.teams, function (index, value) {
                                     $("#sel").append('<option value="' + value.teamID + '">' + value.teamName + "</option>");
@@ -297,7 +336,7 @@
                                         selOption.value = "select";
                                         selOption.text = "--Select Player--";
                                         umpire1Select.appendChild(selOption);
-                                        $.getJSON(playersURL, function (data) {
+                                        ccGetJSON(playersURL, function (data) {
                                             $.each(data.data.teamPlayers, function (index, value) {
                                                 var option = document.createElement("option");
                                                 option.value = value.userId;
@@ -334,7 +373,7 @@
                                         selOption.value = "select";
                                         selOption.text = "--Select Player--";
                                         umpire2Select.appendChild(selOption);
-                                        $.getJSON(playersURL, function (data) {
+                                        ccGetJSON(playersURL, function (data) {
                                             $.each(data.data.teamPlayers, function (index, value) {
                                                 var option = document.createElement("option");
                                                 option.value = value.userId;
