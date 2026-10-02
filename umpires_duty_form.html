@@ -1,90 +1,161 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
-        <link href="https://fonts.googleapis.com/css?family=Roboto Condensed" rel="stylesheet" />
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>NACL — Umpiring Duties</title>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&family=Barlow:wght@500;700;800&display=swap" rel="stylesheet"/>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <style>
+            :root {
+                --navy:  #012169;
+                --red:   #da291c;
+                --white: #ffffff;
+                --light: #f0f3f9;
+                --mid:   #c8d1e8;
+                --text:  #0a1a3a;
+                --green: #22a855;
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+                font-family: 'Roboto Condensed', sans-serif;
+                background: var(--light);
+                color: var(--text);
+                min-height: 100vh;
+            }
+
+            /* ── Header ── */
+            header {
+                background: var(--navy);
+                padding: 0 24px;
+                height: 54px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                box-shadow: 0 2px 12px rgba(0,0,0,.3);
+                position: sticky; top: 0; z-index: 50;
+            }
+            .hdr-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
+            .hdr-title { color: #fff; font-family: 'Barlow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; }
+            .hdr-sub   { color: var(--mid); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+
+            /* ── Page shell ── */
+            .page-wrap {
+                max-width: 680px;
+                margin: 32px auto;
+                padding: 0 16px 60px;
+            }
+
+            /* ── Card ── */
+            .card {
+                background: var(--white);
+                border-radius: 12px;
+                box-shadow: 0 2px 20px rgba(1,33,105,.08);
+                overflow: hidden;
+            }
+            .card-head {
+                background: var(--navy);
+                padding: 18px 24px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .card-head-icon { font-size: 20px; }
+            .card-head-title { color: #fff; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 16px; }
+            .card-head-sub { color: var(--mid); font-size: 12px; margin-top: 1px; }
+            .card-body { padding: 24px; }
+            .intro { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 20px; }
+
+            /* ── Controls (IDs preserved for existing JS) ── */
+            #bt {
+                display: block;
+                margin: 0 auto;
+            }
+            #selSeries, #sel {
+                display: block;
+                width: 100%;
+                max-width: 320px;
+                margin: 0 auto;
+                height: 42px;
+                padding: 0 12px;
+                border: 2px solid var(--mid);
+                border-radius: 8px;
+                font-family: 'Roboto Condensed', sans-serif;
+                font-size: 15px;
+                color: var(--text);
+                background: #fff;
+            }
+            #selSeries { margin-bottom: 16px; }
+            #selSeries:focus, #sel:focus { outline: none; border-color: var(--navy); }
+
+            .btn {
+                background-color: var(--navy);
+                border: none;
+                color: #fff;
+                padding: 12px 36px;
+                text-align: center;
+                text-decoration: none;
+                font-family: 'Barlow', sans-serif;
+                font-weight: 700;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                font-size: 14px;
+                cursor: pointer;
+                border-radius: 8px;
+                transition: background-color .15s;
+            }
+            .btn:hover { background-color: #022a85; }
+
+            .subBtn {
+                background-color: var(--red);
+                border: none;
+                color: #fff;
+                padding: 10px 28px;
+                text-align: center;
+                text-decoration: none;
+                font-family: 'Barlow', sans-serif;
+                font-weight: 700;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                font-size: 13px;
+                cursor: pointer;
+                border-radius: 8px;
+            }
+            .subBtn:hover { background-color: #b31f14; }
+            .subBtn:disabled { opacity: .6; cursor: default; }
+
+            /* ── Fixture tables (generated by JS; classes/structure preserved) ── */
+            #umpireTables { margin-top: 8px; }
             .styled-table {
                 border-collapse: collapse;
-                margin: 25px 0;
-                min-width: 400px;
-                box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-                border-style: hidden;
-                font-family: "Roboto Condensed";
+                margin: 20px auto;
+                width: 100%;
+                box-shadow: 0 2px 14px rgba(1,33,105,.12);
+                border-radius: 10px;
+                overflow: hidden;
+                font-family: 'Roboto Condensed', sans-serif;
                 font-size: 14px;
                 transition: opacity 1s;
             }
-
-            .styled-table tr {
-                color: #ffffff;
-                text-align: left;
-                background-color: #012169;
-            }
-
-            .styled-table td {
-                padding: 12px 15px;
-                border: 2px solid white;
-            }
-
+            .styled-table tr { color: #ffffff; text-align: left; background-color: var(--navy); }
+            .styled-table td { padding: 12px 15px; border: 1px solid rgba(255,255,255,.15); }
             .styled-table tr:first-child {
-                background-color: #da291c;
+                background-color: var(--red);
+                font-family: 'Barlow', sans-serif;
+                font-weight: 700;
+                letter-spacing: 1px;
             }
-
-            .styled-table tbody tr {
-                border-bottom: 1px solid #dddddd;
-            }
-
-            .styled-table tbody tr:nth-of-type(even) {
-                background-color: #012169;
-            }
-
-            .styled-table tbody tr:last-of-type {
-                border-bottom: 2px solid #012169;
-            }
-
-            #umpireDiv,
-            #umpireTables,
-            #sel,
-            #selSeries,
-            #bt {
-                display: table;
-                margin-right: auto;
-                margin-left: auto;
-                font-family: "Roboto Condensed";
+            .styled-table tbody tr { border-bottom: 1px solid #dddddd; }
+            .styled-table select, .styled-table input[type=text] {
+                width: 100%;
+                padding: 8px 10px;
+                margin: 2px 0;
+                border: 1px solid var(--mid);
+                border-radius: 6px;
+                font-family: 'Roboto Condensed', sans-serif;
                 font-size: 14px;
-            }
-
-            #sel,#selSeries {
-                border: 2px solid #012169;
-                width: 160px;
-                height: 32px;
-                font-size: 14px;
-                border-radius: 8px;
-            }
-
-            .btn {
-                background-color: #012169; /* Green */
-                border: none;
-                color: white;
-                padding: 10px 32px;
-                text-align: center;
-                text-decoration: none;
-                font-size: 14px;
-                cursor: pointer;
-                border-radius: 8px;
-            }
-
-            .subBtn {
-                background-color: #da291c;
-                border: none;
-                color: white;
-                padding: 10px 15px;
-                text-align: center;
-                text-decoration: none;
-                font-size: 14px;
-                cursor: pointer;
-                border-radius: 8px;
-                font-family: "Roboto Condensed";
+                color: var(--text);
+                background: #fff;
             }
             #img {
               display: none;
@@ -116,11 +187,32 @@
         </style>
     </head>
     <body>
-        <p><input type="button" value="Start" id="bt" class="btn" /><br /></p>
-        <div id="umpireDiv">
-            <select id="selSeries" style="display: none;"></select><br>
-            <select id="sel" style="display: none;"> </select><br>
-            <div id="umpireTables"></div>
+        <header>
+            <span class="hdr-dot"></span>
+            <div>
+                <div class="hdr-title">NACL</div>
+                <div class="hdr-sub">Umpiring Duties</div>
+            </div>
+        </header>
+        <div class="page-wrap">
+            <div class="card">
+                <div class="card-head">
+                    <span class="card-head-icon">🏏</span>
+                    <div>
+                        <div class="card-head-title">Umpiring Duty Assignment</div>
+                        <div class="card-head-sub">Assign umpires to your team's upcoming fixtures</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="intro">Click <b>Start</b>, choose your season and umpiring team, then assign umpires and phone numbers for each upcoming fixture.</p>
+                    <p><input type="button" value="Start" id="bt" class="btn" /></p>
+                    <div id="umpireDiv">
+                        <select id="selSeries" style="display: none;"></select>
+                        <select id="sel" style="display: none;"> </select>
+                        <div id="umpireTables"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </body>
 
