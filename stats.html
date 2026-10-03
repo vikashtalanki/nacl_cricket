@@ -385,6 +385,50 @@
             return _ccInflight[url].done(cb);
         }
 
+        // Concurrency-limited scheduler for burst-prone fan-outs. The stat views
+        // (batting/bowling/partnerships) request one scorecard per match — dozens to
+        // hundreds at once — which previously fired simultaneously and tripped the
+        // cricclubs rate limit. ccGetJSONQueued caps live network calls at
+        // CC_MAX_CONCURRENT; cached hits and in-flight dupes resolve immediately and
+        // never occupy a slot. Returns a promise just like ccGetJSON, so callers can
+        // still push the result into an array awaited by $.when.
+        var CC_MAX_CONCURRENT = 5;
+        var _ccQueue = [];
+        var _ccActive = 0;
+        function _ccPump() {
+            while (_ccActive < CC_MAX_CONCURRENT && _ccQueue.length) {
+                var job = _ccQueue.shift();
+                _ccActive++;
+                job();
+            }
+        }
+        function _ccCacheRead(url, cacheForever) {
+            var ttl = cacheForever === true ? -1 : ccTtl(url);
+            if (ttl === 0) return null;
+            try {
+                var hit = JSON.parse(localStorage.getItem('cc:' + url));
+                if (hit && (ttl < 0 || (Date.now() - hit.t) < ttl)) return hit;
+            } catch (e) {}
+            return null;
+        }
+        function ccGetJSONQueued(url, cb, cacheForever) {
+            cb = cb || function () {};
+            // Fast path: already cached or already in flight -> no queue slot needed.
+            var cached = _ccCacheRead(url, cacheForever);
+            if (cached) { cb(cached.d); return $.Deferred().resolve(cached.d).promise(); }
+            if (_ccInflight[url]) return _ccInflight[url].done(cb);
+
+            var dfd = $.Deferred();
+            _ccQueue.push(function () {
+                ccGetJSON(url, cb, cacheForever)
+                    .done(function (d) { dfd.resolve(d); })
+                    .fail(function () { dfd.reject(); })
+                    .always(function () { _ccActive--; _ccPump(); });
+            });
+            _ccPump();
+            return dfd.promise();
+        }
+
         $(document).ready(function () {
             var allMatchesMap = {};// Object<series, List<match>>
             const allPlayersMap = new Map();//Map<series, Map<team_name, Map<player_id, player_name>>>
@@ -1537,7 +1581,7 @@
                                 var matchId = match.matchId;
                                 var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
-                                    ccGetJSON(matchUrl, function (data) {
+                                    ccGetJSONQueued(matchUrl, function (data) {
                                         function addBowlingRows(innings, bowlerTeam, oppTeam) {
                                             $.each(innings.bowling, function (idx, playerStat) {
                                                 if(playerStat.wickets >= minBowlerStatWkts) {
@@ -1565,7 +1609,7 @@
                                 var matchId = match.matchId;
                                 var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
-                                    ccGetJSON(matchUrl, function (data) {
+                                    ccGetJSONQueued(matchUrl, function (data) {
                                         function addBattingRows(innings, oppTeam, teamTotal) {
                                             $.each(innings.batting, function (idx, playerStat) {
                                                 if(playerStat.runsScored > minBatsmanStatScore) {
@@ -1594,7 +1638,7 @@
                                 var matchId = match.matchId;
                                 var matchUrl = cricclubs_url+"scoreCard/getScoreCard?"+url_params+"&matchId="+matchId;
                                 calls.push(
-                                    ccGetJSON(matchUrl, function(data) {
+                                    ccGetJSONQueued(matchUrl, function(data) {
                                         var team1Name = data.data.matchInfo.teamOneName;
                                         var team2Name = data.data.matchInfo.teamTwoName;
                                         var team1TotalRuns = data.data.innings1.total;
