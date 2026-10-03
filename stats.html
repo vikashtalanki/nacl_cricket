@@ -348,14 +348,15 @@
         // (daily 500 / weekly 5000 / monthly 15000, shared across all NACL forms). Near-static
         // reads (series list, teams, team players) are cached in localStorage for a few hours.
         // Completed-match scorecards never change, so callers cache those permanently by passing
-        // cacheForever=true. Live reads (getMatches) are never cached. An in-flight map also
-        // collapses duplicate concurrent requests for the same URL (e.g. the same scorecard
-        // requested by several stat views at once).
+        // cacheForever=true. getMatches is cached for CC_TTL (6h) — the match list is the hottest
+        // repeated read (fired per-series on every page load) and only goes stale when a live score
+        // ticks, which is acceptable here. An in-flight map also collapses duplicate concurrent
+        // requests for the same URL (e.g. the same scorecard requested by several stat views at once).
         var CC_TTL = 6 * 60 * 60 * 1000; // 6 hours
         var _ccInflight = {};
         function ccTtl(url) {
-            if (/getSeriesList|getSeriesDetails|getTeamsList|getTeamPlayers/.test(url)) return CC_TTL;
-            return 0; // schedule, matches, scorecards (unless caller forces), submissions -> live
+            if (/getSeriesList|getSeriesDetails|getTeamsList|getTeamPlayers|getMatches/.test(url)) return CC_TTL;
+            return 0; // schedule, scorecards (unless caller forces), submissions -> live
         }
         // ccGetJSON(url, cb, cacheForever): drop-in for $.getJSON(url, cb). Returns the same
         // jqXHR/promise so .done()/.fail() chaining still works. Pass cacheForever=true to cache
@@ -430,7 +431,7 @@
                     allPlayersMap.set(seriesName, new Map());
                     allTeamsMap.set(seriesName, new Map());
                     var allMatchesPerSeriesUrl = cricclubs_url+"match/getMatches?"+url_params+"&X-Auth-Token=&seriesId="+seriesId+"&teamId=&limit=10000";
-                    $.getJSON(allMatchesPerSeriesUrl, function (data) {
+                    ccGetJSON(allMatchesPerSeriesUrl, function (data) {
                         $.each(data.data, function (idx, val) {
                             if(matchDates.includes(val.matchDate) || matchDates.length==0) {
                                 allMatchesMap[seriesName] ??= [];
