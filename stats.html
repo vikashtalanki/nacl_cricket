@@ -2518,8 +2518,10 @@
                     var gc = groundRow.insertCell(i+1);
                     gc.innerHTML = smGetVenue(p); gc.style.textAlign='center'; gc.colSpan=2;
                 });
-                // Edit button cell
-                var editTd = teamsRow.insertCell(-1);
+                // Edit button cell — attach to the groundRow (the TOP row of the pair) so its
+                // rowSpan=2 spans down over the teamsRow. Attaching it to the teamsRow (bottom)
+                // made the rowSpan bleed into the next season's row.
+                var editTd = groundRow.insertCell(-1);
                 editTd.style.cssText = 'padding:0;text-align:center;vertical-align:middle;';
                 editTd.rowSpan = 2;
                 editTd.innerHTML = '<button class="sm-edit-btn" title="Edit row" onclick="smEditRow(this,\'360\')">&#x270F;&#xFE0F;</button>';
@@ -2537,7 +2539,7 @@
                     if (smVal(p+'Champ')) cc.style.backgroundColor = '#012169';
                     teamsRow.insertCell(1).innerHTML = teamCellDOM(smVal(p+'Runner'), smVal(p+'RunnerScore'));
                     var gc = groundRow.insertCell(1); gc.innerHTML = smGetVenue(p); gc.style.textAlign='center'; gc.colSpan=2;
-                    var editTd = teamsRow.insertCell(-1);
+                    var editTd = groundRow.insertCell(-1); // top row, so rowSpan=2 spans the pair
                     editTd.style.cssText = 'padding:0;text-align:center;vertical-align:middle;';
                     editTd.rowSpan = 2;
                     editTd.innerHTML = '<button class="sm-edit-btn" title="Edit row" onclick="smEditRow(this,\'T12\')">&#x270F;&#xFE0F;</button>';
@@ -2648,7 +2650,7 @@
                     gc.innerHTML = smFormatVenue(dv.date, dv.ground) || '-';
                     gc.style.textAlign = 'center'; gc.colSpan = 2;
                 }
-                editBtn(teamsRow, true);
+                editBtn(groundRow, true); // pencil on the top (ground) row so rowSpan=2 spans the pair
                 return [teamsRow, groundRow];
             } else if (type === 'T12') {
                 var teamsRow  = document.createElement('tr');
@@ -2662,7 +2664,7 @@
                 var gc = groundRow.insertCell(1);
                 gc.innerHTML = smFormatVenue(dv.date, dv.ground) || '-';
                 gc.style.textAlign = 'center'; gc.colSpan = 2;
-                editBtn(teamsRow, true);
+                editBtn(groundRow, true); // pencil on the top (ground) row so rowSpan=2 spans the pair
                 return [teamsRow, groundRow];
             } else { // Box
                 var row = document.createElement('tr');
@@ -2943,10 +2945,11 @@
                 groundRow = null;
                 seasonLabel = teamsRow.cells[0].textContent.trim();
             } else {
-                // Edit cell has rowSpan=2; its parentRow is the teamsRow
-                teamsRow  = btn.closest('tr');
-                groundRow = teamsRow.nextElementSibling;
-                // Season label is in first cell of groundRow (rowSpan=2 means it appears in groundRow)
+                // Edit cell has rowSpan=2 and lives on the groundRow (the TOP row of the pair);
+                // the teamsRow (champ/runner) is directly below it.
+                groundRow = btn.closest('tr');
+                teamsRow  = groundRow.nextElementSibling;
+                // Season label is in the first cell of the groundRow (rowSpan=2).
                 seasonLabel = groundRow ? groundRow.cells[0].textContent.trim() : '';
             }
 
