@@ -301,8 +301,7 @@
           </div>
           <div id="smDivsContainer"></div>
           <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-            <button class="btn" onclick="addSummaryRowToTable()">&#x2795; Add to Table</button>
-            <button class="subBtn" onclick="saveSummaryToFile()">&#x1F4C2; Save to File</button>
+            <button class="btn" onclick="saveSummaryToStore()">&#x1F4BE; Save Season</button>
           </div>
           <div id="smFileStatus" style="margin-top:8px;font-size:12px;color:#555;"></div>
         </div>
@@ -319,7 +318,7 @@
                 $("body").removeClass("loading"); 
             }    
         });
-        var script_url ="https://script.google.com/macros/s/AKfycbyy4BY8sb963Fk9_0TTF1_AP71OgD2yOL-5VzPufVpU0kNIf5GfO_iBUrQN0JmoPNVCAQ/exec";
+        var script_url ="https://script.google.com/macros/s/AKfycbxodbghYVJjJ7x9AowTeaxTyrPH56w9O6KbLyqOmKGJrbFm3FGGfiTtG9d_N90X3JlxFw/exec";
         var cricclubs_url = "https://core-prod-origin.cricclubs.com/core/";
         var url_params = "clubId=27594&x-api-key=Z!wocr8&x-consumer-key=Y6%26afRE";
         var emailcheck=false;
@@ -337,6 +336,7 @@
         var _smEditData  = null;   // populated when editing an existing row
         var _smEditTeamsRow  = null;
         var _smEditGroundRow = null;
+        var _summaryStore = {};    // season label -> saved season data (loaded from / saved to the backend)
         // Helper: append a text cell to a row and return the td
         function addCell(row, html) {
             var td = row.insertCell();
@@ -857,6 +857,10 @@
                     divCCell.innerHTML= "DIVISION C"
                     divCCell.colSpan = 2
 
+                    var divDCell = headRow1.insertCell(4);
+                    divDCell.innerHTML= "DIVISION D"
+                    divDCell.colSpan = 2
+
                     var headRow2 = tbl.insertRow(1);
 
                     var divAWinners = headRow2.insertCell(0);
@@ -883,6 +887,14 @@
                     divCRunnersUp.innerHTML= "RUNNERS-UP";
                     divCRunnersUp.style.backgroundColor = "#da291c";
 
+                    var divDWinners = headRow2.insertCell(6);
+                    divDWinners.innerHTML= "CHAMPIONS";
+                    divDWinners.style.backgroundColor = "#da291c";
+
+                    var divDRunnersUp = headRow2.insertCell(7);
+                    divDRunnersUp.innerHTML= "RUNNERS-UP";
+                    divDRunnersUp.style.backgroundColor = "#da291c";
+
                     var spring2021TeamsRow = tbl.insertRow(2);
                     var spring2021GroundRow = tbl.insertRow(2);
                     seriesCell = spring2021GroundRow.insertCell(0);
@@ -896,6 +908,8 @@
                     spring2021TeamsRow.insertCell(3).innerHTML= "-";
                     spring2021TeamsRow.insertCell(4).innerHTML= "-";
                     spring2021TeamsRow.insertCell(5).innerHTML= "-";
+                    spring2021TeamsRow.insertCell(6).innerHTML= "-";
+                    spring2021TeamsRow.insertCell(7).innerHTML= "-";
                     groundACell = spring2021GroundRow.insertCell(1);
                     groundACell.innerHTML= "Central Park, Fremont";
                     groundACell.style.textAlign = "center";
@@ -908,6 +922,10 @@
                     groundCCell.innerHTML= "-";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = spring2021GroundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
 
                     var teamsRow = tbl.insertRow(2);
@@ -923,6 +941,8 @@
                     teamsRow.insertCell(3).innerHTML= "-";
                     teamsRow.insertCell(4).innerHTML= "-";
                     teamsRow.insertCell(5).innerHTML= "-";
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "Murphy Park, Milpitas";
                     groundACell.style.textAlign = "center";
@@ -935,6 +955,10 @@
                     groundCCell.innerHTML= "-";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -949,6 +973,8 @@
                     teamsRow.insertCell(3).innerHTML= "-";
                     teamsRow.insertCell(4).innerHTML= "-";
                     teamsRow.insertCell(5).innerHTML= "-";
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "27-Feb-2022, Anthony 1, Hayward";
                     groundACell.style.textAlign = "center";
@@ -961,6 +987,10 @@
                     groundCCell.innerHTML= "-";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -975,6 +1005,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/9VBN1Pj/LordsXI.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">LORDS XI<br><b style="color:#ffff00">98(18.4)</h3></div>';
                     teamsRow.insertCell(4).innerHTML= "-";
                     teamsRow.insertCell(5).innerHTML= "-";
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "19-Jun-2022, Anthony 1, Hayward";
                     groundACell.style.textAlign = "center";
@@ -987,6 +1019,10 @@
                     groundCCell.innerHTML= "-";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1001,6 +1037,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/J3hH24k/Unstoppable.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">UNSTOPPABLE<br><b style="color:#ffff00">70(18)</h3></div>';
                     teamsRow.insertCell(4).innerHTML= "-";
                     teamsRow.insertCell(5).innerHTML= "-";
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "16-Oct-2022, Anthony 1, Hayward";
                     groundACell.style.textAlign = "center";
@@ -1013,6 +1051,10 @@
                     groundCCell.innerHTML= "-";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
                     
 
                     var win202223Row = tbl.insertRow(2);
@@ -1025,6 +1067,8 @@
                     win202223BDivCell.colSpan = 2;
                     win202223Row.insertCell(3).innerHTML= "-";
                     win202223Row.insertCell(4).innerHTML= "-";
+                    win202223Row.insertCell(5).innerHTML= "-";
+                    win202223Row.insertCell(6).innerHTML= "-";
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1039,6 +1083,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/J3hH24k/Unstoppable.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">UNSTOPPABLE<br><b style="color:#ffff00">101/9(20)</h3></div>';
                     teamsRow.insertCell(4).innerHTML= "-";
                     teamsRow.insertCell(5).innerHTML= "-";
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "16-Jul-2023, Anthony 1, Hayward";
                     groundACell.style.textAlign = "center";
@@ -1051,6 +1097,10 @@
                     groundCCell.innerHTML= "-";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1065,6 +1115,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/BcFxbtP/Bleed-Blue.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">BLEED BLUE<br><b style="color:#ffff00">85(19.1)</h3></div>';
                     teamsRow.insertCell(4).innerHTML= "-";
                     teamsRow.insertCell(5).innerHTML= "-";
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "12-Nov-2023, Loren Eden, Hayward";
                     groundACell.style.textAlign = "center";
@@ -1077,6 +1129,10 @@
                     groundCCell.innerHTML= "-";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1091,6 +1147,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/HPTf5Xw/Bravehearts.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3>BRAVEHEARTS</h3></div>';
                     teamsRow.insertCell(4).innerHTML= "-";
                     teamsRow.insertCell(5).innerHTML= "-";
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "10-Mar-2024, Kathryn Hughes, Santa Clara";
                     groundACell.style.textAlign = "center";
@@ -1103,6 +1161,10 @@
                     groundCCell.innerHTML= "-";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1117,6 +1179,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/bPkHH25/Rising-Stars.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">RISING STARS<br><b style="color:#ffff00">104(19.4)</h3></div>';
                     teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/RHST4Zd/Tailenders.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">TAILENDERS<br><b style="color:#ffff00">84/8(19)</h3></div>';
                     teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/XpjYcqF/UC11.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">UC11<br><b style="color:#ffff00">80(18.2)</h3></div>';
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "22-Jun-2024, Sierramont, San Jose";
                     groundACell.style.textAlign = "center";
@@ -1129,6 +1193,10 @@
                     groundCCell.innerHTML= "23-Jun-2024, MLK, Hayward";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1143,6 +1211,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/pZL4Dgh/Ghadheer-CC.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">GHADEER LIONS<br><b style="color:#ffff00">56(19)</h3></div>';
                     teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/LdQ9HVq/Vikings.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">VIKINGS<br><b style="color:#ffff00">103/6(19)</h3></div>';
                     teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/j5Ft0z0/Singh-Warriors.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">SINGH WARRIORS<br><b style="color:#ffff00">101(17.2)</h3></div>';
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "13-Oct-2024, Delaine Eastin, Union City";
                     groundACell.style.textAlign = "center";
@@ -1155,6 +1225,10 @@
                     groundCCell.innerHTML= "12-Oct-2024, Loren Eden, Hayward";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1169,6 +1243,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/X6NdC9n/Daredevils.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">DAREDEVILS<br><b style="color:#ffff00">39(11.3)</h3></div>';
                     teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Kz7sJ5Xq/Fire-Friends.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">FIRE FRIENDS<br><b style="color:#ffff00">111/8(15)</h3></div>';
                     teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/Rp1f2Pfp/Avengers.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">AVENGERS<br><b style="color:#ffff00">85(13.4)</h3></div>';
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "16-Feb-2025, Sierramont, San Jose";
                     groundACell.style.textAlign = "center";
@@ -1181,6 +1257,10 @@
                     groundCCell.innerHTML= "16-Feb-2025, Murphy Park, Milpitas";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1195,6 +1275,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/1G5KrQxP/Royal-Knights.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ROYAL KNIGHTS<br><b style="color:#ffff00">134(20)</h3></div>';
                     teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/d0d8sJ82/Orange-Army.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ORANGE ARMY<br><b style="color:#ffff00">126(19.5) SO:17/1</h3></div>';
                     teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/39tFHpjn/Sabertooths.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">SABERTOOTHS<br><b style="color:#ffff00">126/6(20) SO:16/0</h3></div>';
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "07-Jun-2025, Kathryn Hughes, Santa Clara";
                     groundACell.style.textAlign = "center";
@@ -1207,6 +1289,10 @@
                     groundCCell.innerHTML= "07-Jun-2025, MLK, Hayward";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1221,6 +1307,8 @@
                     teamsRow.insertCell(3).innerHTML= '<div class="logo-txt-container"><h3 style="text-align: center;">KINGS XI<br><b style="color:#ffff00">71(19.1)</h3></div>';
                     teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/0j7JwnrC/Escuela-Boys.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">ESCUELA BOYS<br><b style="color:#ffff00">168/9(20)</h3></div>';
                     teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src="https://i.ibb.co/G3RNFp04/JerseyXI.png" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">JERSEY XI<br><b style="color:#ffff00">162/9(20)</h3></div>';
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "12-Oct-2025, Loren Eden, Hayward";
                     groundACell.style.textAlign = "center";
@@ -1233,6 +1321,10 @@
                     groundCCell.innerHTML= "12-Oct-2025, MLK, Hayward";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var teamsRow = tbl.insertRow(2);
                     var groundRow = tbl.insertRow(2);
@@ -1249,6 +1341,8 @@
                     teamsRow.insertCell(4).innerHTML= '<div class="logo-txt-container"><img src=\"https://media.cricclubs.com/documentsRep/teamLogos/7a95f3ab-14be-4503-a011-c293693b60d0.jpg\" border=\"0\" width=\"30\" height=\"30\">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">THUNDERS<br><b style=\"color:#ffff00\">62/3(14.2)</b></h3></div>';
                     teamsRow.cells[4].style.backgroundColor="#012169";
                     teamsRow.insertCell(5).innerHTML= '<div class="logo-txt-container"><img src=\"https://media.cricclubs.com/documentsRep/teamLogos/5d99a752-4441-47ed-bf11-3552717f6210.jpg\" border=\"0\" width=\"30\" height=\"30\">&nbsp;&nbsp;&nbsp;&nbsp;<h3 style="text-align: center;">FC SPARTANS<br><b style=\"color:#ffff00\">57/6(15.0)</b></h3></div>';
+                    teamsRow.insertCell(6).innerHTML= "-";
+                    teamsRow.insertCell(7).innerHTML= "-";
                     groundACell = groundRow.insertCell(1);
                     groundACell.innerHTML= "21-Feb-2026, Loren Eden, Hayward";
                     groundACell.style.textAlign = "center";
@@ -1261,6 +1355,10 @@
                     groundCCell.innerHTML= "21-Feb-2026, MLK, Hayward";
                     groundCCell.style.textAlign = "center";
                     groundCCell.colSpan = 2;
+                    groundDCell = groundRow.insertCell(4);
+                    groundDCell.innerHTML= "-";
+                    groundDCell.style.textAlign = "center";
+                    groundDCell.colSpan = 2;
 
                     var t12tbl = document.createElement("table");
                     t12tbl.setAttribute("class", "styled-table");
@@ -1661,6 +1759,8 @@
                 [["360", tbl], ["T12", t12tbl], ["Box", btbl]].forEach(function(pair) {
                     injectSummaryControls(pair[1], pair[0]);
                 });
+                // Layer any saved seasons (from the backend) over the hardcoded tables
+                loadSummaryFromStore();
             });
         });
         
@@ -2115,9 +2215,10 @@
                 container.innerHTML =
                     divisionBlock('smA', 'Division A', true) +
                     divisionBlock('smB', 'Division B', true) +
-                    divisionBlock('smC', 'Division C', true);
+                    divisionBlock('smC', 'Division C', true) +
+                    divisionBlock('smD', 'Division D', true);
                 smLoadTeamsForAll([
-                    { prefix: 'smA' }, { prefix: 'smB' }, { prefix: 'smC' }
+                    { prefix: 'smA' }, { prefix: 'smB' }, { prefix: 'smC' }, { prefix: 'smD' }
                 ], type, editData);
             } else if (type === 'T12') {
                 container.innerHTML = divisionBlock('smS', 'Final', true);
@@ -2129,7 +2230,7 @@
 
             // Re-fetch when season changes
             seasonSel.onchange = function() {
-                if (type === '360')      smFetchDivisionTeams([{prefix:'smA'},{prefix:'smB'},{prefix:'smC'}], [' - A',' - B',' - C'], type, null);
+                if (type === '360')      smFetchDivisionTeams([{prefix:'smA'},{prefix:'smB'},{prefix:'smC'},{prefix:'smD'}], [' - A',' - B',' - C',' - D'], type, null);
                 else                     smFetchDivisionTeams([{prefix:'smS'}], [''], type, null);
             };
 
@@ -2138,7 +2239,7 @@
 
         // Detect child series matching the entered season label and load teams
         function smLoadTeamsForAll(divConfigs, type, editData) {
-            var suffixes = type === '360' ? [' - A', ' - B', ' - C'] : [''];
+            var suffixes = type === '360' ? [' - A', ' - B', ' - C', ' - D'] : [''];
             smFetchDivisionTeams(divConfigs, suffixes, type, editData);
         }
 
@@ -2151,7 +2252,7 @@
             function smDivLoaded() {
                 if (--pending <= 0 && addBtn) {
                     addBtn.disabled = false;
-                    addBtn.textContent = '\u2795 Add to Table';
+                    addBtn.textContent = '\ud83d\udcbe Save Season';
                 }
             }
             if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Loading\u2026'; }
@@ -2328,9 +2429,9 @@
             return "'<div class=\"logo-txt-container\">" + imgPart + "<h3 style=\"text-align: center;\">" + inner + "</h3></div>'";
         }
 
-        function teamCellDOM(name, score) {
+        function teamCellDOM(name, score, logoOverride) {
             if (!name) return '-';
-            var logo = _teamLogoMap[name.toUpperCase()] || '';
+            var logo = logoOverride || _teamLogoMap[name.toUpperCase()] || '';
             var imgTag = logo ? '<img src="' + logo + '" border="0" width="30" height="30">&nbsp;&nbsp;&nbsp;&nbsp;' : '';
             return '<div class="logo-txt-container">' + imgTag +
                 '<h3 style="text-align:center;">' +
@@ -2364,7 +2465,7 @@
                 var teamsRow  = document.createElement('tr');
                 var groundRow = document.createElement('tr');
                 var sc = groundRow.insertCell(0); sc.innerHTML = season.toUpperCase(); sc.rowSpan = 2;
-                ['smA','smB','smC'].forEach(function(p, i) {
+                ['smA','smB','smC','smD'].forEach(function(p, i) {
                     var cc = teamsRow.insertCell(i*2);
                     cc.innerHTML = teamCellDOM(smVal(p+'Champ'), smVal(p+'ChampScore'));
                     if (smVal(p+'Champ')) cc.style.backgroundColor = '#012169';
@@ -2417,14 +2518,210 @@
                 if (newRows[1] && _smEditGroundRow) _smEditGroundRow.parentNode.replaceChild(newRows[1], _smEditGroundRow);
                 _smEditTeamsRow = _smEditGroundRow = null;
             } else {
-                // Insert before the last row (the + Add Season row)
-                var insertBefore = tbl.rows[tbl.rows.length - 1];
+                // Insert the new season at the TOP (just below the 2 header rows) so the newest
+                // season is always on top and the table stays aligned.
                 var newRows = _smTableType === '360' ? buildTeamsAndGround360() : buildTeamsAndGroundSingle(_smTableType);
-                newRows.forEach(function(r) { tbl.tBodies[0].insertBefore(r, insertBefore); });
+                var refRow = tbl.rows[2]; // first existing data row (after the 2 header rows)
+                if (newRows.length === 2) {
+                    // newRows = [teamsRow, groundRow]. Insert groundRow first so it sits on top
+                    // (it holds the season label with rowSpan=2), then teamsRow directly below —
+                    // matching the hardcoded season ordering so rowSpan aligns.
+                    tbl.tBodies[0].insertBefore(newRows[1], refRow);
+                    tbl.tBodies[0].insertBefore(newRows[0], refRow);
+                } else {
+                    tbl.tBodies[0].insertBefore(newRows[0], refRow); // Box: single standalone row
+                }
             }
 
             document.getElementById('smFileStatus').innerHTML = '&#x2705; Row ' + (isEdit ? 'updated' : 'added') + '. Click <b>Save to File</b> to persist.';
             _smEditData = null;
+        }
+
+        // ─── Summary cross-device persistence (Google Apps Script backend) ─────
+        // Build "16-Feb-2025, Loren Eden, Hayward" from a stored date (yyyy-mm-dd)
+        // + ground name, mirroring smGetVenue()'s output format.
+        function smFormatVenue(dateStr, ground) {
+            if (!dateStr) return ground || '';
+            var d = new Date(dateStr + 'T00:00:00');
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var formatted = String(d.getDate()).padStart(2,'0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
+            return ground ? formatted + ', ' + ground : formatted;
+        }
+
+        // Just the ground name from a division editor block (no date).
+        function smGetGround(id) {
+            var sel = document.getElementById(id + 'Ground');
+            if (!sel) return '';
+            return sel.value === '__custom__'
+                ? (document.getElementById(id + 'GroundCustom').value.trim())
+                : sel.value;
+        }
+
+        // Read the current editor form into a plain data object for persistence.
+        function collectEditorData() {
+            var type = _smTableType;
+            var prefixes = type === '360' ? ['smA','smB','smC','smD'] : ['smS'];
+            var data = { type: type, divs: [] };
+            prefixes.forEach(function(p) {
+                var champ  = smVal(p + 'Champ');
+                var runner = smVal(p + 'Runner');
+                data.divs.push({
+                    champ:       champ,
+                    champScore:  smVal(p + 'ChampScore'),
+                    champLogo:   _teamLogoMap[champ.toUpperCase()] || '',
+                    runner:      runner,
+                    runnerScore: smVal(p + 'RunnerScore'),
+                    runnerLogo:  _teamLogoMap[runner.toUpperCase()] || '',
+                    ground:      smGetGround(p),
+                    date:        smVal(p + 'Date')
+                });
+            });
+            return data;
+        }
+
+        // Build the DOM row(s) for one stored season. Returns [teamsRow, groundRow]
+        // for 360/T12 (groundRow holds the season label, rowSpan=2) or [row] for Box.
+        function buildRowsFromData(type, season, divs) {
+            var label = season.toUpperCase();
+            function editBtn(row, span) {
+                var editTd = row.insertCell(-1);
+                editTd.style.cssText = 'padding:0;text-align:center;vertical-align:middle;';
+                if (span) editTd.rowSpan = 2;
+                editTd.innerHTML = '<button class="sm-edit-btn" title="Edit row" onclick="smEditRow(this,\'' + type + '\')">&#x270F;&#xFE0F;</button>';
+            }
+            if (type === '360') {
+                var teamsRow  = document.createElement('tr');
+                var groundRow = document.createElement('tr');
+                var sc = groundRow.insertCell(0); sc.innerHTML = label; sc.rowSpan = 2;
+                for (var i = 0; i < 4; i++) {
+                    var dv = divs[i] || {};
+                    var cc = teamsRow.insertCell(i * 2);
+                    cc.innerHTML = teamCellDOM(dv.champ, dv.champScore, dv.champLogo);
+                    if (dv.champ) cc.style.backgroundColor = '#012169';
+                    teamsRow.insertCell(i * 2 + 1).innerHTML = teamCellDOM(dv.runner, dv.runnerScore, dv.runnerLogo);
+                    var gc = groundRow.insertCell(i + 1);
+                    gc.innerHTML = smFormatVenue(dv.date, dv.ground) || '-';
+                    gc.style.textAlign = 'center'; gc.colSpan = 2;
+                }
+                editBtn(teamsRow, true);
+                return [teamsRow, groundRow];
+            } else if (type === 'T12') {
+                var teamsRow  = document.createElement('tr');
+                var groundRow = document.createElement('tr');
+                var sc = groundRow.insertCell(0); sc.innerHTML = label; sc.rowSpan = 2;
+                var dv = divs[0] || {};
+                var cc = teamsRow.insertCell(0);
+                cc.innerHTML = teamCellDOM(dv.champ, dv.champScore, dv.champLogo);
+                if (dv.champ) cc.style.backgroundColor = '#012169';
+                teamsRow.insertCell(1).innerHTML = teamCellDOM(dv.runner, dv.runnerScore, dv.runnerLogo);
+                var gc = groundRow.insertCell(1);
+                gc.innerHTML = smFormatVenue(dv.date, dv.ground) || '-';
+                gc.style.textAlign = 'center'; gc.colSpan = 2;
+                editBtn(teamsRow, true);
+                return [teamsRow, groundRow];
+            } else { // Box
+                var row = document.createElement('tr');
+                row.insertCell(0).innerHTML = label;
+                var dv = divs[0] || {};
+                var cc = row.insertCell(1);
+                cc.innerHTML = teamCellDOM(dv.champ, dv.champScore, dv.champLogo);
+                if (dv.champ) cc.style.backgroundColor = '#012169';
+                row.insertCell(2).innerHTML = teamCellDOM(dv.runner, dv.runnerScore, dv.runnerLogo);
+                editBtn(row, false);
+                return [row];
+            }
+        }
+
+        // Add or update one season in a summary table (idempotent by season label).
+        function applySeasonData(tbl, season, data) {
+            if (!tbl || !data) return;
+            var type = data.type || '360';
+            var rows = buildRowsFromData(type, season, data.divs || []);
+            var label = season.toUpperCase();
+            var isPair = (type !== 'Box');
+            var existing = null;
+            for (var r = 2; r < tbl.rows.length - 1; r++) {
+                var c0 = tbl.rows[r].cells[0];
+                if (c0 && c0.textContent.trim() === label) { existing = tbl.rows[r]; break; }
+            }
+            if (existing) {
+                if (isPair) {
+                    var existingTeams = existing.nextElementSibling; // teamsRow sits below groundRow
+                    existing.parentNode.replaceChild(rows[1], existing);            // replace groundRow
+                    if (existingTeams) existingTeams.parentNode.replaceChild(rows[0], existingTeams); // replace teamsRow
+                } else {
+                    existing.parentNode.replaceChild(rows[0], existing);
+                }
+            } else {
+                var refRow = tbl.rows[2]; // first existing data row (after the 2 header rows)
+                if (isPair) {
+                    tbl.tBodies[0].insertBefore(rows[1], refRow); // groundRow on top
+                    tbl.tBodies[0].insertBefore(rows[0], refRow); // teamsRow below
+                } else {
+                    tbl.tBodies[0].insertBefore(rows[0], refRow);
+                }
+            }
+        }
+
+        // Load saved summary data from the backend and layer it over the hardcoded tables.
+        function loadSummaryFromStore() {
+            if (!script_url) return;
+            $.ajax({
+                url: script_url,
+                data: { action: 'get', key: 'summary' },
+                dataType: 'jsonp',
+                timeout: 15000,
+                success: function(resp) {
+                    var store = resp && resp.data;
+                    if (!store) return;
+                    if (typeof store === 'string') { try { store = JSON.parse(store); } catch(e) { return; } }
+                    _summaryStore = store || {};
+                    var tables = { '360': 'summaryTable', 'T12': 't12SummaryTable', 'Box': 'boxSummaryTable' };
+                    Object.keys(_summaryStore).forEach(function(season) {
+                        var data = _summaryStore[season];
+                        var tbl = document.getElementById(tables[(data && data.type) || '360']);
+                        if (tbl) applySeasonData(tbl, season, data);
+                    });
+                },
+                error: function() { /* backend unreachable - keep the hardcoded tables as-is */ }
+            });
+        }
+
+        // Admin PIN (cached locally after first entry) guards writes to the shared backend.
+        function smGetPin(forcePrompt) {
+            var pin = forcePrompt ? '' : (localStorage.getItem('smPin') || '');
+            if (!pin) {
+                pin = prompt('Enter the admin PIN to save changes:') || '';
+                if (pin) localStorage.setItem('smPin', pin);
+            }
+            return pin;
+        }
+
+        // Persist the current editor season to the backend (survives reloads / other devices).
+        async function saveSummaryToStore() {
+            var season = smVal('smSeason');
+            if (!season) { alert('Please select a season first.'); return; }
+            var pin = smGetPin(false);
+            if (!pin) { return; }
+            var data = collectEditorData();
+            _summaryStore[season.toUpperCase()] = data;
+            var tables = { '360': 'summaryTable', 'T12': 't12SummaryTable', 'Box': 'boxSummaryTable' };
+            var tbl = document.getElementById(tables[_smTableType] || 'summaryTable');
+            if (tbl) applySeasonData(tbl, season, data);
+
+            var status = document.getElementById('smFileStatus');
+            if (status) status.innerHTML = '&#x23F3; Saving&hellip;';
+            try {
+                await fetch(script_url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'save', key: 'summary', pin: pin, data: _summaryStore })
+                });
+                if (status) status.innerHTML = '&#x2705; Saved. This change will persist across devices.';
+            } catch (err) {
+                if (status) status.innerHTML = '&#x274C; Save failed: ' + err.message;
+            }
         }
 
         function buildSummaryJsBlock(season, type) {
@@ -2546,7 +2843,7 @@
 
         // ── Summary table: inject edit pencils + in-table + button ─────────────
         function injectSummaryControls(tbl, type) {
-            var colSpan = type === '360' ? 7 : 4; // season col + data cols + 1 for edit col
+            var colSpan = type === '360' ? 9 : 4; // season col + data cols + 1 for edit col
 
             // Add an EDIT column header to row 0 (the top header row)
             var hdr = tbl.rows[0];
@@ -2643,7 +2940,7 @@
             var editData = { season: seasonLabel, divs: [] };
 
             if (type === '360') {
-                for (var d = 0; d < 3; d++) {
+                for (var d = 0; d < 4; d++) {
                     var champCell  = teamsRow.cells[d * 2];
                     var runnerCell = teamsRow.cells[d * 2 + 1];
                     var groundCell = groundRow ? groundRow.cells[d + 1] : null;
