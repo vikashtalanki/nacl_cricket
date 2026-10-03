@@ -475,7 +475,7 @@
                     allPlayersMap.set(seriesName, new Map());
                     allTeamsMap.set(seriesName, new Map());
                     var allMatchesPerSeriesUrl = cricclubs_url+"match/getMatches?"+url_params+"&X-Auth-Token=&seriesId="+seriesId+"&teamId=&limit=10000";
-                    ccGetJSON(allMatchesPerSeriesUrl, function (data) {
+                    ccGetJSONQueued(allMatchesPerSeriesUrl, function (data) {
                         $.each(data.data, function (idx, val) {
                             if(matchDates.includes(val.matchDate) || matchDates.length==0) {
                                 allMatchesMap[seriesName] ??= [];
@@ -490,7 +490,7 @@
                         });
                     });
                     var allTeamsPerSeriesUrl = cricclubs_url+"team/getTeamsList?"+url_params+"&seriesId="+seriesId;
-                    ccGetJSON(allTeamsPerSeriesUrl, function (data) {
+                    ccGetJSONQueued(allTeamsPerSeriesUrl, function (data) {
                         $.each(data.data.teamsList, function (index, teamsList) {
                             $.each(teamsList.teams, function (index, team) {
                                 allPlayersMap.get(seriesName).set(team.teamName, new Map());
@@ -501,7 +501,7 @@
                                     : '';
                                 if (logo) _teamLogoMap[team.teamName.toUpperCase()] = logo;
                                 var playersURL = cricclubs_url+"team/getTeamPlayers?"+url_params+"&teamId=" + team.teamID;
-                                ccGetJSON(playersURL, function (data) {
+                                ccGetJSONQueued(playersURL, function (data) {
                                     $.each(data.data.teamPlayers, function (index, player) {
                                         allPlayersMap.get(seriesName).get(team.teamName).set(player.playerID,player.firstName + " " + player.lastName);
                                     });
