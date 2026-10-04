@@ -2242,15 +2242,25 @@
                 (editData ? 'Edit Row — ' : 'Add Row — ') + type + ' Series';
             document.getElementById('smFileStatus').innerHTML = '';
 
-            // Populate season dropdown from parent series map
+            // Populate the season dropdown. 360 seasons are division leagues — parent series
+            // that have " - A/- B/- C/- D" children — so list the parents. T12/Box tournaments
+            // (Independence Cup, Diwali Cup, Presidents Cup, etc.) are standalone series with no
+            // children, so for those types list every leaf series that is NOT a 360 division child.
             var seasonSel = document.getElementById('smSeason');
-            var parents = Object.keys(_parentSeriesMap);
-            if (parents.length > 0) {
-                seasonSel.innerHTML = parents.map(function(p) {
+            var seasons;
+            if (type === '360') {
+                seasons = Object.keys(_parentSeriesMap);
+            } else {
+                seasons = Object.keys(_seriesNameToId).filter(function(name) {
+                    return !_childToParent[name]; // drop division children; keep standalone cups/leagues
+                });
+            }
+            if (seasons.length > 0) {
+                seasonSel.innerHTML = seasons.map(function(p) {
                     return '<option value="' + p + '">' + p + '</option>';
                 }).join('');
                 // Default to latest season
-                seasonSel.value = editData ? editData.season : parents[parents.length - 1];
+                seasonSel.value = editData ? editData.season : seasons[seasons.length - 1];
             } else {
                 seasonSel.innerHTML = '<option value="">No seasons loaded</option>';
             }
